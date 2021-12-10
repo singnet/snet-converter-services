@@ -1,0 +1,41 @@
+service: snet-converter-services
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  deploymentBucket:
+    name: snet-converter-services
+    serverSideEncryption: AES256
+  memorySize: 512
+
+useDotenv: true
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+  - serverless-dotenv-plugin
+  - serverless-prune-plugin
+  - serverless-layers
+  - serverless-plugin-split-stacks
+
+package:
+  patterns:
+    - "!node_modules/**"
+    - "!.serverless/**"
+    - "!package.json"
+    - "!layers"
+  excludeDevDependencies: true
+
+custom:
+  prune:
+    automatic: true
+    number: 2
+  serverless-layers:
+    - common:
+        dependenciesPath: ./package.json
+  splitStacks:
+    nestedStackCount: 50 # Controls the number of created nested stacks
+    perFunction: false
+    perType: true
+    perGroupFunction: false
