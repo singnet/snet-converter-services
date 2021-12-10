@@ -1,8 +1,8 @@
 export enum Database {
-  type = 'mysql',
-  database = 'dtmarketplace',
-  user = 'admin',
-  password = 'password',
-  host = '127.0.0.1',
+  type = "mysql",
+  database = "",
+  user = "",
+  password = "",
+  host = "",
   port = 3306,
 }
