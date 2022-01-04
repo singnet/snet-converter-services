@@ -1,4 +1,4 @@
-from sqlalchemy import Column, VARCHAR, TIMESTAMP, INTEGER, ForeignKey, UniqueConstraint, DECIMAL, BOOLEAN
+from sqlalchemy import Column, VARCHAR, TIMESTAMP, INTEGER, ForeignKey, UniqueConstraint, DECIMAL, BOOLEAN, BIGINT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -38,7 +38,7 @@ class ConversionFeeDBModel(Base, AuditClass):
     __tablename__ = "conversion_fee"
     id = Column("id", VARCHAR(250), primary_key=True)
     percentage_from_source = Column("percentage_from_source", DECIMAL)
-    amount = Column("amount", DECIMAL)
+    amount = Column("amount", BIGINT)
     token_id = Column("token_id", INTEGER, ForeignKey(TokenDetailDBModel.id))
     token_detail = relationship("TokenDetailDBModel", foreign_keys=[token_id])
     __table_args__ = (UniqueConstraint(id), {})
@@ -51,8 +51,8 @@ class TokenPairDBModel(Base, AuditClass):
     to_token_id = Column("to_token_id", INTEGER, ForeignKey(TokenDetailDBModel.id), nullable=False)
     conversion_fee_id = Column("conversion_fee_id", VARCHAR(250), ForeignKey(ConversionFeeDBModel.id))
     is_enabled = Column("is_enabled", BOOLEAN, default=True)
-    min_value = Column("min_value", DECIMAL)
-    max_value = Column("max_value", DECIMAL)
+    min_value = Column("min_value", BIGINT)
+    max_value = Column("max_value", BIGINT)
     form_tn = relationship("TokenDetailDBModel", foreign_keys=[from_token_id])
     to_tn = relationship("TokenDetailDBModel", foreign_keys=[to_token_id])
     contract_address = Column("contract_address", VARCHAR(250))
@@ -74,7 +74,7 @@ class ConversionDBModel(Base, AuditClass):
     __tablename__ = "conversion"
     id = Column("id", VARCHAR(250), primary_key=True)
     wallet_payer_id = Column("wallet_payer_id", VARCHAR(250), ForeignKey(WalletPayerDBModel.id), nullable=False)
-    amount = Column("amount", DECIMAL)
+    amount = Column("amount", BIGINT)
     status = Column("status", VARCHAR(30), nullable=False)
     wallet_address = relationship('WalletAddressDBModel', uselist=False, lazy="select")
     __table_args__ = (UniqueConstraint(id), {})

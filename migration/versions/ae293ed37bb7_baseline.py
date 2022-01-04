@@ -1,8 +1,8 @@
 """baseline
 
-Revision ID: 725e0e098952
+Revision ID: ae293ed37bb7
 Revises: 
-Create Date: 2021-12-30 10:02:21.517719
+Create Date: 2022-01-04 09:16:07.663726
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '725e0e098952'
+revision = 'ae293ed37bb7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -49,7 +49,7 @@ def upgrade():
     sa.Column('updated_at', sa.TIMESTAMP(), nullable=False),
     sa.Column('id', sa.VARCHAR(length=250), nullable=False),
     sa.Column('percentage_from_source', sa.DECIMAL(), nullable=True),
-    sa.Column('amount', sa.DECIMAL(), nullable=True),
+    sa.Column('amount', sa.BIGINT(), nullable=True),
     sa.Column('token_id', sa.INTEGER(), nullable=True),
     sa.ForeignKeyConstraint(['token_id'], ['token_detail.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -63,8 +63,8 @@ def upgrade():
     sa.Column('to_token_id', sa.INTEGER(), nullable=False),
     sa.Column('conversion_fee_id', sa.VARCHAR(length=250), nullable=True),
     sa.Column('is_enabled', sa.BOOLEAN(), nullable=True),
-    sa.Column('min_value', sa.DECIMAL(), nullable=True),
-    sa.Column('max_value', sa.DECIMAL(), nullable=True),
+    sa.Column('min_value', sa.BIGINT(), nullable=True),
+    sa.Column('max_value', sa.BIGINT(), nullable=True),
     sa.Column('contract_address', sa.VARCHAR(length=250), nullable=True),
     sa.Column('receiving_address', sa.VARCHAR(length=250), nullable=True),
     sa.ForeignKeyConstraint(['conversion_fee_id'], ['conversion_fee.id'], ),
@@ -88,7 +88,7 @@ def upgrade():
     sa.Column('updated_at', sa.TIMESTAMP(), nullable=False),
     sa.Column('id', sa.VARCHAR(length=250), nullable=False),
     sa.Column('wallet_payer_id', sa.VARCHAR(length=250), nullable=False),
-    sa.Column('amount', sa.DECIMAL(), nullable=True),
+    sa.Column('amount', sa.BIGINT(), nullable=True),
     sa.Column('status', sa.VARCHAR(length=30), nullable=False),
     sa.ForeignKeyConstraint(['wallet_payer_id'], ['wallet_payer.id'], ),
     sa.PrimaryKeyConstraint('id'),
