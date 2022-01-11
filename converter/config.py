@@ -1,1 +1,11 @@
-DB_URL = 'mysql+pymysql://snet:Password!12345@localhost:3306/snet_converter_db'
+NETWORK = {
+    "db": {
+        "DB_DRIVER": "mysql+pymysql",
+        "DB_HOST": "localhost",
+        "DB_USER": "snet",
+        "DB_PASSWORD": "Password!12345",
+        "DB_NAME": "snet_converter_db",
+        "DB_PORT": 3306,
+        "DB_LOGGING": True,
+    },
+}

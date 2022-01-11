@@ -7,12 +7,17 @@ from alembic import context
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-from converter.config import DB_URL
+from converter.config import NETWORK
 from converter.infrastructure.models import Base
 
 config = context.config
 
-config.set_main_option('sqlalchemy.url', DB_URL)
+MYSQL_CONNECTION_STRING = (
+    f"mysql+pymysql://{NETWORK['db']['DB_USER']}:{NETWORK['db']['DB_PASSWORD']}"
+    f"@{NETWORK['db']['DB_HOST']}:{NETWORK['db']['DB_PORT']}/{NETWORK['db']['DB_NAME']}"
+)
+
+config.set_main_option('sqlalchemy.url', MYSQL_CONNECTION_STRING)
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
