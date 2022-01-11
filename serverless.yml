@@ -7,6 +7,7 @@ plugins:
   - serverless-plugin-tracing
   - serverless-prune-plugin
   - serverless-aws-documentation
+  - serverless-latest-layer-version
 
 provider:
   name: aws
@@ -35,6 +36,9 @@ custom:
     automatic: true
     includeLayers: true
     number: 5
+  defaultLayers:
+    - ${file(./config.${self:provider.stage}.json):MplaceCommonCode_Layer}
+    - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
   defaultVpc:
     securityGroupIds:
       - ${file(./config.${self:provider.stage}.json):SG1}
@@ -74,6 +78,7 @@ functions:
   get_blockchain:
     handler: converter/application/handler/blockchain_handlers.get_blockchain
     role: ${file(./config.${self:provider.stage}.json):ROLE}
+    layers: ${self:custom.defaultLayers}
     events:
       - http:
           path: /v1/blockchain
