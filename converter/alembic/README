@@ -19,6 +19,7 @@ export PYTHONPATH=`pwd`/..
   alembic revision --autogenerate -m "filename for revision"
   ```
 - Then again run the step 2 command
+
   ```commandline
   alembic upgrade head
   ```

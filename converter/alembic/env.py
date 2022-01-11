@@ -7,8 +7,8 @@ from alembic import context
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-from config import DB_URL
-from infrastructure.models import Base
+from converter.config import DB_URL
+from converter.infrastructure.models import Base
 
 config = context.config
 
