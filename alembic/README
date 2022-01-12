@@ -1,0 +1,27 @@
+Generic single-database configuration.
+
+
+# How to run alembic in local db
+
+- Make sure DB URL is pointing to local or target db which you want
+- Always run this command to check latest version of changes is reflected in your db
+
+```commandline
+export PYTHONPATH=`pwd`/..
+```
+
+  ```commandline
+  alembic upgrade head
+  ```
+- If you made changes in your model and want to make migration , then run this command below
+
+  ```commandline
+  alembic revision --autogenerate -m "filename for revision"
+  ```
+- Then again run the step 2 command
+
+  ```commandline
+  alembic upgrade head
+  ```
+
+Reference URL => `https://alembic.sqlalchemy.org/en/latest/autogenerate.html`

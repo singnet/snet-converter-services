@@ -1,0 +1,81 @@
+{
+  "GetAllBlockchainOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["success"]
+      },
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "logo": {
+              "type": "string"
+            },
+            "is_extension_available": {
+              "type": "boolean"
+            },
+            "chain_id": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "created_at": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "symbol",
+            "logo",
+            "is_extension_available",
+            "chain_id",
+            "created_at"
+          ]
+        }
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  }
+}
