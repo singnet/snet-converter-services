@@ -38,7 +38,6 @@ custom:
     number: 5
   defaultLayers:
     - ${file(./config.${self:provider.stage}.json):MplaceCommonCode_Layer}
-    - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
   defaultVpc:
     securityGroupIds:
       - ${file(./config.${self:provider.stage}.json):SG1}
@@ -75,8 +74,8 @@ package:
     - "!node_modules/**"
 
 functions:
-  get_blockchain:
-    handler: converter/application/handler/blockchain_handlers.get_blockchain
+  get_all_blockchain:
+    handler: converter/application/handler/blockchain_handlers.get_all_blockchain
     role: ${file(./config.${self:provider.stage}.json):ROLE}
     layers: ${self:custom.defaultLayers}
     events:

@@ -28,7 +28,7 @@ class BlockChainDBModel(Base, PrimaryKeyClass, AuditClass):
     logo = Column("logo", VARCHAR(250), nullable=False)
     chain_id = Column("chain_id", VARCHAR(50), nullable=False)
     block_confirmation = Column("block_confirmation", INTEGER, nullable=False)
-    is_extension_available = Column("is_enabled", BOOLEAN, default=True)
+    is_extension_available = Column("is_extension_available", BOOLEAN, default=False)
     __table_args__ = (UniqueConstraint(chain_id, name, symbol), {})
 
 
@@ -41,7 +41,7 @@ class TokenDBModel(Base, PrimaryKeyClass, AuditClass):
     blockchain_id = Column("blockchain_id", BIGINT, ForeignKey(BlockChainDBModel.row_id), nullable=False)
     allowed_decimal = Column("allowed_decimal", INTEGER)
     blockchain_detail = relationship(BlockChainDBModel, uselist=False, lazy="select")
-    __table_args__ = (UniqueConstraint(blockchain_id, symbol), {})
+    __table_args__ = (UniqueConstraint(name, symbol), {})
 
 
 class ConversionFeeDBModel(Base, PrimaryKeyClass, AuditClass):
