@@ -1,5 +1,5 @@
 NETWORK = {
-     "db": {
+    "db": {
         "DB_DRIVER": "mysql+pymysql",
         "DB_HOST": "localhost",
         "DB_USER": "unittest_root",
