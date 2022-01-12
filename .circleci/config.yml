@@ -18,7 +18,7 @@ jobs:
       - run:
           name: Generating checksum for all requirements file
           command: |
-            shasum */requirement*.txt > /tmp/checksum_files_list
+            shasum requirement*.txt > /tmp/checksum_files_list
             sudo chown -R circleci:circleci /usr/local/bin
             sudo chown circleci:circleci -R /usr/local/lib/python3.7
       - run:
@@ -40,9 +40,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            for requirement_file in `ls */*/requirement*.txt`;do sudo pip install -r $requirement_file --prefer-binary ;done
-            for requirement_file in `ls */requirement*.txt`;do sudo pip install -r $requirement_file --prefer-binary ;done
-            for package_file in `ls */package*.json | cut -d '/' -f1`;do sudo npm install $package_file/;done
+            for requirement_file in `ls requirement*.txt`;do sudo pip install -r $requirement_file --prefer-binary ;done
+            for package_file in `ls package*.json | cut -d '/' -f1`;do sudo npm install $package_file ;done
       - run:
           name: Install required packages.
           command: |
@@ -55,11 +54,11 @@ jobs:
             mysql -h 127.0.0.1 -u root -punittest_pwd -e "create database converter_unittest_db"
             mysql -h 127.0.0.1 -u root -punittest_pwd -e "GRANT ALL PRIVILEGES ON *.* TO 'unittest_root'@'%';"
             export PYTHONPATH=$PWD
-            for alembic_file in `ls */alembic*.ini | cut -d '/' -f1`;do cd $alembic_file; echo $alembic_file; alembic upgrade head; cd .. ;done
+            alembic upgrade head;
       - run:
           name: Run unit tests and integration test
           command: |
-            PYTHONPATH=$PWD python -m coverage run -m pytest */testcases/unit_testcases/*.py */testcases/functional_testcases/*.py
+            PYTHONPATH=$PWD python -m coverage run -m pytest testcases/unit_testcases/*.py testcases/functional_testcases/*.py
             python -m coverage report -m
             coverage xml -i
             sonar-scanner-4.6.2.2472-linux/bin/sonar-scanner -Dsonar.host.url=https://sonarqube.singularitynet.io -Dsonar.login=${SONAR_TOKEN} $SONAR_SCANNER_OPTS_CUSTOM
