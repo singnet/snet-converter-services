@@ -55,6 +55,22 @@ custom:
       - X-Amz-Security-Token
       - X-Amz-User-Agent
       - x-requested-with
+  documentation:
+    models:
+      - name: "ApiErrorMessage"
+        description: "API Error Response"
+        contentType: "application/json"
+        schema: ${file(documentation/models/error.json):ApiError}
+
+      - name: "LambdaErrorMessage"
+        description: "Server is not able to process the client request"
+        contentType: "application/json"
+        schema: ${file(documentation/models/error.json):LambdaError}
+
+      - name: "GetAllBlockchainOutput"
+        description: "Get all blockchain response model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/blockchain.json):GetAllBlockchainOutput}
 
 package:
   patterns:
@@ -83,5 +99,26 @@ functions:
           path: /v1/blockchain
           method: get
           cors: ${self:custom.defaultCors}
+          documentation:
+            summary: "Get all blockchain"
+            description: "Get all blockchain for the converter bridge"
+            tags:
+              - "Blockchain"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Get all blockchain"
+                responseModels:
+                  "application/json": "GetAllBlockchainOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+          
 
 

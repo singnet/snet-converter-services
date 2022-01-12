@@ -21,11 +21,11 @@ class TestVariablesBlockchain:
         self.blockchain_id_2 = "5b21294fe71a4145a40f6ab918a50f96"
         self.blockchain = [
             create_blockchain_record(id=self.blockchain_id_1, name="Ethereum", description="Connect with your wallet",
-                                     symbol="ETH", logo="", chain_id="42,3", block_confirmation=25,
+                                     symbol="ETH", logo="www.ethereum.com/image.png", chain_id="42,3", block_confirmation=25,
                                      is_extension_available=True, created_by=DAPP_AS_CREATED_BY, created_at=created_at,
                                      updated_at=updated_at),
             create_blockchain_record(id=self.blockchain_id_2, name="Cardano", description="Add your wallet address",
-                                     symbol="ADA", logo="", chain_id="2", block_confirmation=23,
+                                     symbol="ADA", logo="www.cardano.com/image.png", chain_id="2", block_confirmation=23,
                                      is_extension_available=False, created_by=DAPP_AS_CREATED_BY, created_at=created_at,
                                      updated_at=updated_at)
         ]

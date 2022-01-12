@@ -16,8 +16,6 @@ Converter Service│
  1. [Get all blockchain](#1-get-all-blockchain)
 
 
-
-
 ### 1. Get all blockchain
   API Url: `{DOMAIN_URL}/{STAGE}/v1/blockchain` 
 
@@ -41,7 +39,8 @@ Converter Service│
       "name": "Cardano",
       "description": "Add your wallet address",
       "symbol": "ADA",
-      "logo": "",
+      "logo": "www.cardano.com/image.png",
+      "is_extension_available": false,
       "chain_id": [
         "2"
       ],
@@ -52,7 +51,8 @@ Converter Service│
       "name": "Ethereum",
       "description": "Connect with your wallet",
       "symbol": "ETH",
-      "logo": "",
+      "logo": "www.ethereum.com/image.png",
+      "is_extension_available": true,
       "chain_id": [
         "42",
         "3"
