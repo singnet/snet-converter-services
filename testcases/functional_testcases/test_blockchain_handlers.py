@@ -1,7 +1,5 @@
 import json
-from unittest import TestCase
-
-from sqlalchemy import or_
+import unittest
 
 from application.handler.blockchain_handlers import get_all_blockchain
 from infrastructure.models import BlockChainDBModel
@@ -9,18 +7,13 @@ from infrastructure.repositories.blockchain_repository import BlockchainReposito
 from testcases.functional_testcases.test_variables import TestVariablesBlockchain
 
 blockchain_repo = BlockchainRepository()
-variables = TestVariablesBlockchain()
 
 
-class TestBlockchain(TestCase):
+class TestBlockchain(unittest.TestCase):
 
     def setUp(self):
         self.tearDown()
-        blockchain_repo.session.add_all(variables.blockchain)
-        blockchain_repo.session.commit()
-
-    def tearDown(self):
-        blockchain_repo.session.query(BlockChainDBModel).delete()
+        blockchain_repo.session.add_all(TestVariablesBlockchain().blockchain)
         blockchain_repo.session.commit()
 
     def test_get_all_blockchain(self):
@@ -48,3 +41,7 @@ class TestBlockchain(TestCase):
         response = get_all_blockchain(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, success_response_2)
+
+    def tearDown(self):
+        blockchain_repo.session.query(BlockChainDBModel).delete()
+        blockchain_repo.session.commit()
