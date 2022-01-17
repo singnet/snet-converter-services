@@ -1,0 +1,82 @@
+{
+  "CreateConversionRequestInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "token_pair_id": {
+        "type": "string"
+      },
+      "amount": {
+        "type": "string"
+      },
+      "from_address": {
+        "type": "string"
+      },
+      "to_address": {
+        "type": "string"
+      },
+      "block_number": {
+        "type": "integer"
+      },
+      "signature": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "token_pair_id",
+      "amount",
+      "from_address",
+      "to_address",
+      "block_number",
+      "signature"
+    ]
+  },
+  "CreateConversionRequestOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "deposit_address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "deposit_address"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  }
+}

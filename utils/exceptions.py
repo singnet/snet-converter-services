@@ -25,4 +25,13 @@ class InternalServerErrorException(Exception):
         self.error_details = error_details
 
 
-EXCEPTIONS = (AccessDeniedException, BadRequestException, InternalServerErrorException)
+class TokenPairIdNotExitsException(Exception):
+    error_message = "BAD_REQUEST"
+    status_code = 400
+
+    def __init__(self, error_code, error_details):
+        self.error_code = error_code
+        self.error_details = error_details
+
+
+EXCEPTIONS = (AccessDeniedException, BadRequestException, InternalServerErrorException, TokenPairIdNotExitsException)

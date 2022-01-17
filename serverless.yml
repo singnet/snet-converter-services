@@ -14,7 +14,7 @@ provider:
   runtime: python3.8
   lambdaHashingVersion: 20201221
   memorySize: 512
-  timeout: 30
+  timeout: 15
   region: ${file(./config.${self:provider.stage}.json):REGION}
   stage: ${opt:stage,'dev'}
   deploymentBucket:
@@ -36,10 +36,6 @@ custom:
     automatic: true
     includeLayers: true
     number: 5
-  splitStacks:
-    perFunction: false
-    perType: true
-    perGroupFunction: false
   defaultLayers:
     - ${file(./config.${self:provider.stage}.json):MplaceCommonCode_Layer}
     - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib}
@@ -77,6 +73,20 @@ custom:
         contentType: "application/json"
         schema: ${file(documentation/models/blockchain.json):GetAllBlockchainOutput}
 
+      - name: "GetAllTokenPairOutput"
+        description: "Get all token pair response model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/token.json):GetAllTokenPairOutput}
+
+      - name: "CreateConversionRequestInput"
+        description: "create a conversion request model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):CreateConversionRequestInput}
+      
+      - name: "CreateConversionRequestOutput"
+        description: "create a conversion response model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):CreateConversionRequestOutput}
 package:
   patterns:
     - "!.circleci/**"
@@ -97,7 +107,7 @@ package:
 
 functions:
   get_all_blockchain:
-    handler: converter/application/handler/blockchain_handlers.get_all_blockchain
+    handler: application/handler/blockchain_handlers.get_all_blockchain
     role: ${file(./config.${self:provider.stage}.json):ROLE}
     layers: ${self:custom.defaultLayers}
     events:
@@ -125,6 +135,67 @@ functions:
               - statusCode: "500"
                 responseModels:
                   "application/json": "LambdaErrorMessage"
-          
 
+
+  get_token_pair:
+    handler: application/handler/token_handlers.get_all_token_pair
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/token/pair
+          method: get
+          cors: ${self:custom.defaultCors}
+          documentation:
+            summary: "Get all token pair"
+            description: "Get all token pair for the converter bridge"
+            tags:
+              - "Token"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Get all token pair"
+                responseModels:
+                  "application/json": "GetAllTokenPairOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+
+  create_conversion_request:
+    handler: application/handler/conversion_handlers.create_conversion_request
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/conversion
+          method: post
+          cors: ${self:custom.defaultCors}
+          documentation:
+            summary: "Create a conversion request"
+            description: "Create a conversion request"
+            tags:
+              - "Conversion"
+            requestModels:
+              "application/json": "CreateConversionRequestInput"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Successfully made a  conversion request"
+                responseModels:
+                  "application/json": "CreateConversionRequestOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
 
