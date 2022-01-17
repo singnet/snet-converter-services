@@ -38,7 +38,7 @@ custom:
     number: 5
   defaultLayers:
     - ${file(./config.${self:provider.stage}.json):MplaceCommonCode_Layer}
-    - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib}
+    - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
   defaultVpc:
     securityGroupIds:
       - ${file(./config.${self:provider.stage}.json):SG1}
