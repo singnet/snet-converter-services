@@ -93,6 +93,7 @@ package:
     - "!Dockerfile"
     - "!License"
     - "!node_modules/**"
+    - "!common"
 
 functions:
   get_all_blockchain:
