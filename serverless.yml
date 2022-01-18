@@ -8,10 +8,9 @@ plugins:
   - serverless-prune-plugin
   - serverless-aws-documentation
   - serverless-latest-layer-version
-
 provider:
   name: aws
-  runtime: python3.8
+  runtime: python3.7
   lambdaHashingVersion: 20201221
   memorySize: 512
   timeout: 15
@@ -27,7 +26,7 @@ provider:
 
 custom:
 #  pythonRequirements:
-#    fileName: converter/requirements.txt
+#    fileName: requirements.txt
 #    dockerizePip: true
 #    useDownloadCache: true
 #    useStaticCache: true
