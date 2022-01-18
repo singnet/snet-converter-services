@@ -10,7 +10,7 @@ plugins:
   - serverless-latest-layer-version
 provider:
   name: aws
-  runtime: python3.8
+  runtime: python3.7
   lambdaHashingVersion: 20201221
   memorySize: 512
   timeout: 15
@@ -25,12 +25,12 @@ provider:
   tracing: true
 
 custom:
-  pythonRequirements:
-    #fileName: converter/requirements.txt
-    dockerizePip: true
-    useDownloadCache: true
-    useStaticCache: true
-    cacheLocation: "/var/cache/serverless"
+#  pythonRequirements:
+#    fileName: requirements.txt
+#    dockerizePip: true
+#    useDownloadCache: true
+#    useStaticCache: true
+#    cacheLocation: "/var/cache/serverless"
   prune:
     automatic: true
     includeLayers: true
