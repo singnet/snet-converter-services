@@ -6,12 +6,12 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
-class PrimaryKeyClass(object):
+class PrimaryKeyClass:
     row_id = Column("row_id", BIGINT, primary_key=True, autoincrement=True)
     id = Column("id", VARCHAR(50), unique=True, nullable=False)
 
 
-class AuditClass(object):
+class AuditClass:
     created_by = Column("created_by", VARCHAR(50), nullable=False)
     created_at = Column("created_at", TIMESTAMP,
                         server_default=func.current_timestamp(), nullable=False)
@@ -29,7 +29,7 @@ class BlockChainDBModel(Base, PrimaryKeyClass, AuditClass):
     chain_id = Column("chain_id", VARCHAR(50), nullable=False)
     block_confirmation = Column("block_confirmation", INTEGER, nullable=False)
     is_extension_available = Column("is_extension_available", BOOLEAN, default=False)
-    __table_args__ = (UniqueConstraint(chain_id, name, symbol), {})
+    __table_args__ = (UniqueConstraint(name, symbol), {})
 
 
 class TokenDBModel(Base, PrimaryKeyClass, AuditClass):
@@ -41,13 +41,13 @@ class TokenDBModel(Base, PrimaryKeyClass, AuditClass):
     blockchain_id = Column("blockchain_id", BIGINT, ForeignKey(BlockChainDBModel.row_id), nullable=False)
     allowed_decimal = Column("allowed_decimal", INTEGER)
     blockchain_detail = relationship(BlockChainDBModel, uselist=False, lazy="select")
-    __table_args__ = (UniqueConstraint(name, symbol), {})
+    __table_args__ = (UniqueConstraint(name, symbol, blockchain_id), {})
 
 
 class ConversionFeeDBModel(Base, PrimaryKeyClass, AuditClass):
     __tablename__ = "conversion_fee"
-    percentage_from_source = Column("percentage_from_source", DECIMAL)
-    amount = Column("amount", DECIMAL)
+    percentage_from_source = Column("percentage_from_source", DECIMAL(10, 5), nullable=False)
+    amount = Column("amount", DECIMAL(50, 20))
     token_id = Column("token_id", BIGINT, ForeignKey(TokenDBModel.row_id))
     token = relationship(TokenDBModel, foreign_keys=[token_id])
 
@@ -58,11 +58,11 @@ class TokenPairDBModel(Base, PrimaryKeyClass, AuditClass):
     to_token_id = Column("to_token_id", BIGINT, ForeignKey(TokenDBModel.row_id), nullable=False)
     conversion_fee_id = Column("conversion_fee_id", BIGINT, ForeignKey(ConversionFeeDBModel.row_id))
     is_enabled = Column("is_enabled", BOOLEAN, default=True)
-    min_value = Column("min_value", DECIMAL)
-    max_value = Column("max_value", DECIMAL)
+    min_value = Column("min_value", DECIMAL(50, 20))
+    max_value = Column("max_value", DECIMAL(50, 20))
     contract_address = Column("contract_address", VARCHAR(250), nullable=False)
     conversion_fee = relationship(ConversionFeeDBModel, foreign_keys=[conversion_fee_id])
-    form_token = relationship(TokenDBModel, foreign_keys=[from_token_id])
+    from_token = relationship(TokenDBModel, foreign_keys=[from_token_id])
     to_token = relationship(TokenDBModel, foreign_keys=[to_token_id])
     __table_args__ = (UniqueConstraint(from_token_id, to_token_id), {})
 
@@ -82,9 +82,9 @@ class WalletPairDBModel(Base, PrimaryKeyClass, AuditClass):
 class ConversionDBModel(Base, PrimaryKeyClass, AuditClass):
     __tablename__ = "conversion"
     wallet_pair_id = Column("wallet_pair_id", BIGINT, ForeignKey(WalletPairDBModel.row_id), nullable=False)
-    deposit_amount = Column("deposit_amount", DECIMAL, nullable=False)
-    claim_amount = Column("claim_amount", DECIMAL)
-    fee_amount = Column("fee_amount", DECIMAL)
+    deposit_amount = Column("deposit_amount", DECIMAL(50, 20), nullable=False)
+    claim_amount = Column("claim_amount", DECIMAL(50, 20))
+    fee_amount = Column("fee_amount", DECIMAL(50, 20))
     status = Column("status", VARCHAR(30), nullable=False)
     claim_signature = Column("claim_signature", VARCHAR(250))
     wallet_pair = relationship(WalletPairDBModel, foreign_keys=[wallet_pair_id], uselist=False, lazy="select")
@@ -107,8 +107,8 @@ class TransactionDBModel(Base, PrimaryKeyClass, AuditClass):
     transaction_visibility = Column("transaction_visibility", VARCHAR(30))
     transaction_operation = Column("transaction_operation", VARCHAR(30))
     transaction_hash = Column("transaction_hash", VARCHAR(250))
-    transaction_amount = Column("transaction_amount", DECIMAL)
+    transaction_amount = Column("transaction_amount", DECIMAL(50, 20))
     status = Column("status", VARCHAR(30))
     conversion_transaction = relationship(ConversionTransactionDBModel, uselist=False, lazy="select")
-    form_token = relationship(TokenDBModel, foreign_keys=[from_token_id])
+    from_token = relationship(TokenDBModel, foreign_keys=[from_token_id])
     to_token = relationship(TokenDBModel, foreign_keys=[to_token_id])

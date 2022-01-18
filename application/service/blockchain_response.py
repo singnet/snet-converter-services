@@ -10,6 +10,15 @@ def get_all_blockchain_response(blockchains):
         BlockchainEntities.LOGO.value: blockchain[BlockchainEntities.LOGO.value],
         BlockchainEntities.IS_EXTENSION_AVAILABLE.value: blockchain[BlockchainEntities.IS_EXTENSION_AVAILABLE.value],
         BlockchainEntities.CHAIN_ID.value: blockchain[BlockchainEntities.CHAIN_ID.value],
-        BlockchainEntities.CREATED_AT.value: blockchain[BlockchainEntities.CREATED_AT.value]
+        BlockchainEntities.UPDATED_AT.value: blockchain[BlockchainEntities.UPDATED_AT.value]
     }
         for blockchain in blockchains]
+
+
+def get_blockchain_for_token_response(blockchain):
+    return {
+        BlockchainEntities.ID.value: blockchain[BlockchainEntities.ID.value],
+        BlockchainEntities.NAME.value: blockchain[BlockchainEntities.NAME.value],
+        BlockchainEntities.SYMBOL.value: blockchain[BlockchainEntities.SYMBOL.value],
+        BlockchainEntities.CHAIN_ID.value: blockchain[BlockchainEntities.CHAIN_ID.value]
+    }

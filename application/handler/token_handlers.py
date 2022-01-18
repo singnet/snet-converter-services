@@ -1,6 +1,9 @@
+import sys
+
+sys.path.append('/opt')
 import json
 from http import HTTPStatus
-
+from application.service.token_service import TokenService
 from common.logger import get_logger
 from common.utils import generate_lambda_response, make_response_body
 from config import SLACK_HOOK
@@ -14,10 +17,12 @@ token_service = TokenService()
 
 
 @exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
-def get_token_pair(event, context):
+def get_all_token_pair(event, context):
     logger.debug(f"Get all token pair event={json.dumps(event)}")
-    response = token_service.get_token_pair()
+    response = token_service.get_all_token_pair()
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
+
+
 

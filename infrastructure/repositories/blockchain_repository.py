@@ -21,6 +21,6 @@ class BlockchainRepository(BaseRepository):
                                              block_confirmation=blockchain.block_confirmation,
                                              is_extension_available=blockchain.is_extension_available,
                                              created_by=blockchain.created_by,
-                                             created_at=datetime_to_str(blockchain.created_at),
-                                             updated_at=datetime_to_str(blockchain.updated_at))
+                                             created_at=blockchain.created_at,
+                                             updated_at=blockchain.updated_at)
                 for blockchain in blockchains]
