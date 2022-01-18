@@ -3,7 +3,6 @@ frameworkVersion: "2"
 
 plugins:
   - serverless-offline
-  - serverless-python-requirements
   - serverless-plugin-tracing
   - serverless-prune-plugin
   - serverless-aws-documentation
@@ -26,12 +25,6 @@ provider:
   tracing: true
 
 custom:
-#  pythonRequirements:
-#    fileName: converter/requirements.txt
-#    dockerizePip: true
-#    useDownloadCache: true
-#    useStaticCache: true
-#    cacheLocation: "/var/cache/serverless"
   prune:
     automatic: true
     includeLayers: true
