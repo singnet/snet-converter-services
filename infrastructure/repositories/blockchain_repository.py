@@ -10,7 +10,7 @@ class BlockchainRepository(BaseRepository):
 
     def get_all_blockchain(self):
         blockchains = self.session.query(BlockChainDBModel.id, BlockChainDBModel.name, BlockChainDBModel.description,
-                                         BlockChainDBModel.symbol,BlockChainDBModel.logo, BlockChainDBModel.chain_id,
+                                         BlockChainDBModel.symbol, BlockChainDBModel.logo, BlockChainDBModel.chain_id,
                                          BlockChainDBModel.block_confirmation, BlockChainDBModel.is_extension_available,
                                          BlockChainDBModel.created_by, BlockChainDBModel.created_at,
                                          BlockChainDBModel.updated_at).order_by(BlockChainDBModel.name.asc()).all()

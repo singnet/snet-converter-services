@@ -68,7 +68,7 @@ def exception_handler(*decorator_args, **decorator_kwargs):
 
                 return generate_lambda_response(
                     e.status_code,
-                    make_response_body(status=e.status, data=None,
+                    make_response_body(status=LambdaResponseStatus.FAILED.value, data=None,
                                        error=make_error_format(error_code=e.error_code, error_message=e.error_message,
                                                                error_details=e.error_details)), cors_enabled=True)
             except Exception as e:

@@ -123,7 +123,7 @@ class TestVariables:
                                                             id="6149fdfbdb81415c916636937c8ebe8e",
                                                             from_token_id=self.token_row_id_2,
                                                             to_token_id=self.token_row_id_4,
-                                                            min_value=0.001, max_value=100,
+                                                            min_value=0, max_value=100,
                                                             contract_address="0xacontractaddress",
                                                             conversion_fee_id=self.conversion_fee_row_id_2, is_enabled=True,
                                                             created_by=DAPP_AS_CREATED_BY,

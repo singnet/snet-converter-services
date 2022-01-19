@@ -228,7 +228,7 @@ Converter Service│
     "from_address": "0xb3D785784136E96290E74F4E06e2d0695882B0C7",
     "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
     "block_number": 2744,
-    "signature": "ethereum signature"
+    "signature": "0xb141a8178bc5765dd6dd366d6a1101ae086d9acb9fe56f0e5bededc575620377475828d978298833aea6ced6bd776427233c81e8b723bfb90de45da3387e05231c"
 }
 ```
 
@@ -237,8 +237,8 @@ Converter Service│
 {
   "status": "success",
   "data": {
-    "id": "3e24b15670ca42c49f8674ab38dbaf69",
-    "deposit_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8"
+    "id": "02bdcb4e65d1491586110cbf4a16efe8",
+    "deposit_address": null
   },
   "error": {
     "code": null,

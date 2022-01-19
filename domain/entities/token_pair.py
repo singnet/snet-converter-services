@@ -9,9 +9,10 @@ from decimal import Decimal
 
 class TokenPair:
 
-    def __init__(self, id: str, min_value: Decimal, max_value: Decimal, contract_address: str,
+    def __init__(self, row_id: int, id: str, min_value: Decimal, max_value: Decimal, contract_address: str,
                  created_by: str, created_at: date, updated_at: date, from_token_obj: Token, to_token_obj: Token,
                  conversion_fee_obj: ConversionFee):
+        self.row_id = row_id
         self.id = id
         self.min_value = str(min_value.normalize())
         self.max_value = str(max_value.normalize())
@@ -29,6 +30,7 @@ class TokenPair:
         conversion_fee = {} if self.conversion_fee_obj is None else self.conversion_fee_obj.to_dict()
 
         return {
+            TokenPairEntities.ROW_ID.value: self.row_id,
             TokenPairEntities.ID.value: self.id,
             TokenPairEntities.MIN_VALUE.value: self.min_value,
             TokenPairEntities.MAX_VALUE.value: self.max_value,

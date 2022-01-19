@@ -10,7 +10,7 @@ class TokenRepository(BaseRepository):
 
     def get_all_token_pair(self):
         token_pairs = self.session.query(TokenPairDBModel).filter(TokenPairDBModel.is_enabled == True).all()
-        return [TokenFactory.token_pair(id=token_pair.id, min_value=token_pair.min_value,
+        return [TokenFactory.token_pair(row_id=token_pair.row_id,id=token_pair.id, min_value=token_pair.min_value,
                                         max_value=token_pair.max_value, contract_address=token_pair.contract_address,
                                         created_by=token_pair.created_by, created_at=token_pair.created_at,
                                         updated_at=token_pair.updated_at, from_token=token_pair.from_token,
@@ -25,7 +25,7 @@ class TokenRepository(BaseRepository):
         if token_pair is None:
             raise TokenPairIdNotExitsException(error_code=1, error_details="Given toke pair id not exists")
 
-        return TokenFactory.token_pair(id=token_pair.id, min_value=token_pair.min_value,
+        return TokenFactory.token_pair(row_id=token_pair.row_id, id=token_pair.id, min_value=token_pair.min_value,
                                        max_value=token_pair.max_value, contract_address=token_pair.contract_address,
                                        created_by=token_pair.created_by, created_at=token_pair.created_at,
                                        updated_at=token_pair.updated_at, from_token=token_pair.from_token,

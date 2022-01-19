@@ -1,3 +1,4 @@
+from domain.entities.conversion import Conversion
 from domain.entities.conversion_fee import ConversionFee
 
 
@@ -6,6 +7,14 @@ class ConversionFactory:
     def conversion_fee(id, percentage_from_source, created_by, created_at, updated_at):
         return ConversionFee(id=id, percentage_from_source=percentage_from_source, created_by=created_by,
                              created_at=created_at, updated_at=updated_at)
+
+    @staticmethod
+    def conversion(row_id, id, wallet_pair_id, deposit_amount, status, claim_signature,
+                   created_by, created_at, updated_at, claim_amount=None, fee_amount=None):
+        return Conversion(row_id=row_id, id=id, wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,
+                          claim_amount=claim_amount, fee_amount=fee_amount, status=status,
+                          claim_signature=claim_signature, created_by=created_by, created_at=created_at,
+                          updated_at=updated_at)
 
     @staticmethod
     def convert_conversion_fee_db_object_to_object(conversion_fee):

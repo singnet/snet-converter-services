@@ -52,7 +52,7 @@ class TestToken(unittest.TestCase):
                           'blockchain': {'id': '5b21294fe71a4145a40f6ab918a50f96', 'name': 'Cardano', 'symbol': 'ADA',
                                          'chain_id': ['2']}}, 'conversion_fee': {},
              'updated_at': '2022-01-12 04:10:54'},
-            {'id': '6149fdfbdb81415c916636937c8ebe8e', 'min_value': '0.001', 'max_value': '1E+2',
+            {'id': '6149fdfbdb81415c916636937c8ebe8e', 'min_value': '0', 'max_value': '1E+2',
              'contract_address': '0xacontractaddress',
              'from_token': {'id': 'aa5763de861e4a52ab24464790a5c017', 'symbol': 'NTX', 'allowed_decimal': 10,
                             'updated_at': '2022-01-12 04:10:54',
