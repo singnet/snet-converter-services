@@ -24,6 +24,7 @@ from utils.general import get_valid_value, validate_schema
 logger = get_logger(__name__)
 
 conversion_service = ConversionService()
+file_path = os.path.realpath(__file__)
 
 
 @exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
@@ -36,7 +37,7 @@ def create_conversion_request(event, context):
                                   error_details=ErrorDetails[ErrorCode.MISSING_BODY.value].value)
 
     body = json.loads(body)
-    validate_schema(filepath=os.getcwd()+"/../../documentation/models/conversion.json", schema_key="CreateConversionRequestInput",
+    validate_schema(filepath=os.path.dirname(file_path)+"/../../documentation/models/conversion.json", schema_key="CreateConversionRequestInput",
                     input_json=body)
     token_pair_id = body.get(ApiParameters.TOKEN_PAIR_ID.value)
     amount = body.get(ApiParameters.AMOUNT.value)
@@ -67,9 +68,7 @@ def update_conversion_hash(event, context):
 
     body = json.loads(body)
 
-    validate_schema(filepath=os.getcwd()+"/../../documentation/models/conversion.json",
+    validate_schema(filepath=os.getcwd() + "/../../documentation/models/conversion.json",
                     schema_key="UpdateConversionHashRequestInput",
                     input_json=body)
-
-
 
