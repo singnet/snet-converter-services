@@ -18,7 +18,7 @@ def validate_conversion_signature(token_pair_id, amount, from_address, to_addres
         target_address = to_address
 
     message = web3.Web3.soliditySha3(
-        ["string", "string", "address", "string", "uint256"],
+        ["string", "string", "string", "string", "uint256"],
         [token_pair_id, amount, from_address, to_address, block_number],
     )
 

@@ -2,6 +2,8 @@ import json
 import unittest
 from unittest.mock import patch
 
+from sqlalchemy import distinct
+
 from application.handler.conversion_handlers import create_conversion_request
 from infrastructure.models import TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel, \
     WalletPairDBModel, ConversionDBModel
@@ -38,7 +40,14 @@ class TestConversion(unittest.TestCase):
         bad_request_token_pair_id_not_exists = {'status': 'failed', 'data': None,
                                                 'error': {'code': 1, 'message': 'BAD_REQUEST',
                                                           'details': 'Given toke pair id not exists'}}
-        bad_request_incorrect_signature = {'status': 'failed', 'data': None, 'error': {'code': 'E0006', 'message': 'BAD_REQUEST', 'details': 'Incorrect signature provided'}}
+        bad_request_incorrect_signature = {'status': 'failed', 'data': None,
+                                           'error': {'code': 'E0006', 'message': 'BAD_REQUEST',
+                                                     'details': 'Incorrect signature provided'}}
+
+        success_response_new_requested_initiated = {'status': 'success',
+                                                    'data': {'id': '65dedd6be0f94bdb9e7dc7a85075c099',
+                                                             'deposit_address': None},
+                                                    'error': {'code': None, 'message': None, 'details': None}}
 
         # Bad Request
         event = dict()
@@ -78,12 +87,12 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(body, bad_request_property_value_empty)
 
         body_input = json.dumps({
-            "token_pair_id": "32477fd4ea994689a04646cbbaafd133",
+            "token_pair_id": "33477fd4ea994689a04646cbbaafd133",
             "amount": "1333.05",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
             "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-            "block_number": 123456789,
-            "signature": "0x2437d4833b185ff1458a21f45bce382f59dfc1d86c38fac53476615513ece5e174381cd44c1bcfe38a6ce30ba67b71dc37ca774d1c3d991ec5fcbf79dca568d81b"
+            "block_number": 12345678,
+            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
         })
         event["body"] = body_input
         response = create_conversion_request(event, {})
@@ -91,18 +100,88 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(body, bad_request_token_pair_id_not_exists)
 
         body_input = json.dumps({
-            "token_pair_id": "fdd6a416d8414154bcdd95f82b6ab239",
+            "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
             "amount": "1333.05",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
             "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
             "block_number": 123456789,
-            "signature": "0x2437d4833b185ff1458a21f45bce382f59dfc1d86c38fac53476615513ece5e174381cd44c1bcfe38a6ce30ba67b71dc37ca774d1c3d991ec5fcbf79dca568d81b"
+            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
         })
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_incorrect_signature)
-        print("")
+
+        body_input = json.dumps({
+            "token_pair_id": "32477fd4ea994689a04646cbbaafd133",
+            "amount": "1333.05",
+            "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "block_number": 12345678,
+            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+        })
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_token_pair_id_not_exists)
+
+        # success request
+        body_input = json.dumps({
+            "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
+            "amount": "1333.05",
+            "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "block_number": 12345678,
+            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+        })
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(len(body["data"]), 2)
+        self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNotNone(body["data"]["deposit_address"])
+        previous_request_id = body["data"]["id"]
+
+        body_input = json.dumps({
+            "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
+            "amount": "1333.05",
+            "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "block_number": 12345678,
+            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+        })
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(len(body["data"]), 2)
+        self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNotNone(body["data"]["deposit_address"])
+        self.assertEqual(body["data"]["id"], previous_request_id)
+
+        # Length of wallet pair table should be one because , the request is from same from and to address
+        wallet_pair_count = conversion_repo.session.query(distinct(WalletPairDBModel.id)).all()
+        self.assertEqual(len(wallet_pair_count), 1)
+
+        body_input = json.dumps({
+            "token_pair_id": "fdd6a416d8414154bcdd95f82b6ab239",
+            "amount": "1333.05",
+            "from_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "block_number": 12345678,
+            "signature": "0x84cad9a7adbd444f156906a44381135ae2d81140fb4a0a0ea286287706c36eda643268252c6760f18309aa6f8396b53a48d1ffa9784f326b880758b8f11f03d21b"
+        })
+
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(len(body["data"]), 2)
+        self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNone(body["data"]["deposit_address"])
+        self.assertNotEqual(body["data"]["id"], previous_request_id)
+
+        # Length of wallet pair table should be two because , the request is from different from and to address
+        wallet_pair_count = conversion_repo.session.query(distinct(WalletPairDBModel.id)).all()
+        self.assertEqual(len(wallet_pair_count), 2)
 
     def tearDown(self):
         conversion_repo.session.query(ConversionDBModel).delete()
