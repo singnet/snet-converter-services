@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import uuid
 from decimal import Decimal
@@ -35,7 +36,7 @@ def create_conversion_request(event, context):
                                   error_details=ErrorDetails[ErrorCode.MISSING_BODY.value].value)
 
     body = json.loads(body)
-    validate_schema(filepath="../../documentation/models/conversion.json", schema_key="CreateConversionRequestInput",
+    validate_schema(filepath=os.getcwd()+"/../../documentation/models/conversion.json", schema_key="CreateConversionRequestInput",
                     input_json=body)
     token_pair_id = body.get(ApiParameters.TOKEN_PAIR_ID.value)
     amount = body.get(ApiParameters.AMOUNT.value)
@@ -48,7 +49,6 @@ def create_conversion_request(event, context):
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
                                   error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
 
-    amount = Decimal(amount)
     response = conversion_service.create_conversion_request(token_pair_id=token_pair_id, amount=amount,
                                                             from_address=from_address, to_address=to_address,
                                                             block_number=block_number, signature=signature)
@@ -67,21 +67,9 @@ def update_conversion_hash(event, context):
 
     body = json.loads(body)
 
-    validate_schema(filepath="../../documentation/models/conversion.json",
+    validate_schema(filepath=os.getcwd()+"/../../documentation/models/conversion.json",
                     schema_key="UpdateConversionHashRequestInput",
                     input_json=body)
 
 
-if __name__ == "__main__":
-    print("welcome boss")
-    print(uuid.uuid4().hex)
-    body = {
-        "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
-        "amount": "1333.05",
-        "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-        "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-        "block_number": 123456789,
-        "signature": "0x2437d4833b185ff1458a21f45bce382f59dfc1d86c38fac53476615513ece5e174381cd44c1bcfe38a6ce30ba67b71dc37ca774d1c3d991ec5fcbf79dca568d81b"
-    }
-    event = {"body": json.dumps(body)}
-    print(create_conversion_request(event, {}))
+

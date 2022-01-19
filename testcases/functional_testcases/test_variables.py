@@ -105,7 +105,8 @@ class TestVariables:
                                                             to_token_id=self.token_row_id_2,
                                                             min_value=10, max_value=100000000,
                                                             contract_address="0xacontractaddress",
-                                                            conversion_fee_id=self.conversion_fee_row_id_1, is_enabled=True,
+                                                            conversion_fee_id=self.conversion_fee_row_id_1,
+                                                            is_enabled=True,
                                                             created_by=DAPP_AS_CREATED_BY,
                                                             created_at=created_at, updated_at=updated_at)
 
@@ -125,7 +126,8 @@ class TestVariables:
                                                             to_token_id=self.token_row_id_4,
                                                             min_value=0, max_value=100,
                                                             contract_address="0xacontractaddress",
-                                                            conversion_fee_id=self.conversion_fee_row_id_2, is_enabled=True,
+                                                            conversion_fee_id=self.conversion_fee_row_id_2,
+                                                            is_enabled=True,
                                                             created_by=DAPP_AS_CREATED_BY,
                                                             created_at=created_at, updated_at=updated_at)
 

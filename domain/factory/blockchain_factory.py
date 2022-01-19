@@ -2,8 +2,6 @@ from domain.entities.blockchain import Blockchain
 
 
 class BlockchainFactory:
-    def __init__(self):
-        pass
 
     @staticmethod
     def blockchain(id, name=None, description=None, symbol=None, logo=None, chain_id=None,

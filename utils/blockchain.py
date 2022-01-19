@@ -33,9 +33,9 @@ def validate_address(from_address, to_address, from_blockchain_name, to_blockcha
 
 def get_lowest_unit_amount(amount, allowed_decimal):
     if allowed_decimal is None or allowed_decimal <= 0:
-        return amount
+        return Decimal(amount)
 
     if allowed_decimal > MAX_ALLOWED_DECIMAL:
         raise InternalServerErrorException(error_code=ErrorCode.ALLOWED_DECIMAL_LIMIT_EXISTS.value,
                                            error_details=ErrorDetails[ErrorCode.ALLOWED_DECIMAL_LIMIT_EXISTS.value].value)
-    return amount * Decimal(math.pow(10, allowed_decimal))
+    return Decimal(amount) * Decimal(math.pow(10, allowed_decimal))

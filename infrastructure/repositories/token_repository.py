@@ -5,8 +5,6 @@ from utils.exceptions import TokenPairIdNotExitsException
 
 
 class TokenRepository(BaseRepository):
-    def __init__(self):
-        super().__init__()
 
     def get_all_token_pair(self):
         token_pairs = self.session.query(TokenPairDBModel).filter(TokenPairDBModel.is_enabled == True).all()

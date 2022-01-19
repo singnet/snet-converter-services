@@ -1,13 +1,8 @@
-from decimal import Decimal
-
-from sqlalchemy import update
-
 from constants.general import CreatedBy
 from constants.status import ConversionStatus
 from domain.factory.conversion_factory import ConversionFactory
 from infrastructure.models import ConversionDBModel
 from infrastructure.repositories.base_repository import BaseRepository
-from utils.database import update_in_db
 from utils.general import get_uuid, datetime_in_utcnow
 
 

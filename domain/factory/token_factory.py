@@ -5,8 +5,6 @@ from domain.factory.conversion_factory import ConversionFactory
 
 
 class TokenFactory:
-    def __init__(self):
-        pass
 
     @staticmethod
     def token(id, name, description, symbol, logo, allowed_decimal, created_by, created_at,
