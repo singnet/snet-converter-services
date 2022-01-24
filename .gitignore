@@ -143,3 +143,4 @@ cython_debug/
 external_packages/**
 **/node_modules/
 common/
+.serverless

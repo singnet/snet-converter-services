@@ -1,16 +1,13 @@
 from domain.factory.blockchain_factory import BlockchainFactory
 from infrastructure.models import BlockChainDBModel
 from infrastructure.repositories.base_repository import BaseRepository
-from utils.general import datetime_to_str
 
 
 class BlockchainRepository(BaseRepository):
-    def __init__(self):
-        super().__init__()
 
     def get_all_blockchain(self):
         blockchains = self.session.query(BlockChainDBModel.id, BlockChainDBModel.name, BlockChainDBModel.description,
-                                         BlockChainDBModel.symbol,BlockChainDBModel.logo, BlockChainDBModel.chain_id,
+                                         BlockChainDBModel.symbol, BlockChainDBModel.logo, BlockChainDBModel.chain_id,
                                          BlockChainDBModel.block_confirmation, BlockChainDBModel.is_extension_available,
                                          BlockChainDBModel.created_by, BlockChainDBModel.created_at,
                                          BlockChainDBModel.updated_at).order_by(BlockChainDBModel.name.asc()).all()
