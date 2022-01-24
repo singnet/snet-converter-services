@@ -31,6 +31,7 @@ custom:
   defaultLayers:
     - ${file(./config.${self:provider.stage}.json):MplaceCommonCode_Layer}
     - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
+    - ${file(./config.${self:provider.stage}.json):MplacePythonWeb3AndGrpc_Layer}
   defaultVpc:
     securityGroupIds:
       - ${file(./config.${self:provider.stage}.json):SG1}
@@ -101,6 +102,7 @@ functions:
   get_all_blockchain:
     handler: application/handler/blockchain_handlers.get_all_blockchain
     role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
     events:
       - http:
@@ -132,6 +134,7 @@ functions:
   get_token_pair:
     handler: application/handler/token_handlers.get_all_token_pair
     role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
     events:
       - http:
@@ -162,6 +165,7 @@ functions:
   create_conversion_request:
     handler: application/handler/conversion_handlers.create_conversion_request
     role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
     events:
       - http:
