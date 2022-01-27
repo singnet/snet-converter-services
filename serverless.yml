@@ -80,6 +80,27 @@ custom:
         description: "create a conversion response model"
         contentType: "application/json"
         schema: ${file(documentation/models/conversion.json):CreateConversionRequestOutput}
+
+      - name: "GetConversionHistoryInput"
+        description: "Get the conversion history request  model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):GetConversionHistoryInput}
+
+      - name: "GetConversionHistoryOutput"
+        description: "Get the conversion history response model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):GetConversionHistoryOutput}
+
+      - name: "CreateTransactionForConversionInput"
+        description: "Create a transaction for the conversion request model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):CreateTransactionForConversionInput}
+
+      - name: "CreateTransactionForConversionOutput"
+        description: "Create a transaction for the conversion response model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):CreateTransactionForConversionOutput}
+
 package:
   patterns:
     - "!.circleci/**"
@@ -97,6 +118,28 @@ package:
     - "!License"
     - "!node_modules/**"
     - "!common"
+    - "!testcases"
+
+
+resources:
+  Resources:
+    onlyParams:
+      Type: "AWS::ApiGateway::RequestValidator"
+      Properties:
+        Name: 'Validate Parameters'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: false
+        ValidateRequestParameters: true
+
+    onlyBody:
+      Type: "AWS::ApiGateway::RequestValidator"
+      Properties:
+        Name: 'Validate body, Parameters'
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        ValidateRequestBody: true
+        ValidateRequestParameters: true
 
 functions:
   get_all_blockchain:
@@ -129,7 +172,6 @@ functions:
               - statusCode: "500"
                 responseModels:
                   "application/json": "LambdaErrorMessage"
-
 
   get_token_pair:
     handler: application/handler/token_handlers.get_all_token_pair
@@ -172,6 +214,7 @@ functions:
           path: /v1/conversion
           method: post
           cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyBody
           documentation:
             summary: "Create a conversion request"
             description: "Create a conversion request"
@@ -194,4 +237,79 @@ functions:
               - statusCode: "500"
                 responseModels:
                   "application/json": "LambdaErrorMessage"
+
+  create_transaction_for_conversion:
+    handler: application/handler/conversion_handlers.create_transaction_for_conversion
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/transaction
+          method: post
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyBody
+          documentation:
+            summary: "Create a transaction for conversion request"
+            description: "Create a transaction for conversion request"
+            tags:
+              - "Transaction"
+            requestModels:
+              "application/json": "CreateTransactionForConversionInput"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Create a transaction for conversion request"
+                responseModels:
+                  "application/json": "CreateTransactionForConversionOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+
+  get_conversion_history:
+    handler: application/handler/conversion_handlers.get_conversion_history
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/conversion/history
+          method: get
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyParams
+          request:
+            parameters:
+              querystrings:
+                address: true
+                page_size: false
+                page_number: false
+          documentation:
+            summary: "Getting the conversion history"
+            description: "Getting the conversion history"
+            tags:
+              - "Conversion"
+            requestModels:
+              "application/json": "GetConversionHistoryInput"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Getting the conversion history"
+                responseModels:
+                  "application/json": "GetConversionHistoryOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+
 

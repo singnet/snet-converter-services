@@ -10,3 +10,8 @@ class BlockchainName(Enum):
 
 class CreatedBy(Enum):
     DAPP = "DApp"
+
+
+class ConversionOn(Enum):
+    FROM = "from"
+    TO = "to"

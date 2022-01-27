@@ -34,7 +34,7 @@ class WalletPairService:
 
         # persist only when it's not present
         if wallet_pair is None:
-            to_blockchain_name = token_pair.get(TokenPairEntities.TO_TOKEN.value, {}).get(
+            from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
                 TokenEntities.BLOCKCHAIN.value, {}).get(
                 BlockchainEntities.NAME.value, None)
             signature_metadata = create_signature_metadata(token_pair_id=token_pair_id, amount=amount,
@@ -45,5 +45,5 @@ class WalletPairService:
                                                   signature=signature, signature_expiry=None,
                                                   signature_metadata=signature_metadata,
                                                   deposit_address=get_deposit_address(
-                                                      blockchain_name=to_blockchain_name))
+                                                      blockchain_name=from_blockchain_name))
         return wallet_pair

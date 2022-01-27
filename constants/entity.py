@@ -16,6 +16,7 @@ class BlockchainEntities(Enum):
 
 
 class TokenEntities(Enum):
+    ROW_ID = "row_id"
     ID = "id"
     NAME = "name"
     DESCRIPTION = "description"
@@ -85,3 +86,54 @@ class ConversionEntities(Enum):
     CREATED_BY = "created_by"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
+
+
+class ConversionDetailEntities(Enum):
+    CONVERSION = "conversion"
+    WALLET_PAIR = "wallet_pair"
+    FROM_TOKEN = "from_token"
+    TO_TOKEN = "to_token"
+    TRANSACTION = "transaction"
+
+
+class TransactionConversionEntities(Enum):
+    ROW_ID = "row_id"
+    ID = "id"
+    CONVERSION_ID = "conversion_id"
+    STATUS = "status"
+    CREATED_BY = "created_by"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class TransactionEntities(Enum):
+    ROW_ID = "row_id"
+    ID = "id"
+    CONVERSION_TRANSACTION_ID = "transaction_conversion_id"
+    FROM_TOKEN_ID = "from_token_id"
+    TO_TOKEN_ID = "to_token_id"
+    TRANSACTION_VISIBILITY = "transaction_visibility"
+    TRANSACTION_OPERATION = "transaction_operation"
+    TRANSACTION_HASH = "transaction_hash"
+    TRANSACTION_AMOUNT = "transaction_amount"
+    STATUS = "status"
+    CREATED_BY = "created_by"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class TransactionDetailEntities(Enum):
+    CONVERSION_ID = "conversion_id"
+    TRANSACTIONS = "transactions"
+
+
+class PaginationEntity(Enum):
+    ITEMS = "items"
+    ITEM = "item"
+    META = "meta"
+    PAGE_SIZE = "page_size"
+    PAGE_NUMBER = "page_number"
+    OFFSET = "offset"
+    LIMIT = "limit"
+    TOTAL_RECORDS = "total_records"
+    PAGE_COUNT = "page_count"

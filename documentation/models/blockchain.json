@@ -5,7 +5,9 @@
     "properties": {
       "status": {
         "type": "string",
-        "enum": ["success"]
+        "enum": [
+          "success"
+        ]
       },
       "data": {
         "type": "array",
@@ -31,10 +33,7 @@
               "type": "boolean"
             },
             "chain_id": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "type": "integer"
             },
             "updated_at": {
               "type": "string"

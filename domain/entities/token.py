@@ -6,8 +6,9 @@ from utils.general import datetime_to_str
 
 
 class Token:
-    def __init__(self, id: str, name: str, description: str, symbol: str, logo: str, allowed_decimal: int,
+    def __init__(self, row_id: int, id: str, name: str, description: str, symbol: str, logo: str, allowed_decimal: int,
                  created_by: str, created_at: date, updated_at: date, blockchain_obj: Blockchain):
+        self.row_id = row_id
         self.id = id
         self.name = name
         self.description = description
@@ -22,6 +23,7 @@ class Token:
     def to_dict(self):
         blockchain = {} if self.blockchain_obj is None else self.blockchain_obj.to_dict()
         return {
+            TokenEntities.ROW_ID.value: self.row_id,
             TokenEntities.ID.value: self.id,
             TokenEntities.NAME.value: self.name,
             TokenEntities.DESCRIPTION.value: self.description,
