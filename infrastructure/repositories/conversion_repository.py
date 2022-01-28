@@ -36,7 +36,7 @@ class ConversionRepository(BaseRepository):
         return ConversionFactory.conversion_detail(conversion=conversion[0], wallet_pair=conversion[1],
                                                    from_token=conversion[2], to_token=conversion[3],
                                                    from_blockchain=conversion[4], to_blockchain=conversion[5],
-                                                   transactions=transaction_detail.get(conversion[0].id, []))
+                                                   transactions=transaction_detail.get(conversion[0].id, {}))
 
     def get_transaction_detail(self, conversion_ids):
         transaction_details = self.session.query(ConversionDBModel.id, TransactionDBModel) \
