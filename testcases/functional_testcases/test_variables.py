@@ -1,7 +1,7 @@
-from constants.status import ConversionStatus, ConversionTransactionStatus, TransactionVisibility, TransactionOperation, \
-    TransactionStatus
+from constants.status import TransactionVisibility, TransactionOperation, TransactionStatus, \
+    ConversionTransactionStatus, ConversionStatus
 from infrastructure.models import BlockChainDBModel, TokenDBModel, TokenPairDBModel, ConversionFeeDBModel, \
-    ConversionDBModel, ConversionTransactionDBModel, TransactionDBModel, WalletPairDBModel
+    ConversionTransactionDBModel, ConversionDBModel, WalletPairDBModel, TransactionDBModel
 
 DAPP_AS_CREATED_BY = "DApp"
 
@@ -277,7 +277,7 @@ class TestVariables:
                                transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                transaction_operation=TransactionOperation.TOKEN_RECEIVED.value,
                                transaction_hash="22477fd4ea994689a04646cbbaafd133",
-                               transaction_amount=1663050000000000000,status=TransactionStatus.SUCCESS.value,
+                               transaction_amount=1663050000000000000, status=TransactionStatus.SUCCESS.value,
                                created_by=DAPP_AS_CREATED_BY,
                                created_at=created_at, updated_at=updated_at),
             create_transaction(row_id=self.transaction_id_3, id="1df60a2369f34247a5dc3ed29a8eef67",
