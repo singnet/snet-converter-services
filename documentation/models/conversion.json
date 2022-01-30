@@ -236,7 +236,7 @@
                     "blockchain"
                   ]
                 },
-                "transaction": {
+                "transactions": {
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -275,7 +275,7 @@
                   "wallet_pair",
                   "from_token",
                   "to_token",
-                  "transaction"
+                  "transactions"
                 ]
               }
             },

@@ -136,16 +136,12 @@ class ConversionRepository(BaseRepository):
         conversion.updated_at = datetime_in_utcnow()
         self.session.commit()
 
-        if conversion is None:
-            return None
-
-        return ConversionFactory.conversion(row_id=conversion.row_id, id=conversion.id,
-                                            wallet_pair_id=conversion.wallet_pair_id,
-                                            deposit_amount=conversion.deposit_amount,
-                                            claim_amount=conversion.claim_amount, fee_amount=conversion.fee_amount,
-                                            status=conversion.status, claim_signature=conversion.claim_signature,
-                                            created_by=conversion.created_by, created_at=conversion.created_at,
-                                            updated_at=conversion.updated_at)
+    def update_conversion_status(self, conversion_id, status):
+        conversion = self.session.query(ConversionDBModel) \
+            .filter(ConversionDBModel.id == conversion_id).one()
+        conversion.status = status
+        conversion.updated_at = datetime_in_utcnow()
+        self.session.commit()
 
     def get_conversion_history(self, address):
         from_token = aliased(TokenDBModel)
@@ -173,5 +169,4 @@ class ConversionRepository(BaseRepository):
                                                     from_blockchain=conversion_detail[4],
                                                     to_blockchain=conversion_detail[5],
                                                     transactions=transaction_detail.get(conversion_detail[0].id, {}))
-                for
-                conversion_detail in conversions_detail]
+                for conversion_detail in conversions_detail]

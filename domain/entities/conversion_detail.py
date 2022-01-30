@@ -26,7 +26,7 @@ class ConversionDetail:
         return {
             ConversionDetailEntities.CONVERSION.value: conversion,
             ConversionDetailEntities.WALLET_PAIR.value: wallet_pair,
-            ConversionDetailEntities.TO_TOKEN.value: from_token,
-            ConversionDetailEntities.FROM_TOKEN.value: to_token,
-            ConversionDetailEntities.TRANSACTION.value: transactions
+            ConversionDetailEntities.FROM_TOKEN.value: from_token,
+            ConversionDetailEntities.TO_TOKEN.value: to_token,
+            ConversionDetailEntities.TRANSACTIONS.value: transactions
         }

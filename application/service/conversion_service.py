@@ -1,5 +1,5 @@
 from application.service.conversion_reponse import get_latest_user_pending_conversion_request_response, \
-    update_conversion_amount_response, create_conversion_response, create_conversion_request_response, \
+    create_conversion_response, create_conversion_request_response, \
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
     create_transaction_response, create_transaction_for_conversion_response
 from application.service.token_service import TokenService
@@ -9,14 +9,14 @@ from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, ConversionOn, CreatedBy
+from constants.general import BlockchainName, CreatedBy
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus, TransactionOperation
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from utils.blockchain import validate_address, get_lowest_unit_amount, \
     validate_transaction_hash
-from utils.exceptions import BadRequestException
+from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, paginate_items, \
-    check_existing_transaction_succeed
+    is_supported_network_conversion
 
 from utils.signature import validate_conversion_signature
 
@@ -76,9 +76,12 @@ class ConversionService:
     def update_conversion_amount(self, conversion_id, deposit_amount):
         logger.info(f"Updating the conversion amount for the conversion_id={conversion_id}, "
                     f"deposit_amount={deposit_amount}")
-        conversion = self.conversion_repo.update_conversion_amount(conversion_id=conversion_id,
-                                                                   deposit_amount=deposit_amount)
-        return update_conversion_amount_response(conversion.to_dict()) if conversion else None
+        self.conversion_repo.update_conversion_amount(conversion_id=conversion_id, deposit_amount=deposit_amount)
+
+    def update_conversion_status(self, conversion_id, status):
+        logger.info(f"Updating the conversion status for the conversion_id={conversion_id}, "
+                    f"status={status}")
+        self.conversion_repo.update_conversion_status(conversion_id=conversion_id, status=status)
 
     @staticmethod
     def create_conversion_request_validation(token_pair_id, amount, from_address, to_address, block_number,
@@ -89,7 +92,13 @@ class ConversionService:
                                                                  blockchain_conversion_type=TokenPairEntities.FROM_TOKEN.value)
         to_blockchain = get_blockchain_from_token_pair_details(token_pair=token_pair,
                                                                blockchain_conversion_type=TokenPairEntities.TO_TOKEN.value)
-        # TODO Validate network
+
+        if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
+            logger.exception(
+                f"Unsupported network conversion detected from_blockchain={from_blockchain}, to_blockchain={to_blockchain}")
+            raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
         from_blockchain_name = from_blockchain.get(BlockchainEntities.NAME.value)
 
@@ -135,8 +144,8 @@ class ConversionService:
         conversion = self.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id)
 
         if conversion:
-            conversion = self.update_conversion_amount(conversion_id=conversion[ConversionEntities.ID.value],
-                                                       deposit_amount=deposit_amount)
+            self.update_conversion_amount(conversion_id=conversion[ConversionEntities.ID.value],
+                                          deposit_amount=deposit_amount)
         else:
             conversion = self.create_conversion(wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount)
         return conversion
@@ -166,9 +175,11 @@ class ConversionService:
         return create_transaction_for_conversion_response(transaction)
 
     def proces_transaction_creation(self, conversion_detail, transaction_hash):
-        transaction = conversion_detail.get("transaction")
+        transaction = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
         conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
             ConversionEntities.ROW_ID.value)
+        conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
+            ConversionEntities.ID.value)
 
         if not len(transaction):
             token_id = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value).get(
@@ -185,7 +196,11 @@ class ConversionService:
             conversion_transaction_row_id = transaction[0].get(TransactionEntities.CONVERSION_TRANSACTION_ID.value)
             transaction_operation = TransactionOperation.TOKEN_CLAIMED.value
             transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-                ConversionEntities.DEPOSIT_AMOUNT.value)
+                ConversionEntities.CLAIM_AMOUNT.value)
+
+        if transaction_amount is None:
+            raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
+                                      error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
         transaction = self.create_transaction(conversion_transaction_id=conversion_transaction_row_id,
                                               from_token_id=token_id, to_token_id=token_id,
@@ -194,4 +209,6 @@ class ConversionService:
                                               transaction_hash=transaction_hash, transaction_amount=transaction_amount,
                                               status=TransactionStatus.WAITING_FOR_CONFIRMATION.value,
                                               created_by=CreatedBy.DAPP.value)
+        self.update_conversion_status(conversion_id=conversion_id, status=ConversionStatus.PROCESSING.value)
+
         return transaction

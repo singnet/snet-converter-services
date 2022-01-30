@@ -14,6 +14,12 @@ class ErrorCode(Enum):
     UNSUPPORTED_CHAIN_ID = "E0010"
     TRANSACTION_HASH_NOT_FOUND = "E0011"
     BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION = "E0012"
+    RANDOM_TRANSACTION_HASH = "E0013"
+    TRANSACTION_ALREADY_CREATED = "E0014"
+    TRANSACTION_IS_NOT_READY_FOR_CLAIM = "E0015"
+    INVALID_CARDANO_ADDRESS = "E0016"
+    UNEXPECTED_ERROR_CARDANO_ADDRESS_VALIDATION = "E0017"
+    UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS = "E0018"
 
 
 class ErrorDetails(Enum):
@@ -29,3 +35,9 @@ class ErrorDetails(Enum):
     E0010 = "Unsupported chain id configured"
     E0011 = "Transaction hash is not found on the blockchain"
     E0012 = "Blockchain transaction details not matching with conversion request details"
+    E0013 = "Transaction hash should be hex string with proper format"
+    E0014 = "Transaction has been created already"
+    E0015 = "Transaction is not ready for claiming"
+    E0016 = "Invalid address for this network or malformed address format."
+    E0017 = "Unexpected error occurred during address validation"
+    E0018 = "Unexpected error occurred while getting ethereum transaction details"

@@ -13,17 +13,6 @@ def get_latest_user_pending_conversion_request_response(conversion):
     }
 
 
-def update_conversion_amount_response(conversion):
-    return {
-        ConversionEntities.ROW_ID.value: conversion[ConversionEntities.ROW_ID.value],
-        ConversionEntities.ID.value: conversion[ConversionEntities.ID.value],
-        ConversionEntities.WALLET_PAIR_ID.value: conversion[ConversionEntities.WALLET_PAIR_ID.value],
-        ConversionEntities.DEPOSIT_AMOUNT.value: conversion[ConversionEntities.DEPOSIT_AMOUNT.value],
-        ConversionEntities.STATUS.value: conversion[ConversionEntities.STATUS.value],
-        ConversionEntities.UPDATED_AT.value: conversion[ConversionEntities.UPDATED_AT.value]
-    }
-
-
 def create_conversion_response(conversion):
     return {
         ConversionEntities.ROW_ID.value: conversion[ConversionEntities.ROW_ID.value],
@@ -122,8 +111,8 @@ def get_conversion_detail_response(conversion_detail):
             conversion_detail[ConversionDetailEntities.FROM_TOKEN.value]),
         ConversionDetailEntities.TO_TOKEN.value: get_token_internal_response(
             conversion_detail[ConversionDetailEntities.TO_TOKEN.value]),
-        ConversionDetailEntities.TRANSACTION.value: get_transaction_internal_response(
-            conversion_detail[ConversionDetailEntities.TRANSACTION.value])
+        ConversionDetailEntities.TRANSACTIONS.value: get_transaction_internal_response(
+            conversion_detail[ConversionDetailEntities.TRANSACTIONS.value])
     }
 
 
@@ -148,8 +137,8 @@ def get_conversion_history_response(history):
             conversion[ConversionDetailEntities.FROM_TOKEN.value]),
         ConversionDetailEntities.TO_TOKEN.value: get_token_response(
             conversion[ConversionDetailEntities.TO_TOKEN.value]),
-        ConversionDetailEntities.TRANSACTION.value: get_transaction_response(
-            conversion[ConversionDetailEntities.TRANSACTION.value])
+        ConversionDetailEntities.TRANSACTIONS.value: get_transaction_response(
+            conversion[ConversionDetailEntities.TRANSACTIONS.value])
     } for conversion in history]
 
 

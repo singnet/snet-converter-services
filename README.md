@@ -1,6 +1,6 @@
 # snet-converter-services
-
-Backend APIs as Conveter Services
+[![CircleCI](https://circleci.com/gh/singnet/snet-cli.svg?style=svg)](https://circleci.com/gh/singnet/snet-converter-services)
+<br>Backend APIs as Conveter Services
 
 
 ```
@@ -299,15 +299,6 @@ Converter Service│
                     "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8"
                 },
                 "from_token": {
-                    "name": "Singularity Cardano",
-                    "symbol": "AGIX",
-                    "blockchain": {
-                        "name": "Cardano",
-                        "symbol": "ADA",
-                        "chain_id": 2
-                    }
-                },
-                "to_token": {
                     "name": "Singularity Ethereum",
                     "symbol": "AGIX",
                     "blockchain": {
@@ -316,7 +307,16 @@ Converter Service│
                         "chain_id": 42
                     }
                 },
-                "transaction": []
+                "to_token": {
+                    "name": "Singularity Cardano",
+                    "symbol": "AGIX",
+                    "blockchain": {
+                        "name": "Cardano",
+                        "symbol": "ADA",
+                        "chain_id": 2
+                    }
+                },
+                "transactions": []
             },
             {
                 "conversion": {
@@ -332,15 +332,6 @@ Converter Service│
                     "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"
                 },
                 "from_token": {
-                    "name": "Singularity Ethereum",
-                    "symbol": "AGIX",
-                    "blockchain": {
-                        "name": "Ethereum",
-                        "symbol": "ETH",
-                        "chain_id": 42
-                    }
-                },
-                "to_token": {
                     "name": "Singularity Cardano",
                     "symbol": "AGIX",
                     "blockchain": {
@@ -349,7 +340,16 @@ Converter Service│
                         "chain_id": 2
                     }
                 },
-                "transaction": []
+                "to_token": {
+                    "name": "Singularity Ethereum",
+                    "symbol": "AGIX",
+                    "blockchain": {
+                        "name": "Ethereum",
+                        "symbol": "ETH",
+                        "chain_id": 42
+                    }
+                },
+                "transactions": []
             },
             {
                 "conversion": {
@@ -365,15 +365,6 @@ Converter Service│
                     "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8"
                 },
                 "from_token": {
-                    "name": "Singularity Cardano",
-                    "symbol": "AGIX",
-                    "blockchain": {
-                        "name": "Cardano",
-                        "symbol": "ADA",
-                        "chain_id": 2
-                    }
-                },
-                "to_token": {
                     "name": "Singularity Ethereum",
                     "symbol": "AGIX",
                     "blockchain": {
@@ -382,7 +373,16 @@ Converter Service│
                         "chain_id": 42
                     }
                 },
-                "transaction": [
+                "to_token": {
+                    "name": "Singularity Cardano",
+                    "symbol": "AGIX",
+                    "blockchain": {
+                        "name": "Cardano",
+                        "symbol": "ADA",
+                        "chain_id": 2
+                    }
+                },
+                "transactions": [
                     {
                         "id": "391be6385abf4b608bdd20a44acd6abc",
                         "transaction_operation": "TOKEN_RECEIVED",

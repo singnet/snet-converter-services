@@ -8,9 +8,10 @@ from jsonschema.validators import validate
 
 from common.logger import get_logger
 from config import BLOCKCHAIN_DETAILS
-from constants.blockchain import EthereumSupportedNetwork, CardanoSupportedNetwork, EthereumNetwork, CardanoNetwork
+from constants.blockchain import EthereumSupportedNetwork, CardanoSupportedNetwork, EthereumNetwork, CardanoNetwork, \
+    EthereumEnvironment, CardanoEnvironment
 from constants.entity import TokenPairEntities, TokenEntities, BlockchainEntities, PaginationEntity, \
-    ConversionDetailEntities, WalletPairEntities
+    ConversionDetailEntities, WalletPairEntities, TransactionEntities, ConversionEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, ConversionOn
 from constants.lambdas import PaginationDefaults
@@ -103,24 +104,55 @@ def paginate_items_response_format(items, total_records, page_number, page_size)
                                           PaginationEntity.PAGE_SIZE.value: page_size}}
 
 
-def check_existing_transaction_succeed(transaction):
+def check_existing_transaction_succeed(transactions):
     is_check_existing_transaction_succeed = True
-    for x in transaction:
-        status = x.get("status")
-        id = x.get("id")
+    for transaction in transactions:
+        status = transaction.get(TransactionEntities.STATUS.value)
+        id = transaction.get(TransactionEntities.ID.value)
         if status != TransactionStatus.SUCCESS.value:
             logger.info(f"Transaction is not success for the transaction_id={id} having a status={status}")
             is_check_existing_transaction_succeed = False
             break
+
     return is_check_existing_transaction_succeed
 
 
-def is_supported_chain_id(blockchain_type, chain_id):
+def get_transactions_operation(transactions):
+    return [transaction.get(TransactionEntities.TRANSACTION_OPERATION.value) for transaction in transactions]
+
+
+def is_supported_chain_id(blockchain_name, chain_id):
     is_supported = False
 
-    if blockchain_type == BlockchainName.ETHEREUM.value.lower() and chain_id in EthereumSupportedNetwork:
+    if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower() and chain_id in EthereumSupportedNetwork:
         is_supported = True
-    elif blockchain_type == BlockchainName.CARDANO.value.lower() and chain_id in CardanoSupportedNetwork:
+    elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower() and chain_id in CardanoSupportedNetwork:
+        is_supported = True
+
+    return is_supported
+
+
+def get_chain_environment(blockchain_name, chain_id):
+    environment = None
+    if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
+        environment = EthereumEnvironment[EthereumNetwork(chain_id).name].value
+    elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
+        environment = CardanoEnvironment[CardanoNetwork(chain_id).name].value
+
+    return environment
+
+
+def is_supported_network_conversion(from_blockchain, to_blockchain):
+    is_supported = False
+    from_blockchain_name = from_blockchain.get(BlockchainEntities.NAME.value)
+    from_chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
+    to_blockchain_name = to_blockchain.get(BlockchainEntities.NAME.value)
+    to_chain_id = to_blockchain.get(BlockchainEntities.CHAIN_ID.value)
+
+    if is_supported_chain_id(blockchain_name=from_blockchain_name, chain_id=from_chain_id) and is_supported_chain_id(
+            blockchain_name=to_blockchain_name, chain_id=to_chain_id) and \
+            get_chain_environment(blockchain_name=from_blockchain_name, chain_id=from_chain_id) == \
+            get_chain_environment(blockchain_name=to_blockchain_name, chain_id=to_chain_id):
         is_supported = True
 
     return is_supported
@@ -152,13 +184,23 @@ def get_cardano_network_url_and_project_id(chain_id):
 def validate_conversion_with_blockchain(conversion_on, address, amount, conversion_detail):
     logger.info(
         f"Validating the conversion with blockchain details conversion_on={conversion_on}, address={address}, amount={amount}")
-    is_valid = False
+    is_valid = True
 
-    if conversion_on == ConversionOn.FROM.value and address == conversion_detail.get(
-            ConversionDetailEntities.WALLET_PAIR.value, {}).get(WalletPairEntities.FROM_ADDRESS.value):
-        is_valid = True
-    elif conversion_on == ConversionOn.TO.value and address == conversion_detail.get(
-            ConversionDetailEntities.WALLET_PAIR.value, {}).get(WalletPairEntities.TO_ADDRESS.value):
-        is_valid = True
+    if conversion_on == ConversionOn.FROM.value:
+        if address != conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
+                WalletPairEntities.FROM_ADDRESS.value):
+            is_valid = True
+
+        # if amount != conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
+        #         ConversionEntities.DEPOSIT_AMOUNT.value):
+        #     is_valid = False
+
+    elif conversion_on == ConversionOn.TO.value:
+        if address != conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
+                WalletPairEntities.TO_ADDRESS.value):
+            is_valid = False
+        # if amount != conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
+        #         ConversionEntities.CLAIM_AMOUNT.value):
+        #     is_valid = False
 
     return is_valid

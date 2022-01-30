@@ -1,5 +1,5 @@
 NETWORK = {
-    "http_provider": "https://mainnet.infura.io/v3/470382a9465f4e3f82d840b08bb6632f",
+    "http_provider": "https://mainnet.infura.io/v3/",
     "db": {
         "DB_DRIVER": "mysql+pymysql",
         "DB_HOST": "localhost",
@@ -23,15 +23,15 @@ BLOCKCHAIN_DETAILS = {
     "ethereum": {
         "network": {
             "mainnet": {
-                "url": "https://mainnet.infura.io/v3/470382a9465f4e3f82d840b08bb6632f",
+                "url": "https://mainnet.infura.io/v3/",
                 "secret": {}
             },
             "ropsten": {
-                "url": "https://ropsten.infura.io/v3/470382a9465f4e3f82d840b08bb6632f",
+                "url": "https://ropsten.infura.io/v3/",
                 "secret": {}
             },
             "kovan": {
-                "url": "https://kovan.infura.io/v3/470382a9465f4e3f82d840b08bb6632f",
+                "url": "https://kovan.infura.io/v3/",
                 "secret": {}
             }
         }
@@ -41,13 +41,13 @@ BLOCKCHAIN_DETAILS = {
             "mainnet": {
                 "url": "https://cardano-mainnet.blockfrost.io/api",
                 "secret": {
-                    "project_id": "testnetCLPFmGLnXdvNX2bRJgU7NsSKRtMtLDDO"
+                    "project_id": "project id "
                 }
             },
             "testnet": {
                 "url": "https://cardano-testnet.blockfrost.io/api",
                 "secret": {
-                    "project_id": "testnetCLPFmGLnXdvNX2bRJgU7NsSKRtMtLDDO"
+                    "project_id": "project id"
                 }
             }
         }

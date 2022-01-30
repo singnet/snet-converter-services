@@ -93,7 +93,7 @@ class ConversionDetailEntities(Enum):
     WALLET_PAIR = "wallet_pair"
     FROM_TOKEN = "from_token"
     TO_TOKEN = "to_token"
-    TRANSACTION = "transaction"
+    TRANSACTIONS = "transactions"
 
 
 class TransactionConversionEntities(Enum):
