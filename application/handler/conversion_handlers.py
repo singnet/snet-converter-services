@@ -1,13 +1,14 @@
 import json
 import os
 import sys
+sys.path.append('/opt')
 import uuid
 
 from config import SLACK_HOOK
 from constants.error_details import ErrorCode, ErrorDetails
 from utils.exception_handler import exception_handler
 
-sys.path.append('/opt')
+
 from http import HTTPStatus
 
 from application.service.conversion_service import ConversionService
