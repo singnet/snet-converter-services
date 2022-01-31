@@ -19,4 +19,38 @@ SLACK_HOOK = {
     "headers": {"Content-Type": "application/json"},
 }
 
+BLOCKCHAIN_DETAILS = {
+    "ethereum": {
+        "network": {
+            "mainnet": {
+                "url": "https://mainnet.infura.io/v3/",
+                "secret": {}
+            },
+            "ropsten": {
+                "url": "https://ropsten.infura.io/v3/",
+                "secret": {}
+            },
+            "kovan": {
+                "url": "https://kovan.infura.io/v3/",
+                "secret": {}
+            }
+        }
+    },
+    "cardano": {
+        "network": {
+            "mainnet": {
+                "url": "https://cardano-mainnet.blockfrost.io/api",
+                "secret": {
+                    "project_id": "project id "
+                }
+            },
+            "testnet": {
+                "url": "https://cardano-testnet.blockfrost.io/api",
+                "secret": {
+                    "project_id": "project id"
+                }
+            }
+        }
+    }
+}
 CARDANO_DEPOSIT_ADDRESS = "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8 "

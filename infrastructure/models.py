@@ -14,7 +14,7 @@ class BlockChainDBModel(Base):
     description = Column("description", TEXT, nullable=False)
     symbol = Column("symbol", VARCHAR(30), nullable=False)
     logo = Column("logo", VARCHAR(250), nullable=False)
-    chain_id = Column("chain_id", VARCHAR(50), nullable=False)
+    chain_id = Column("chain_id", INTEGER, nullable=False)
     block_confirmation = Column("block_confirmation", INTEGER, nullable=False)
     is_extension_available = Column("is_extension_available", BOOLEAN, default=False)
     created_by = Column("created_by", VARCHAR(50), nullable=False)

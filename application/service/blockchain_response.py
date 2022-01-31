@@ -22,3 +22,5 @@ def get_blockchain_for_token_response(blockchain):
         BlockchainEntities.SYMBOL.value: blockchain[BlockchainEntities.SYMBOL.value],
         BlockchainEntities.CHAIN_ID.value: blockchain[BlockchainEntities.CHAIN_ID.value]
     }
+
+

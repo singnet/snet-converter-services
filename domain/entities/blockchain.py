@@ -5,7 +5,7 @@ from utils.general import datetime_to_str
 
 
 class Blockchain:
-    def __init__(self, id: str, name: str, description: str, symbol: str, logo: str, chain_id: str,
+    def __init__(self, id: str, name: str, description: str, symbol: str, logo: str, chain_id: int,
                  block_confirmation: int, is_extension_available: bool, created_by: str, created_at: date,
                  updated_at: date):
         self.id = id
@@ -13,7 +13,7 @@ class Blockchain:
         self.description = description
         self.symbol = symbol
         self.logo = logo
-        self.chain_id = chain_id.split(",")
+        self.chain_id = chain_id
         self.block_confirmation = block_confirmation
         self.is_extension_available = is_extension_available
         self.created_by = created_by

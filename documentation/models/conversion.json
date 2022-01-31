@@ -78,5 +78,321 @@
       "data",
       "error"
     ]
+  },
+  "GetConversionHistoryInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "queryStringParameters": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "page_number": {
+            "type": "string"
+          },
+          "page_size": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "address"
+        ]
+      }
+    },
+    "required": [
+      "queryStringParameters"
+    ]
+  },
+  "GetConversionHistoryOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "conversion": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "deposit_amount": {
+                      "type": "string"
+                    },
+                    "claim_amount": {
+                      "type": "null"
+                    },
+                    "fee_amount": {
+                      "type": "null"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "deposit_amount",
+                    "claim_amount",
+                    "fee_amount",
+                    "status",
+                    "updated_at"
+                  ]
+                },
+                "wallet_pair": {
+                  "type": "object",
+                  "properties": {
+                    "from_address": {
+                      "type": "string"
+                    },
+                    "to_address": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "from_address",
+                    "to_address"
+                  ]
+                },
+                "from_token": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "blockchain": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "symbol": {
+                          "type": "string"
+                        },
+                        "chain_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "symbol",
+                        "chain_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "symbol",
+                    "blockchain"
+                  ]
+                },
+                "to_token": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "blockchain": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "symbol": {
+                          "type": "string"
+                        },
+                        "chain_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "symbol",
+                        "chain_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "symbol",
+                    "blockchain"
+                  ]
+                },
+                "transactions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "transaction_operation": {
+                        "type": "string"
+                      },
+                      "transaction_hash": {
+                        "type": "string"
+                      },
+                      "transaction_amount": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string"
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "transaction_operation",
+                      "transaction_hash",
+                      "transaction_amount",
+                      "status",
+                      "updated_at"
+                    ]
+                  }
+                },
+                "required": [
+                  "conversion",
+                  "wallet_pair",
+                  "from_token",
+                  "to_token",
+                  "transactions"
+                ]
+              }
+            },
+            "meta": {
+              "type": "object",
+              "properties": {
+                "total_records": {
+                  "type": "integer"
+                },
+                "page_count": {
+                  "type": "integer"
+                },
+                "page_number": {
+                  "type": "integer"
+                },
+                "page_size": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "total_records",
+                "page_count",
+                "page_number",
+                "page_size"
+              ]
+            }
+          },
+          "required": [
+            "items",
+            "meta"
+          ]
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "null"
+            },
+            "message": {
+              "type": "null"
+            },
+            "details": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "details"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "data",
+        "error"
+      ]
+    }
+  },
+  "CreateTransactionForConversionInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "conversion_id": {
+        "type": "string"
+      },
+      "transaction_hash": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "conversion_id",
+      "transaction_hash"
+    ]
+  },
+  "CreateTransactionForConversionOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
   }
 }

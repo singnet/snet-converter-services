@@ -19,3 +19,9 @@ class HttpRequestParamType(Enum):
 class LambdaResponseStatus(Enum):
     SUCCESS = 'success'
     FAILED = 'failed'
+
+
+class PaginationDefaults(Enum):
+    PAGE_SIZE = 15
+    PAGE_NUMBER = 1
+    ASC = 'ASC'

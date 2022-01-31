@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Released]
+
+## 2022-01-25 16:00:00 
+
+### Added
+- Created the transaction conversion api and testcase
+- Created the transaction history api and testcase
+- Added the swagger documentation
+
+
 ## 2022-01-17 12:00:00 
 
 ### Added

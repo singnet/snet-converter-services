@@ -8,3 +8,10 @@ class ApiParameters(Enum):
     TO_ADDRESS = "to_address"
     BLOCK_NUMBER = "block_number"
     SIGNATURE = "signature"
+    CONVERSION_ID = "conversion_id"
+    TRANSACTION_HASH = "transaction_hash"
+    PAGE_SIZE = "page_size"
+    PAGE_NUMBER = "page_number"
+    ADDRESS = "address"
+
+
