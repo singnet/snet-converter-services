@@ -269,71 +269,71 @@
                       "updated_at"
                     ]
                   }
-                },
-                "required": [
-                  "conversion",
-                  "wallet_pair",
-                  "from_token",
-                  "to_token",
-                  "transactions"
-                ]
-              }
-            },
-            "meta": {
-              "type": "object",
-              "properties": {
-                "total_records": {
-                  "type": "integer"
-                },
-                "page_count": {
-                  "type": "integer"
-                },
-                "page_number": {
-                  "type": "integer"
-                },
-                "page_size": {
-                  "type": "integer"
                 }
               },
               "required": [
-                "total_records",
-                "page_count",
-                "page_number",
-                "page_size"
+                "conversion",
+                "wallet_pair",
+                "from_token",
+                "to_token",
+                "transactions"
               ]
             }
           },
-          "required": [
-            "items",
-            "meta"
-          ]
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total_records": {
+                "type": "integer"
+              },
+              "page_count": {
+                "type": "integer"
+              },
+              "page_number": {
+                "type": "integer"
+              },
+              "page_size": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "total_records",
+              "page_count",
+              "page_number",
+              "page_size"
+            ]
+          }
         },
-        "error": {
-          "type": "object",
-          "properties": {
-            "code": {
-              "type": "null"
-            },
-            "message": {
-              "type": "null"
-            },
-            "details": {
-              "type": "null"
-            }
-          },
-          "required": [
-            "code",
-            "message",
-            "details"
-          ]
-        }
+        "required": [
+          "items",
+          "meta"
+        ]
       },
-      "required": [
-        "status",
-        "data",
-        "error"
-      ]
-    }
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
   },
   "CreateTransactionForConversionInput": {
     "$schema": "http://json-schema.org/draft-04/schema#",
