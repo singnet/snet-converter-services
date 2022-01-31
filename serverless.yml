@@ -7,6 +7,7 @@ plugins:
   - serverless-prune-plugin
   - serverless-aws-documentation
   - serverless-latest-layer-version
+  - serverless-python-requirements
 provider:
   name: aws
   runtime: python3.7
@@ -24,6 +25,12 @@ provider:
   tracing: true
 
 custom:
+  pythonRequirements:
+    fileName: requirements.txt
+    dockerizePip: true
+    useDownloadCache: true
+    useStaticCache: true
+    cacheLocation: "/var/cache/serverless"
   prune:
     automatic: true
     includeLayers: true
@@ -294,8 +301,6 @@ functions:
             description: "Getting the conversion history"
             tags:
               - "Conversion"
-            requestModels:
-              "application/json": "GetConversionHistoryInput"
             methodResponses:
               - statusCode: "200"
                 responseBody:
