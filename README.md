@@ -94,25 +94,27 @@ Converter Service│
             "from_token": {
                 "id": "53ceafdb42ad4f3d81eeb19c674437f9",
                 "symbol": "AGIX",
+                "logo": "www.findOurUrl.com/image.png",
                 "allowed_decimal": 5,
                 "updated_at": "2022-01-12 04:10:54",
                 "blockchain": {
                     "id": "a38b4038c3a04810805fb26056dfabdd",
                     "name": "Ethereum",
                     "symbol": "ETH",
-                    "chain_id": 42,
+                    "chain_id": 42
                 }
             },
             "to_token": {
                 "id": "aa5763de861e4a52ab24464790a5c017",
-                "symbol": "NTX",
+                "symbol": "AGIX",
+                "logo": "www.findOurUrl.com/image.png",
                 "allowed_decimal": 10,
                 "updated_at": "2022-01-12 04:10:54",
                 "blockchain": {
-                    "id": "a38b4038c3a04810805fb26056dfabdd",
-                    "name": "Ethereum",
-                    "symbol": "ETH",
-                    "chain_id": 42,
+                    "id": "5b21294fe71a4145a40f6ab918a50f96",
+                    "name": "Cardano",
+                    "symbol": "ADA",
+                    "chain_id": 2
                 }
             },
             "conversion_fee": {
@@ -128,21 +130,10 @@ Converter Service│
             "max_value": "1E+9",
             "contract_address": "0xacontractaddress",
             "from_token": {
-                "id": "53ceafdb42ad4f3d81eeb19c674437f9",
+                "id": "aa5763de861e4a52ab24464790a5c017",
                 "symbol": "AGIX",
-                "allowed_decimal": 5,
-                "updated_at": "2022-01-12 04:10:54",
-                "blockchain": {
-                    "id": "a38b4038c3a04810805fb26056dfabdd",
-                    "name": "Ethereum",
-                    "symbol": "ETH",
-                    "chain_id": 42,
-                }
-            },
-            "to_token": {
-                "id": "928aac782db44a3da84ecd403513322c",
-                "symbol": "AGIX",
-                "allowed_decimal": 15,
+                "logo": "www.findOurUrl.com/image.png",
+                "allowed_decimal": 10,
                 "updated_at": "2022-01-12 04:10:54",
                 "blockchain": {
                     "id": "5b21294fe71a4145a40f6ab918a50f96",
@@ -151,18 +142,11 @@ Converter Service│
                     "chain_id": 2
                 }
             },
-            "conversion_fee": {},
-            "updated_at": "2022-01-12 04:10:54"
-        },
-        {
-            "id": "6149fdfbdb81415c916636937c8ebe8e",
-            "min_value": "0.001",
-            "max_value": "1E+2",
-            "contract_address": "0xacontractaddress",
-            "from_token": {
-                "id": "aa5763de861e4a52ab24464790a5c017",
-                "symbol": "NTX",
-                "allowed_decimal": 10,
+            "to_token": {
+                "id": "53ceafdb42ad4f3d81eeb19c674437f9",
+                "symbol": "AGIX",
+                "logo": "www.findOurUrl.com/image.png",
+                "allowed_decimal": 5,
                 "updated_at": "2022-01-12 04:10:54",
                 "blockchain": {
                     "id": "a38b4038c3a04810805fb26056dfabdd",
@@ -171,23 +155,7 @@ Converter Service│
                     "chain_id": 42
                 }
             },
-            "to_token": {
-                "id": "8fe5c3291abc4b2696e38a42ede55369",
-                "symbol": "NTX",
-                "allowed_decimal": 20,
-                "updated_at": "2022-01-12 04:10:54",
-                "blockchain": {
-                    "id": "5b21294fe71a4145a40f6ab918a50f96",
-                    "name": "Cardano",
-                    "symbol": "ADA",
-                    "chain_id": 2
-                }
-            },
-            "conversion_fee": {
-                "id": "099b90e8f60540228e3ccb948a1a708f",
-                "percentage_from_source": "2.23",
-                "updated_at": "2022-01-12 04:10:54"
-            },
+            "conversion_fee": {},
             "updated_at": "2022-01-12 04:10:54"
         }
     ],

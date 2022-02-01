@@ -104,10 +104,13 @@ class ConversionService:
 
         if from_blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
             is_signer_as_from_address = True
+            chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
+        else:
+            chain_id = to_blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
         result = validate_conversion_signature(token_pair_id=token_pair_id, amount=amount, from_address=from_address,
                                                to_address=to_address, block_number=block_number, signature=signature,
-                                               is_signer_as_from_address=is_signer_as_from_address)
+                                               is_signer_as_from_address=is_signer_as_from_address, chain_id=chain_id)
         if result is False:
             raise BadRequestException(error_code=ErrorCode.INCORRECT_SIGNATURE.value,
                                       error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE.value].value)
