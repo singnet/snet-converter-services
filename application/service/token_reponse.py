@@ -7,6 +7,7 @@ def get_token_response(token):
     return {
         TokenEntities.ID.value: token[TokenEntities.ID.value],
         TokenEntities.SYMBOL.value: token[TokenEntities.SYMBOL.value],
+        TokenEntities.LOGO.value: token[TokenEntities.LOGO.value],
         TokenEntities.ALLOWED_DECIMAL.value: token[TokenEntities.ALLOWED_DECIMAL.value],
         TokenEntities.UPDATED_AT.value: token[TokenEntities.UPDATED_AT.value],
         TokenEntities.BLOCKCHAIN.value: get_blockchain_for_token_response(token[TokenEntities.BLOCKCHAIN.value])

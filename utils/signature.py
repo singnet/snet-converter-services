@@ -5,12 +5,13 @@ from web3 import Web3
 from common.logger import get_logger
 from config import NETWORK
 from constants.entity import SignatureMetadataEntities
+from utils.general import get_ethereum_network_url
 
 logger = get_logger(__name__)
 
 
 def validate_conversion_signature(token_pair_id, amount, from_address, to_address, block_number, signature,
-                                  is_signer_as_from_address):
+                                  is_signer_as_from_address, chain_id):
     logger.info("Validating the signature")
     if is_signer_as_from_address:
         target_address = from_address
@@ -23,7 +24,7 @@ def validate_conversion_signature(token_pair_id, amount, from_address, to_addres
     )
 
     hash_message = defunct_hash_message(message)
-    web3_object = Web3(web3.providers.HTTPProvider(NETWORK['http_provider']))
+    web3_object = Web3(web3.providers.HTTPProvider(get_ethereum_network_url(chain_id=chain_id)))
     signer_address = web3_object.eth.account.recoverHash(
         message_hash=hash_message, signature=signature
     )

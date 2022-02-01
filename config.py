@@ -1,5 +1,4 @@
 NETWORK = {
-    "http_provider": "https://mainnet.infura.io/v3/",
     "db": {
         "DB_DRIVER": "mysql+pymysql",
         "DB_HOST": "localhost",
@@ -53,4 +52,4 @@ BLOCKCHAIN_DETAILS = {
         }
     }
 }
-CARDANO_DEPOSIT_ADDRESS = "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8 "
+CARDANO_DEPOSIT_ADDRESS = "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8"
