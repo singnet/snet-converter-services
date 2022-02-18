@@ -40,13 +40,13 @@ BLOCKCHAIN_DETAILS = {
             "mainnet": {
                 "url": "https://cardano-mainnet.blockfrost.io/api",
                 "secret": {
-                    "project_id": "testnetCLPFmGLnXdvNX2bRJgU7NsSKRtMtLDDO"
+                    "project_id": "project_id"
                 }
             },
             "testnet": {
                 "url": "https://cardano-testnet.blockfrost.io/api",
                 "secret": {
-                    "project_id": "testnetCLPFmGLnXdvNX2bRJgU7NsSKRtMtLDDO"
+                    "project_id": "project_id"
                 }
             }
         }
