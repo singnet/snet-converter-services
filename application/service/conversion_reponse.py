@@ -174,8 +174,6 @@ def get_waiting_conversion_deposit_on_address_response(conversion):
 def get_transaction(transaction):
     return {
         TransactionEntities.ID.value: transaction[TransactionEntities.ID.value],
-        TransactionEntities.CONVERSION_TRANSACTION_ID.value: transaction[
-            TransactionEntities.CONVERSION_TRANSACTION_ID.value],
         TransactionEntities.TRANSACTION_OPERATION.value: transaction[TransactionEntities.TRANSACTION_OPERATION.value],
         TransactionEntities.TRANSACTION_HASH.value: transaction[TransactionEntities.TRANSACTION_HASH.value],
         TransactionEntities.TRANSACTION_AMOUNT.value: transaction[TransactionEntities.TRANSACTION_AMOUNT.value],
@@ -185,4 +183,7 @@ def get_transaction(transaction):
 
 
 def get_transaction_by_hash_response(transaction):
-    return get_transaction(transaction=transaction)
+    response = get_transaction(transaction=transaction)
+    response[TransactionEntities.CONVERSION_TRANSACTION_ID.value] = transaction[
+        TransactionEntities.CONVERSION_TRANSACTION_ID.value]
+    return response
