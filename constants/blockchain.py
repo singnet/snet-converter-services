@@ -26,3 +26,15 @@ class CardanoEnvironment(Enum):
 EthereumSupportedNetwork = [EthereumNetwork.MAINNET.value, EthereumNetwork.ROPSTEN.value, EthereumNetwork.KOVAN.value]
 
 CardanoSupportedNetwork = [CardanoNetwork.MAINNET.value, CardanoNetwork.TESTNET.value]
+
+
+class CardanoTransactionEntities(Enum):
+    FEES = "fees"
+    INDEX = "index"
+    ASSET_MINT_OR_BURN_COUNT = "asset_mint_or_burn_count"
+    BLOCK_HEIGHT = "block_height"
+    BLOCK_TIME = "block_time"
+
+
+class CardanoBlockEntities(Enum):
+    CONFIRMATIONS = "confirmations"

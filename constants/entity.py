@@ -137,3 +137,54 @@ class PaginationEntity(Enum):
     LIMIT = "limit"
     TOTAL_RECORDS = "total_records"
     PAGE_COUNT = "page_count"
+
+
+class EventConsumerEntity(Enum):
+    BLOCKCHAIN_NAME = "blockchain_name"
+    BLOCKCHAIN_EVENT = "blockchain_event"
+
+
+class CardanoEventConsumer(Enum):
+    EVENT_TYPE = "event_type"
+    TX_HASH = "tx_hash"
+    ADDRESS = "address"
+    TRANSACTION_DETAIL = "transaction_detail"
+    CONFIRMATIONS = "confirmations"
+    TX_AMOUNT = "tx_amount"
+    RECORDS = "Records"
+    BODY = "body"
+    MESSAGE = "message"
+
+
+class ConverterBridgeEntities(Enum):
+    BLOCKCHAIN_NAME = "blockchain_name"
+    BLOCKCHAIN_EVENT = "blockchain_event"
+    BLOCKCHAIN_NETWORK_ID = "blockchain_network_id"
+    CONVERSION_ID = "conversion_id"
+    TX_AMOUNT = "tx_amount"
+    TX_OPERATION = "tx_operation"
+    RECORDS = "Records"
+    BODY = "body"
+    MESSAGE = "message"
+
+
+class CardanoEventType(Enum):
+    TOKEN_RECEIVED = "TOKEN_TRANSFER"
+    TOKEN_BURNED = "TOKEN_BURNED"
+    TOKEN_MINTED = "TOKEN_MINTED"
+
+
+class EthereumEventConsumerEntities(Enum):
+    CONVERSION_ID = "conversion_id"
+    TRANSACTION_HASH = "transactionHash"
+    NAME = "name"
+    JSON_STR = "json_str"
+    DATA = "data"
+    TOKEN_HOLDER = "tokenHolder"
+    LOCK_AMOUNT = "lockAmount"
+    UNLOCK_AMOUNT = "unlockAmount"
+
+
+class EthereumEventType(Enum):
+    LOCK_TOKEN = "LockToken"
+    UNLOCK_TOKEN = "UnLock"

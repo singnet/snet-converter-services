@@ -21,6 +21,8 @@ provider:
     serverSideEncryption: AES256 # when using server-side encryption
     tags: # Tags that will be added to each of the deployment resources
       key1: converter-service
+      key2: converter-consumer
+      key3: converter-bridge
   deploymentPrefix: serverless
   tracing: true
 
@@ -127,7 +129,6 @@ package:
     - "!common"
     - "!testcases"
 
-
 resources:
   Resources:
     onlyParams:
@@ -147,6 +148,117 @@ resources:
           Ref: ApiGatewayRestApi
         ValidateRequestBody: true
         ValidateRequestParameters: true
+
+    converterEventConsumerQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-event-consumer
+        VisibilityTimeout: 300
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 7200
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt converterEventConsumerDLQQueue.Arn
+          maxReceiveCount: 5
+
+    converterEventConsumerQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterEventConsumerQueue
+          Statement:
+            - Sid: AllowCardanoEventListener
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterEventConsumerQueue.Arn
+              Condition:
+                ArnEquals:
+                  aws:SourceArn: ${file(./config.${self:provider.stage}.json):CARDANO_EVENT_LISTENER_TOPIC_ARN}
+        Queues:
+          - !Ref converterEventConsumerQueue
+
+    converterEventConsumerDLQQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-event-consumer-dlq
+        VisibilityTimeout: 60
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 172800
+
+    converterEventConsumerDLQQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterEventConsumerDLQQueue
+          Statement:
+            - Sid: Allow-SQS-SendMessage
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterEventConsumerDLQQueue.Arn
+              Condition:
+                ArnEquals:
+                  aws:SourceArn: !GetAtt converterEventConsumerQueue.Arn
+        Queues:
+          - !Ref converterEventConsumerDLQQueue
+
+    converterBridgeQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge
+        VisibilityTimeout: 300
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 7200
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
+          maxReceiveCount: 5
+
+    converterBridgeQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterBridgeQueue
+          Statement:
+            - Sid: sns1Subscribe
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterBridgeQueue.Arn
+        Queues:
+          - !Ref converterBridgeQueue
+
+    converterBridgeDLQQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge-dlq
+        VisibilityTimeout: 60
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 172800
+
+    converterBridgeDLQQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterBridgeDLQQueue
+          Statement:
+            - Sid: Allow-SQS-SendMessage
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterBridgeDLQQueue.Arn
+              Condition:
+                ArnEquals:
+                  aws:SourceArn: !GetAtt converterBridgeQueue.Arn
+        Queues:
+          - !Ref converterBridgeDLQQueue
 
 functions:
   get_all_blockchain:
@@ -316,5 +428,32 @@ functions:
               - statusCode: "500"
                 responseModels:
                   "application/json": "LambdaErrorMessage"
+
+  converter_event_consumer:
+    handler: application/handler/consumer_handlers.converter_event_consumer
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - converterEventConsumerQueue
+              - Arn
+
+  converter_bridge:
+    handler: application/handler/consumer_handlers.converter_bridge
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - converterBridgeQueue
+              - Arn
+
+
+
 
 

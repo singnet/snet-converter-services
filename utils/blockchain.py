@@ -1,18 +1,25 @@
+import json
 import math
+import traceback
 from decimal import Decimal
 from http import HTTPStatus
 
 from web3.exceptions import TransactionNotFound
 
 from common.blockchain_util import BlockChainUtil
+from common.boto_utils import BotoUtils
 from common.logger import get_logger
-from config import CARDANO_DEPOSIT_ADDRESS
-from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities
+from config import CARDANO_DEPOSIT_ADDRESS, CARDANO_SERVICE_LAMBDA_ARN
+from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
+from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
+    ConversionEntities, CardanoEventType, EthereumEventType
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn
-from constants.status import TransactionOperation
+from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus
+from domain.entities.converter_bridge import ConverterBridge
+from utils.boto_utils import BotoUtility, LambdaInvocationTypes
 from utils.cardano_blockchain import CardanoBlockchainUtil
-from utils.exceptions import InternalServerErrorException, BadRequestException
+from utils.exceptions import InternalServerErrorException, BadRequestException, BlockConfirmationNotEnoughException
 from utils.general import get_ethereum_network_url, validate_conversion_with_blockchain, \
     get_cardano_network_url_and_project_id, check_existing_transaction_succeed, get_transactions_operation, \
     is_supported_network_conversion
@@ -145,7 +152,7 @@ def check_existing_transaction_state(transactions, conversion_on):
 
     if len(transactions) and conversion_on == ConversionOn.TO.value:
         transactions_operation = get_transactions_operation(transactions=transactions)
-        if TransactionOperation.TOKEN_CLAIMED.value in transactions_operation:
+        if TransactionOperation.TOKEN_MINT_AND_TRANSFER.value in transactions_operation:
             raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CREATED.value,
                                       error_details=ErrorDetails[
                                           ErrorCode.TRANSACTION_ALREADY_CREATED.value].value)
@@ -188,3 +195,148 @@ def validate_transaction_hash(conversion_detail, transaction_hash):
                                                                 transaction_hash=transaction_hash,
                                                                 conversion_on=conversion_on,
                                                                 conversion_detail=conversion_detail)
+
+
+def get_next_activity_event_on_conversion(conversion_complete_detail):
+    from_blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
+        TokenEntities.BLOCKCHAIN.value, {}).get(BlockchainEntities.NAME.value).lower()
+    to_blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
+        TokenEntities.BLOCKCHAIN.value, {}).get(BlockchainEntities.NAME.value).lower()
+    transactions = conversion_complete_detail.get(ConversionDetailEntities.TRANSACTIONS.value, [])
+
+    if not len(transactions):
+        logger.info("transactions can't be empty, expecting atleast one transaction should be success")
+        raise BadRequestException(error_code=ErrorCode.NO_TRANSACTIONS_AVAILABLE.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.NO_TRANSACTIONS_AVAILABLE.value].value)
+
+    expected_events_flow = []
+
+    if from_blockchain.lower() == BlockchainName.ETHEREUM.value.lower() and to_blockchain.lower() == BlockchainName.CARDANO.value.lower():
+        expected_events_flow = EthereumToCardanoEvent
+    elif from_blockchain.lower() == BlockchainName.CARDANO.value.lower() and to_blockchain.lower() == BlockchainName.ETHEREUM.value.lower():
+        expected_events_flow = CardanoToEthereumEvent
+
+    return get_conversion_next_event(conversion_complete_detail=conversion_complete_detail,
+                                     expected_events_flow=expected_events_flow)
+
+
+def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
+    next_event = None
+    activity_event = None
+    tx_list_index = 0
+    conversion = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, [])
+    transactions = conversion_complete_detail.get(ConversionDetailEntities.TRANSACTIONS.value, [])
+
+    conversion_side = ConversionOn.FROM.value
+    for blockchain_name, expected_events in expected_events_flow.items():
+        for expected_event in expected_events:
+            if tx_list_index <= len(transactions) - 1:
+                transaction = transactions[tx_list_index]
+                if transaction.get(TransactionEntities.TRANSACTION_OPERATION.value) != expected_event:
+                    raise InternalServerErrorException(error_code=ErrorCode.TRANSACTION_WRONGLY_CREATED.value,
+                                                       error_details=ErrorDetails[
+                                                           ErrorCode.TRANSACTION_WRONGLY_CREATED.value].value)
+            else:
+                next_event = expected_event
+                break
+            tx_list_index += 1
+
+        if next_event:
+            break
+        conversion_side = ConversionOn.TO.value
+
+    tx_amount = Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)))
+    if conversion_side == ConversionOn.FROM.value:
+        blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
+            TokenEntities.BLOCKCHAIN.value, {})
+    elif conversion_side == ConversionOn.TO.value:
+        blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
+            TokenEntities.BLOCKCHAIN.value, {})
+        fee_amount = conversion.get(ConversionEntities.FEE_AMOUNT.value)
+        if fee_amount:
+            tx_amount = tx_amount - Decimal(float(fee_amount))
+    else:
+        blockchain = None
+
+    if not next_event or not blockchain:
+        logger.info("All conversions are done for this conversion")
+    else:
+        conversion_bridge_obj = ConverterBridge(blockchain_name=blockchain.get(BlockchainEntities.NAME.value),
+                                                blockchain_network_id=blockchain.get(BlockchainEntities.CHAIN_ID.value),
+                                                conversion_id=conversion.get(ConversionEntities.ID.value),
+                                                tx_amount=tx_amount, tx_operation=next_event)
+        activity_event = conversion_bridge_obj.to_dict()
+
+    return activity_event
+
+
+def validate_consumer_event_against_transaction(event_type, transaction):
+    if event_type == CardanoEventType.TOKEN_RECEIVED.value and transaction:
+        logger.info("transaction already updated")
+        raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
+                                  error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
+    elif event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNED.value:
+        if transaction is None:
+            logger.info("Transaction is not available")
+            raise BadRequestException(error_code=ErrorCode.TRANSACTION_NOT_FOUND.value,
+                                      error_details=ErrorDetails[ErrorCode.TRANSACTION_NOT_FOUND.value].value)
+
+        if transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
+            logger.info("Transaction already confirmed")
+            raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
+                                      error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
+    elif event_type == EthereumEventType.UNLOCK_TOKEN.value and transaction and transaction.get(
+            TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
+        logger.info("Transaction already confirmed")
+        raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
+                                  error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
+
+
+def check_block_confirmation(tx_hash, blockchain_network_id, required_block_confirmation):
+    url, project_id = get_cardano_network_url_and_project_id(chain_id=blockchain_network_id)
+    cardano_blockchain = CardanoBlockchainUtil(project_id=project_id, base_url=url)
+    try:
+        transaction = cardano_blockchain.get_transaction(hash=tx_hash)
+        bc_block_height = transaction.get(CardanoTransactionEntities.BLOCK_HEIGHT.value)
+        block_details = cardano_blockchain.get_block(hash_or_number=bc_block_height)
+
+        bc_block_confirmations = block_details.get(CardanoBlockEntities.CONFIRMATIONS.value)
+
+    except Exception as e:
+        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_BLOCK_CONFIRMATION.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.UNEXPECTED_ERROR_ON_BLOCK_CONFIRMATION.value].value)
+
+    if bc_block_confirmations < required_block_confirmation:
+        raise BlockConfirmationNotEnoughException(error_code=ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value,
+                                                  error_details=ErrorDetails[
+                                                      ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
+
+
+def burn_token_on_cardano(token, tx_amount, tx_details):
+    logger.info(f"Input={token}, tx_amount={tx_amount}, tx_details={tx_details}")
+    response = None
+    try:
+        payload = {}
+        response = BotoUtility.invoke_lambda_as_api(CARDANO_SERVICE_LAMBDA_ARN['BURN_TOKEN_ARN'],
+                                                    LambdaInvocationTypes.REQUEST_RESPONSE.value,
+                                                    json.dumps(payload))
+    except Exception as e:
+        traceback.print_exc()
+
+    return response
+
+
+def mint_token_and_transfer_on_cardano(token, tx_amount, tx_details):
+    logger.info(f"Input={token}, tx_amount={tx_amount}, tx_details={tx_details}")
+    response = None
+    try:
+        payload = {}
+        response = BotoUtility.invoke_lambda_as_api(CARDANO_SERVICE_LAMBDA_ARN['MINT_TOKEN_ARN'],
+                                                    LambdaInvocationTypes.REQUEST_RESPONSE.value,
+                                                    json.dumps(payload))
+    except Exception as e:
+        traceback.print_exc()
+
+    return response

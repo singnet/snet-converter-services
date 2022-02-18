@@ -10,8 +10,17 @@ class BlockchainName(Enum):
 
 class CreatedBy(Enum):
     DAPP = "DApp"
+    BACKEND = "Backend"
 
 
 class ConversionOn(Enum):
     FROM = "from"
     TO = "to"
+
+
+class TopicName(Enum):
+    pass
+
+
+class QueueName(Enum):
+    CONVERTER_BRIDGE = "CONVERTER_BRIDGE"

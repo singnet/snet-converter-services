@@ -78,14 +78,7 @@ def get_token_internal_response(token):
 
 
 def get_transaction_response(transactions):
-    return [{
-        TransactionEntities.ID.value: transaction[TransactionEntities.ID.value],
-        TransactionEntities.TRANSACTION_OPERATION.value: transaction[TransactionEntities.TRANSACTION_OPERATION.value],
-        TransactionEntities.TRANSACTION_HASH.value: transaction[TransactionEntities.TRANSACTION_HASH.value],
-        TransactionEntities.TRANSACTION_AMOUNT.value: transaction[TransactionEntities.TRANSACTION_AMOUNT.value],
-        TransactionEntities.STATUS.value: transaction[TransactionEntities.STATUS.value],
-        TransactionEntities.UPDATED_AT.value: transaction[TransactionEntities.UPDATED_AT.value]
-    } for transaction in transactions]
+    return [get_transaction(transaction=transaction) for transaction in transactions]
 
 
 def get_transaction_internal_response(transactions):
@@ -164,3 +157,32 @@ def create_transaction_response(transaction):
     return {
         TransactionEntities.ID.value: transaction[TransactionEntities.ID.value]
     }
+
+
+def get_waiting_conversion_deposit_on_address_response(conversion):
+    return {
+        ConversionEntities.ROW_ID.value: conversion[ConversionEntities.ROW_ID.value],
+        ConversionEntities.ID.value: conversion[ConversionEntities.ID.value],
+        ConversionEntities.DEPOSIT_AMOUNT.value: conversion[ConversionEntities.DEPOSIT_AMOUNT.value],
+        ConversionEntities.CLAIM_AMOUNT.value: conversion[ConversionEntities.CLAIM_AMOUNT.value],
+        ConversionEntities.FEE_AMOUNT.value: conversion[ConversionEntities.FEE_AMOUNT.value],
+        ConversionEntities.STATUS.value: conversion[ConversionEntities.STATUS.value],
+        ConversionEntities.UPDATED_AT.value: conversion[ConversionEntities.UPDATED_AT.value]
+    }
+
+
+def get_transaction(transaction):
+    return {
+        TransactionEntities.ID.value: transaction[TransactionEntities.ID.value],
+        TransactionEntities.CONVERSION_TRANSACTION_ID.value: transaction[
+            TransactionEntities.CONVERSION_TRANSACTION_ID.value],
+        TransactionEntities.TRANSACTION_OPERATION.value: transaction[TransactionEntities.TRANSACTION_OPERATION.value],
+        TransactionEntities.TRANSACTION_HASH.value: transaction[TransactionEntities.TRANSACTION_HASH.value],
+        TransactionEntities.TRANSACTION_AMOUNT.value: transaction[TransactionEntities.TRANSACTION_AMOUNT.value],
+        TransactionEntities.STATUS.value: transaction[TransactionEntities.STATUS.value],
+        TransactionEntities.UPDATED_AT.value: transaction[TransactionEntities.UPDATED_AT.value]
+    }
+
+
+def get_transaction_by_hash_response(transaction):
+    return get_transaction(transaction=transaction)

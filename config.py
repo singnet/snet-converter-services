@@ -40,16 +40,29 @@ BLOCKCHAIN_DETAILS = {
             "mainnet": {
                 "url": "https://cardano-mainnet.blockfrost.io/api",
                 "secret": {
-                    "project_id": "project id "
+                    "project_id": "testnetCLPFmGLnXdvNX2bRJgU7NsSKRtMtLDDO"
                 }
             },
             "testnet": {
                 "url": "https://cardano-testnet.blockfrost.io/api",
                 "secret": {
-                    "project_id": "project id"
+                    "project_id": "testnetCLPFmGLnXdvNX2bRJgU7NsSKRtMtLDDO"
                 }
             }
         }
     }
 }
 CARDANO_DEPOSIT_ADDRESS = "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8"
+
+TOPIC_DETAILS= {
+
+}
+
+QUEUE_DETAILS = {
+    "CONVERTER_BRIDGE": ""
+}
+
+CARDANO_SERVICE_LAMBDA_ARN = {
+    "BURN_TOKEN_ARN": "",
+    "MINT_TOKEN_ARN": ""
+}
