@@ -84,6 +84,9 @@ class ConversionRepository(BaseRepository):
 
     def create_transaction(self, conversion_transaction_id, from_token_id, to_token_id, transaction_visibility,
                            transaction_operation, transaction_hash, transaction_amount, status, created_by):
+        if not created_by:
+            created_by = CreatedBy.DAPP.value
+
         transaction_item = TransactionDBModel(id=get_uuid(), conversion_transaction_id=conversion_transaction_id,
                                               from_token_id=from_token_id, to_token_id=to_token_id,
                                               transaction_visibility=transaction_visibility,

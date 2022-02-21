@@ -149,6 +149,7 @@ class CardanoEventConsumer(Enum):
     TX_HASH = "tx_hash"
     ADDRESS = "address"
     TRANSACTION_DETAIL = "transaction_detail"
+    TX_TYPE = "tx_type"
     CONFIRMATIONS = "confirmations"
     TX_AMOUNT = "tx_amount"
     RECORDS = "Records"
@@ -169,8 +170,8 @@ class ConverterBridgeEntities(Enum):
 
 
 class CardanoEventType(Enum):
-    TOKEN_RECEIVED = "TOKEN_TRANSFER"
-    TOKEN_BURNED = "TOKEN_BURNED"
+    TOKEN_RECEIVED = "TOKEN_RECEIVED"
+    TOKEN_BURNT = "TOKEN_BURNT"
     TOKEN_MINTED = "TOKEN_MINTED"
 
 

@@ -1,3 +1,5 @@
+import json
+
 from constants.status import TransactionVisibility, TransactionOperation, TransactionStatus, \
     ConversionTransactionStatus, ConversionStatus
 from infrastructure.models import BlockChainDBModel, TokenDBModel, TokenPairDBModel, ConversionFeeDBModel, \
@@ -252,3 +254,38 @@ class TestVariables:
                                status=TransactionStatus.WAITING_FOR_CONFIRMATION.value,
                                created_by=DAPP_AS_CREATED_BY, created_at=created_at, updated_at=updated_at)
         ]
+
+
+def prepare_consumer_cardano_event_format(message):
+    records = []
+    body = {"message": json.dumps(message)}
+    records.append({"body": json.dumps(body)})
+    input_event = {"Records": records}
+    return input_event
+
+
+def prepare_converter_bridge_event_format(message):
+    records = [{"body": json.dumps(message)}]
+    input_event = {"Records": records}
+    return input_event
+
+
+consumer_token_received_event_message = {'id': '3f998ad2acd5427da9dcee73c9043b2f',
+                                         'tx_hash': '1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449',
+                                         'event_type': 'TOKEN_TRANSFER',
+                                         'address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
+                                         'event_status': None, 'updated_at': '2022-02-20 10:39:19',
+                                         'asset': {'id': 'bc3e8590103d4d5cb2701f2faa2d5927',
+                                                   'asset': '34d1adbf3a7e95b253fd0999fb85e2d41d4121b36b834b83ac069ebb41474958',
+                                                   'policy_id': '34d1adbf3a7e95b253fd0999fb85e2d41d4121b36b834b83ac069ebb',
+                                                   'asset_name': '41474958',
+                                                   'allowed_decimal': 8,
+                                                   'updated_at': '2022-02-20 10:39:15'},
+                                         'transaction_detail': {'id': '6f1b5f9f7e654433baf6941986ec7e7d',
+                                                                'tx_type': 'TOKEN_RECEIVED',
+                                                                'assurance_level': 'HIGH', 'confirmations': 71514,
+                                                                'tx_amount': '1E+8',
+                                                                'tx_fee': '172101', 'block_number': 3263733,
+                                                                'block_time': 1643042281,
+                                                                'tx_metadata': {},
+                                                                'updated_at': '2022-02-20 10:40:14'}}

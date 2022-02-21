@@ -3,7 +3,6 @@ import os
 import sys
 
 sys.path.append('/opt')
-import uuid
 
 from config import SLACK_HOOK
 from constants.error_details import ErrorCode, ErrorDetails
@@ -108,24 +107,3 @@ def get_conversion_history(event, context):
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
-
-
-
-
-
-if __name__ == "__main__":
-    print("welcome boss")
-    print(uuid.uuid4().hex)
-    body = {
-        "conversion_id": "5086b5245cd046a68363d9ca8ed0027e",
-        "transaction_hash": "0xe5bd9472b9d9931ca41bc3598f2ec15665b77ef32c088da5f2f8f3d2f72782a9",
-        "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
-        "amount": "1333.05",
-        "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-        "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-        "block_number": 12345678,
-        "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
-    }
-    event = {"body": json.dumps(body),
-             "queryStringParameters": {"address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}}
-    print(converter_event_consumer(event, {}))

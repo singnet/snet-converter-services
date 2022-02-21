@@ -7,7 +7,6 @@ from http import HTTPStatus
 from web3.exceptions import TransactionNotFound
 
 from common.blockchain_util import BlockChainUtil
-from common.boto_utils import BotoUtils
 from common.logger import get_logger
 from config import CARDANO_DEPOSIT_ADDRESS, CARDANO_SERVICE_LAMBDA_ARN
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
@@ -276,7 +275,7 @@ def validate_consumer_event_against_transaction(event_type, transaction):
         logger.info("transaction already updated")
         raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
                                   error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
-    elif event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNED.value:
+    elif event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNT.value:
         if transaction is None:
             logger.info("Transaction is not available")
             raise BadRequestException(error_code=ErrorCode.TRANSACTION_NOT_FOUND.value,

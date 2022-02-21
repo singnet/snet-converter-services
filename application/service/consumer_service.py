@@ -52,12 +52,17 @@ class ConsumerService:
                 EthereumEventConsumerEntities.TRANSACTION_HASH.value)
             blockchain_network_id = blockchain_detail.get(BlockchainEntities.CHAIN_ID.value)
         elif blockchain_name.lower() == BlockchainName.CARDANO.name.lower():
-            event_type = blockchain_event.get(CardanoEventConsumer.EVENT_TYPE.value)
+            event_type = blockchain_event.get(CardanoEventConsumer.TRANSACTION_DETAIL.value, {}).get(
+                CardanoEventConsumer.TX_TYPE.value)
             tx_hash = blockchain_event.get(CardanoEventConsumer.TX_HASH.value)
             blockchain_network_id = blockchain_detail.get(BlockchainEntities.CHAIN_ID.value)
         else:
             raise BadRequestException(error_code=ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value,
                                       error_details=ErrorDetails[ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value].value)
+
+        if not event_type or not tx_hash or not blockchain_network_id or not blockchain_event or not blockchain_detail:
+            raise BadRequestException(error_code=ErrorCode.CONSUMER_EVENT_EMPTY.value,
+                                      error_details=ErrorDetails[ErrorCode.CONSUMER_EVENT_EMPTY.value].value)
 
         self.process_event_consumer(event_type=event_type, tx_hash=tx_hash, network_id=blockchain_network_id,
                                     blockchain_event=blockchain_event, blockchain_detail=blockchain_detail)
@@ -71,7 +76,10 @@ class ConsumerService:
                 CardanoEventConsumer.CONFIRMATIONS.value)
             required_block_confirmation = blockchain_detail.get(BlockchainEntities.BLOCK_CONFIRMATION.value)
 
-            if blockchain_confirmation and required_block_confirmation and required_block_confirmation > blockchain_confirmation:
+            if blockchain_confirmation is None:
+                blockchain_confirmation = 0
+
+            if required_block_confirmation and required_block_confirmation > blockchain_confirmation:
                 check_block_confirmation(tx_hash=tx_hash, blockchain_network_id=network_id,
                                          required_block_confirmation=required_block_confirmation)
 
@@ -98,7 +106,7 @@ class ConsumerService:
             conversion = self.process_cardano_token_received_event(blockchain_event=blockchain_event)
         elif event_type == CardanoEventType.TOKEN_MINTED.value:
             conversion = self.process_cardano_token_mint_event(tx_id=transaction.get(TransactionEntities.ID.value))
-        elif event_type == CardanoEventType.TOKEN_BURNED.value:
+        elif event_type == CardanoEventType.TOKEN_BURNT.value:
             conversion = self.process_cardano_token_burnt_event(tx_id=transaction.get(TransactionEntities.ID.value))
         else:
             logger.info(f"Invalid event type provided ={event_type}")
@@ -142,13 +150,16 @@ class ConsumerService:
 
         wallet_pair = self.wallet_pair_service.get_wallet_pair_by_conversion_id(conversion_id=conversion_id)
 
-        if (event_type == EthereumEventType.LOCK_TOKEN.value and (conversion.get(
+        if event_type == EthereumEventType.LOCK_TOKEN.value and (conversion.get(
                 ConversionEntities.DEPOSIT_AMOUNT.value) != tx_amount or wallet_pair.get(
-            WalletPairEntities.FROM_ADDRESS.value) == token_holder)) or \
-                (event_type == EthereumEventType.UNLOCK_TOKEN.value and (
-                        conversion.get(ConversionEntities.CLAIM_AMOUNT.value) != tx_amount or wallet_pair.get(
-                    WalletPairEntities.TO_ADDRESS.value) == token_holder)):
-            logger.info("Mismatch on address and amount from request and contract")
+            WalletPairEntities.FROM_ADDRESS.value) == token_holder):
+            logger.info("Mismatch on address and amount from request and contract for lock event")
+            raise BadRequestException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
+                                      error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
+        elif event_type == EthereumEventType.UNLOCK_TOKEN.value and (
+                conversion.get(ConversionEntities.CLAIM_AMOUNT.value) != tx_amount or wallet_pair.get(
+            WalletPairEntities.TO_ADDRESS.value) == token_holder):
+            logger.info("Mismatch on address and amount from request and contract for unlock event")
             raise BadRequestException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
                                       error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
 
@@ -186,6 +197,7 @@ class ConsumerService:
                 wallet_pair = self.wallet_pair_service.get_wallet_pair_by_deposit_address(
                     deposit_address=deposit_address)
                 if wallet_pair is None:
+                    logger.info("Wallet pair doesn't exist")
                     raise BadRequestException(error_code=ErrorCode.WALLET_PAIR_NOT_EXISTS.value,
                                               error_details=ErrorDetails[ErrorCode.WALLET_PAIR_NOT_EXISTS.value].value)
 
@@ -193,6 +205,8 @@ class ConsumerService:
                 conversion = self.conversion_service.create_conversion(
                     wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value), deposit_amount=tx_amount,
                     created_by=created_by)
+            else:
+                created_by = CreatedBy.DAPP.value
 
             transaction = self.conversion_service.create_transaction_for_conversion(
                 conversion_id=conversion.get(ConversionEntities.ID.value),
@@ -223,7 +237,8 @@ class ConsumerService:
 
     def converter_bridge(self, payload):
         blockchain_name = payload.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value)
-        blockchain_event = payload.get(ConverterBridgeEntities.BLOCKCHAIN_EVENT.value)
+        blockchain_event = payload.get(ConverterBridgeEntities.BLOCKCHAIN_EVENT.value, {})
+
         conversion_id = blockchain_event.get(ConverterBridgeEntities.CONVERSION_ID.value)
         tx_amount = blockchain_event.get(ConverterBridgeEntities.TX_AMOUNT.value)
         tx_operation = blockchain_event.get(ConverterBridgeEntities.TX_OPERATION.value)

@@ -3,7 +3,8 @@ import unittest
 from unittest.mock import patch
 
 from application.handler.blockchain_handlers import get_all_blockchain
-from infrastructure.models import BlockChainDBModel
+from infrastructure.models import BlockChainDBModel, TransactionDBModel, ConversionTransactionDBModel, \
+    ConversionDBModel, WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel
 from infrastructure.repositories.blockchain_repository import BlockchainRepository
 from testcases.functional_testcases.test_variables import TestVariables
 
@@ -45,5 +46,19 @@ class TestBlockchain(unittest.TestCase):
         self.assertEqual(body, success_response_2)
 
     def tearDown(self):
+        blockchain_repo.session.query(TransactionDBModel).delete()
+        blockchain_repo.session.commit()
+        blockchain_repo.session.query(ConversionTransactionDBModel).delete()
+        blockchain_repo.session.commit()
+        blockchain_repo.session.query(ConversionDBModel).delete()
+        blockchain_repo.session.commit()
+        blockchain_repo.session.query(WalletPairDBModel).delete()
+        blockchain_repo.session.commit()
+        blockchain_repo.session.query(TokenPairDBModel).delete()
+        blockchain_repo.session.commit()
+        blockchain_repo.session.query(ConversionFeeDBModel).delete()
+        blockchain_repo.session.commit()
+        blockchain_repo.session.query(TokenDBModel).delete()
+        blockchain_repo.session.commit()
         blockchain_repo.session.query(BlockChainDBModel).delete()
         blockchain_repo.session.commit()
