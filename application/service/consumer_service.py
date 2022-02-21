@@ -9,13 +9,14 @@ from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
 from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventConsumer, EventConsumerEntity, \
     WalletPairEntities, ConversionEntities, ConverterBridgeEntities, EthereumEventConsumerEntities, EthereumEventType, \
-    TransactionEntities, TokenEntities, ConversionDetailEntities
+    TransactionEntities, TokenEntities, ConversionDetailEntities, CardanoAPIEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, QueueName
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
     ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS, ConversionStatus, ConversionTransactionStatus
 from utils.blockchain import get_next_activity_event_on_conversion, validate_consumer_event_against_transaction, \
-    check_block_confirmation, burn_token_on_cardano, mint_token_and_transfer_on_cardano
+    check_block_confirmation, burn_token_on_cardano, mint_token_and_transfer_on_cardano, \
+    generate_transaction_detail_for_cardano_operation
 from utils.exceptions import BadRequestException, InternalServerErrorException
 
 logger = get_logger(__name__)
@@ -306,11 +307,26 @@ class ConsumerService:
 
         tx_hash = None
         if payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_BURNT.value:
-            tx_hash = burn_token_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value), tx_amount=tx_amount,
-                                            tx_details={})
+            address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
+                WalletPairEntities.FROM_ADDRESS.value)
+            tx_details = generate_transaction_detail_for_cardano_operation(
+                hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
+                environment=conversion_complete_detail.get())
+            response = burn_token_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value), tx_amount=tx_amount,
+                                             tx_details=tx_details, address=address)
+            tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
-            tx_hash = mint_token_and_transfer_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value),
-                                                         tx_amount=tx_amount, tx_details={})
+            tx_details = generate_transaction_detail_for_cardano_operation(
+                hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
+                environment=db_to_blockchain_name)
+            address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
+                WalletPairEntities.TO_ADDRESS.value)
+            source_address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
+                WalletPairEntities.FROM_ADDRESS.value)
+            response = mint_token_and_transfer_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value),
+                                                          tx_amount=tx_amount, tx_details=tx_details, address=address,
+                                                          source_address=source_address)
+            tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
         elif payload_blockchain_name == BlockchainName.ETHEREUM.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             status = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
                 ConversionEntities.STATUS.value)

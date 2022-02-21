@@ -11,7 +11,7 @@ from common.logger import get_logger
 from config import CARDANO_DEPOSIT_ADDRESS, CARDANO_SERVICE_LAMBDA_ARN
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
-    ConversionEntities, CardanoEventType, EthereumEventType
+    ConversionEntities, CardanoEventType, EthereumEventType, CardanoAPIEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus
@@ -151,7 +151,7 @@ def check_existing_transaction_state(transactions, conversion_on):
 
     if len(transactions) and conversion_on == ConversionOn.TO.value:
         transactions_operation = get_transactions_operation(transactions=transactions)
-        if TransactionOperation.TOKEN_MINT_AND_TRANSFER.value in transactions_operation:
+        if TransactionOperation.TOKEN_MINTED.value in transactions_operation:
             raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CREATED.value,
                                       error_details=ErrorDetails[
                                           ErrorCode.TRANSACTION_ALREADY_CREATED.value].value)
@@ -316,29 +316,62 @@ def check_block_confirmation(tx_hash, blockchain_network_id, required_block_conf
                                                       ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
 
 
-def burn_token_on_cardano(token, tx_amount, tx_details):
-    logger.info(f"Input={token}, tx_amount={tx_amount}, tx_details={tx_details}")
+def burn_token_on_cardano(address, token, tx_amount, tx_details):
+    logger.info(f"Input address={address}, {token}, tx_amount={tx_amount}, tx_details={tx_details}")
     response = None
     try:
-        payload = {}
+        body = generate_body_format_for_cardano_operation(address=address, tx_amount=tx_amount, tx_details=tx_details)
+
+        payload = {CardanoAPIEntities.PATH_PARAMETERS.value: {CardanoAPIEntities.TOKEN.value: token},
+                   CardanoAPIEntities.BODY.value: json.dumps(body)}
+
         response = BotoUtility.invoke_lambda_as_api(CARDANO_SERVICE_LAMBDA_ARN['BURN_TOKEN_ARN'],
                                                     LambdaInvocationTypes.REQUEST_RESPONSE.value,
                                                     json.dumps(payload))
     except Exception as e:
         traceback.print_exc()
 
+    if not response.get(CardanoAPIEntities.TRANSACTION_ID.value):
+        raise BadRequestException(error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
+
     return response
 
 
-def mint_token_and_transfer_on_cardano(token, tx_amount, tx_details):
-    logger.info(f"Input={token}, tx_amount={tx_amount}, tx_details={tx_details}")
+def mint_token_and_transfer_on_cardano(address, token, tx_amount, tx_details, source_address):
+    logger.info(
+        f"Input address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, source_address={source_address}")
     response = None
     try:
-        payload = {}
+        body = generate_body_format_for_cardano_operation(address=address, tx_amount=tx_amount, tx_details=tx_details)
+        body[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
+
+        payload = {CardanoAPIEntities.PATH_PARAMETERS.value: {CardanoAPIEntities.TOKEN.value: token},
+                   CardanoAPIEntities.BODY.value: json.dumps(body)}
         response = BotoUtility.invoke_lambda_as_api(CARDANO_SERVICE_LAMBDA_ARN['MINT_TOKEN_ARN'],
                                                     LambdaInvocationTypes.REQUEST_RESPONSE.value,
                                                     json.dumps(payload))
     except Exception as e:
         traceback.print_exc()
 
+    if not response.get(CardanoAPIEntities.TRANSACTION_ID.value):
+        raise BadRequestException(error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
+
     return response
+
+
+def generate_transaction_detail_for_cardano_operation(hash, environment):
+    return {
+        CardanoAPIEntities.HASH.value: hash,
+        CardanoAPIEntities.ENVIRONMENT.value: environment
+    }
+
+
+def generate_body_format_for_cardano_operation(address, tx_amount, tx_details):
+    return {
+        CardanoAPIEntities.CARDANO_ADDRESS.value: address, CardanoAPIEntities.AMOUNT.value: tx_amount,
+        CardanoAPIEntities.TRANSACTION_DETAILS.value: tx_details
+    }

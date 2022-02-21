@@ -188,3 +188,16 @@ class EthereumEventConsumerEntities(Enum):
 class EthereumEventType(Enum):
     TOKEN_BURNT = "ConversionIn"
     TOKEN_MINTED = "ConversionOut"
+
+
+class CardanoAPIEntities(Enum):
+    HASH = "hash"
+    PATH_PARAMETERS = "pathParameters"
+    TOKEN = "token"
+    BODY = "body"
+    ENVIRONMENT = "environment"
+    CARDANO_ADDRESS = "cardano_address"
+    AMOUNT = "amount"
+    TRANSACTION_DETAILS = "transaction_details"
+    SOURCE_ADDRESS = "source_address"
+    TRANSACTION_ID = "transaction_id"
