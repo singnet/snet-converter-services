@@ -174,6 +174,9 @@ class TestConsumer(unittest.TestCase):
         conversion_repo.session.query(ConversionTransactionDBModel).delete()
         conversion_repo.session.commit()
 
+    def tearDown(self):
+        TestConsumer.delete_all_tables()
+
     @staticmethod
     def delete_all_tables():
         conversion_repo.session.query(TransactionDBModel).delete()
