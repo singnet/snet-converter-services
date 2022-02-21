@@ -64,7 +64,7 @@ def exception_handler(*decorator_args, **decorator_kwargs):
                     logger.exception(slack_message)
                     utils_obj.report_slack(slack_msg=slack_message, SLACK_HOOK=SLACK_HOOK)
                 else:
-                    logger.debug(slack_message)
+                    logger.info(slack_message)
 
                 return generate_lambda_response(
                     e.status_code,

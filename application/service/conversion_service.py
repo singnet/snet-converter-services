@@ -1,7 +1,8 @@
 from application.service.conversion_reponse import get_latest_user_pending_conversion_request_response, \
     create_conversion_response, create_conversion_request_response, \
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
-    create_transaction_response, create_transaction_for_conversion_response
+    create_transaction_response, create_transaction_for_conversion_response, \
+    get_waiting_conversion_deposit_on_address_response, get_transaction_by_hash_response
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
@@ -30,10 +31,11 @@ class ConversionService:
         self.token_service = TokenService()
         self.wallet_pair_service = WalletPairService()
 
-    def create_conversion(self, wallet_pair_id, deposit_amount):
-        logger.info(f"Creating the conversion with wallet_pair_id={wallet_pair_id}, deposit_amount={deposit_amount}")
+    def create_conversion(self, wallet_pair_id, deposit_amount, created_by=CreatedBy.DAPP.value):
+        logger.info(f"Creating the conversion with wallet_pair_id={wallet_pair_id}, deposit_amount={deposit_amount}, "
+                    f"created_by={created_by}")
         conversion = self.conversion_repo.create_conversion(wallet_pair_id=wallet_pair_id,
-                                                            deposit_amount=deposit_amount)
+                                                            deposit_amount=deposit_amount, created_by=created_by)
         return create_conversion_response(conversion.to_dict())
 
     def create_conversion_transaction(self, conversion_id, created_by):
@@ -57,6 +59,11 @@ class ConversionService:
                                                               transaction_amount=transaction_amount, status=status,
                                                               created_by=created_by)
         return create_transaction_response(transaction.to_dict())
+
+    def get_conversion_detail_by_tx_id(self, tx_id):
+        logger.info(f"Get the conversion detail by tx_id={tx_id}")
+        conversion = self.conversion_repo.get_conversion_detail_by_tx_id(tx_id)
+        return conversion.to_dict()
 
     def get_conversion_detail(self, conversion_id):
         logger.info(f"Get the conversion for the ID={conversion_id}")
@@ -82,6 +89,19 @@ class ConversionService:
         logger.info(f"Updating the conversion status for the conversion_id={conversion_id}, "
                     f"status={status}")
         self.conversion_repo.update_conversion_status(conversion_id=conversion_id, status=status)
+
+    def update_conversion(self, conversion_id, deposit_amount=None, claim_amount=None, fee_amount=None, status=None):
+        logger.info(f"Updating the conversion  for the conversion_id={conversion_id}, "
+                    f"deposit_amount={deposit_amount}, claim_amount={claim_amount}, fee_amount={fee_amount}, status={status}")
+        self.conversion_repo.update_conversion(conversion_id=conversion_id, deposit_amount=deposit_amount,
+                                               claim_amount=claim_amount, fee_amount=fee_amount, status=status)
+
+    def update_conversion_transaction(self, conversion_transaction_id, status):
+        logger.info(
+            f"Updating the conversion transaction for the conversion_transaction_id={conversion_transaction_id}, "
+            f"status={status}")
+        self.conversion_repo.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
+                                                           status=status)
 
     @staticmethod
     def create_conversion_request_validation(token_pair_id, amount, from_address, to_address, block_number,
@@ -123,10 +143,10 @@ class ConversionService:
                     f"from_address={from_address}, to_address={to_address}, block_number={block_number}, "
                     f"signature={signature}")
         token_pair = self.token_service.get_token_pair_internal(token_pair_id=token_pair_id)
-        ConversionService().create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
-                                                                 from_address=from_address, to_address=to_address,
-                                                                 block_number=block_number, signature=signature,
-                                                                 token_pair=token_pair)
+        ConversionService.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
+                                                               from_address=from_address, to_address=to_address,
+                                                               block_number=block_number, signature=signature,
+                                                               token_pair=token_pair)
         wallet_pair = self.wallet_pair_service.persist_wallet_pair_details(from_address=from_address,
                                                                            to_address=to_address, amount=amount,
                                                                            signature=signature,
@@ -156,10 +176,17 @@ class ConversionService:
     def get_conversion_history(self, address, page_size, page_number):
         logger.info(f"Getting the conversion history for the given address={address}, page_size={page_size}, "
                     f"page_number={page_number}")
-        conversion_detail_history = self.conversion_repo.get_conversion_history(address=address)
+        conversion_detail_history = self.conversion_repo.get_conversion_history(address=address, conversion_id=None)
         conversion_detail_history_response = get_conversion_history_response(
             get_response_from_entities(conversion_detail_history))
         return paginate_items(items=conversion_detail_history_response, page_number=page_number, page_size=page_size)
+
+    def get_conversion_complete_detail(self, conversion_id):
+        logger.info(f"Getting the conversion complete detail")
+        conversion_detail_history = self.conversion_repo.get_conversion_history(address=None,
+                                                                                conversion_id=conversion_id)
+        conversion_detail_history_response = get_response_from_entities(conversion_detail_history)
+        return conversion_detail_history_response[0] if len(conversion_detail_history_response) else None
 
     @staticmethod
     def get_conversion_ids_from_conversion_detail(conversion_detail):
@@ -168,16 +195,16 @@ class ConversionService:
             conversion_ids.append(conversion["conversion"]["id"])
         return set(conversion_ids)
 
-    def create_transaction_for_conversion(self, conversion_id, transaction_hash):
+    def create_transaction_for_conversion(self, conversion_id, transaction_hash, created_by=CreatedBy.DAPP.value):
         logger.info(f"Creating the new transaction for the conversion_id={conversion_id} with "
-                    f"transaction_hash={transaction_hash}")
+                    f"transaction_hash={transaction_hash}, created_by={created_by}")
         conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
         validate_transaction_hash(conversion_detail=conversion_detail, transaction_hash=transaction_hash)
         transaction = self.proces_transaction_creation(conversion_detail=conversion_detail,
-                                                       transaction_hash=transaction_hash)
+                                                       transaction_hash=transaction_hash, created_by=created_by)
         return create_transaction_for_conversion_response(transaction)
 
-    def proces_transaction_creation(self, conversion_detail, transaction_hash):
+    def proces_transaction_creation(self, conversion_detail, transaction_hash, created_by):
         transaction = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
         conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
             ConversionEntities.ROW_ID.value)
@@ -188,7 +215,7 @@ class ConversionService:
             token_id = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value).get(
                 TokenEntities.ROW_ID.value)
             conversion_transaction = self.create_conversion_transaction(conversion_id=conversion_row_id,
-                                                                        created_by=CreatedBy.DAPP.value)
+                                                                        created_by=created_by)
             conversion_transaction_row_id = conversion_transaction.get(TransactionConversionEntities.ROW_ID.value)
             transaction_operation = TransactionOperation.TOKEN_RECEIVED.value
             transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
@@ -197,7 +224,7 @@ class ConversionService:
             token_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
                 TokenEntities.ROW_ID.value)
             conversion_transaction_row_id = transaction[0].get(TransactionEntities.CONVERSION_TRANSACTION_ID.value)
-            transaction_operation = TransactionOperation.TOKEN_CLAIMED.value
+            transaction_operation = TransactionOperation.TOKEN_BURNT.value
             transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
                 ConversionEntities.CLAIM_AMOUNT.value)
 
@@ -211,7 +238,26 @@ class ConversionService:
                                               transaction_operation=transaction_operation,
                                               transaction_hash=transaction_hash, transaction_amount=transaction_amount,
                                               status=TransactionStatus.WAITING_FOR_CONFIRMATION.value,
-                                              created_by=CreatedBy.DAPP.value)
+                                              created_by=created_by)
         self.update_conversion_status(conversion_id=conversion_id, status=ConversionStatus.PROCESSING.value)
 
         return transaction
+
+    def get_waiting_conversion_deposit_on_address(self, deposit_address):
+        logger.info("Getting waiting for deposit amount on cardano")
+        conversion = self.conversion_repo.get_waiting_conversion_deposit_on_address(deposit_address=deposit_address)
+        return get_waiting_conversion_deposit_on_address_response(conversion.to_dict()) if conversion else None
+
+    def update_transaction_by_id(self, tx_id, tx_operation=None, tx_visibility=None, tx_amount=None, tx_status=None,
+                                 created_by=None):
+        logger.info(
+            f"Updating the transaction of tx_id={tx_id}, tx_operation={tx_operation}, tx_visibility={tx_visibility}, "
+            f"tx_amount={tx_amount}, tx_status={tx_status}, created_by={created_by}")
+        self.conversion_repo.update_transaction_by_id(tx_id=tx_id, tx_operation=tx_operation,
+                                                      tx_visibility=tx_visibility,
+                                                      tx_amount=tx_amount, tx_status=tx_status, created_by=created_by)
+
+    def get_transaction_by_hash(self, tx_hash):
+        logger.info(f"Getting the transaction by tx_hash={tx_hash}")
+        transaction = self.conversion_repo.get_transaction_by_hash(tx_hash)
+        return get_transaction_by_hash_response(transaction.to_dict()) if transaction else None
