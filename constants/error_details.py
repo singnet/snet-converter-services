@@ -43,6 +43,7 @@ class ErrorCode(Enum):
     TOPIC_NOT_FOUND = "E0039"
     UNABLE_TO_PARSE_THE_INPUT_EVENT = "E0040"
     QUEUE_DETAILS_NOT_FOUND = "E0041"
+    INVALID_TRANSACTION_OPERATION = "E0042"
 
 
 class ErrorDetails(Enum):
@@ -87,3 +88,4 @@ class ErrorDetails(Enum):
     E0039 = "Topic not found in the config"
     E0040 = "Unable to parse the input event provided"
     E0041 = "Queue details not found"
+    E0042 = "Invalid Transaction Operation provided"

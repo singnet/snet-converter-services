@@ -224,7 +224,7 @@ class ConversionService:
             token_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
                 TokenEntities.ROW_ID.value)
             conversion_transaction_row_id = transaction[0].get(TransactionEntities.CONVERSION_TRANSACTION_ID.value)
-            transaction_operation = TransactionOperation.TOKEN_LOCKED.value
+            transaction_operation = TransactionOperation.TOKEN_BURNT.value
             transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
                 ConversionEntities.CLAIM_AMOUNT.value)
 

@@ -176,16 +176,15 @@ class CardanoEventType(Enum):
 
 
 class EthereumEventConsumerEntities(Enum):
-    CONVERSION_ID = "conversion_id"
+    CONVERSION_ID = "ConversionId"
     TRANSACTION_HASH = "transactionHash"
     NAME = "name"
     JSON_STR = "json_str"
     DATA = "data"
     TOKEN_HOLDER = "tokenHolder"
-    LOCK_AMOUNT = "lockAmount"
-    UNLOCK_AMOUNT = "unlockAmount"
+    AMOUNT = "Amount"
 
 
 class EthereumEventType(Enum):
-    LOCK_TOKEN = "LockToken"
-    UNLOCK_TOKEN = "UnLock"
+    TOKEN_BURNT = "ConversionIn"
+    TOKEN_MINTED = "ConversionOut"

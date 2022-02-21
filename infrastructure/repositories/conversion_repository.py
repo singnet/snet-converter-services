@@ -163,7 +163,7 @@ class ConversionRepository(BaseRepository):
 
     def update_conversion_transaction(self, conversion_transaction_id, status):
         conversion_transaction = self.session.query(ConversionTransactionDBModel) \
-            .filter(ConversionTransactionDBModel.id == conversion_transaction_id).first()
+            .filter(ConversionTransactionDBModel.row_id == conversion_transaction_id).first()
 
         conversion_transaction.status = status
         conversion_transaction.updated_at = datetime_in_utcnow()

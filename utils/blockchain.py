@@ -270,26 +270,29 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
     return activity_event
 
 
-def validate_consumer_event_against_transaction(event_type, transaction):
-    if event_type == CardanoEventType.TOKEN_RECEIVED.value and transaction:
-        logger.info("transaction already updated")
-        raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
-                                  error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
-    elif event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNT.value:
-        if transaction is None:
-            logger.info("Transaction is not available")
-            raise BadRequestException(error_code=ErrorCode.TRANSACTION_NOT_FOUND.value,
-                                      error_details=ErrorDetails[ErrorCode.TRANSACTION_NOT_FOUND.value].value)
+def validate_consumer_event_against_transaction(event_type, transaction, blockchain_name):
+    if blockchain_name.lower() == BlockchainName.CARDANO.name.lower():
+        if event_type == CardanoEventType.TOKEN_RECEIVED.value and transaction:
+            logger.info("transaction already updated")
+            raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
+                                      error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
+        elif event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNT.value:
+            if transaction is None:
+                logger.info("Transaction is not available")
+                raise BadRequestException(error_code=ErrorCode.TRANSACTION_NOT_FOUND.value,
+                                          error_details=ErrorDetails[ErrorCode.TRANSACTION_NOT_FOUND.value].value)
 
-        if transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
+            if transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
+                logger.info("Transaction already confirmed")
+                raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
+                                          error_details=ErrorDetails[
+                                              ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
+    elif blockchain_name.lower() == BlockchainName.ETHEREUM.name.lower():
+        if (event_type == EthereumEventType.TOKEN_BURNT.value or event_type == EthereumEventType.TOKEN_MINTED.value) and \
+                transaction and transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
             logger.info("Transaction already confirmed")
             raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
                                       error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
-    elif event_type == EthereumEventType.UNLOCK_TOKEN.value and transaction and transaction.get(
-            TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
-        logger.info("Transaction already confirmed")
-        raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
-                                  error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
 
 
 def check_block_confirmation(tx_hash, blockchain_network_id, required_block_confirmation):
