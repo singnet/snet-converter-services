@@ -33,6 +33,7 @@ class TestConsumer(unittest.TestCase):
         conversion_repo.session.add_all(TestVariables().conversion)
         conversion_repo.session.commit()
 
+    @patch("utils.blockchain.validate_cardano_transaction_details_against_conversion")
     @patch("utils.sqs.SqsService.send_message_to_queue")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_block")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_transaction")
@@ -42,7 +43,8 @@ class TestConsumer(unittest.TestCase):
     @patch("common.utils.Utils.report_slack")
     def test_converter_event_consumer(self, mock_report_slack, mock_validate_cardano_address,
                                       mock_send_message_to_queue, mock_check_block_confirmation, mock_get_transaction,
-                                      mock_get_block, mock_send_message_to_sqs):
+                                      mock_get_block, mock_send_message_to_sqs,
+                                      mock_validate_cardano_transaction_details_against_conversion):
         bad_request_missing_inputs = {'status': 'failed', 'data': None,
                                       'error': {'code': 'E0019', 'message': 'BAD_REQUEST',
                                                 'details': 'Missing required inputs '}}
