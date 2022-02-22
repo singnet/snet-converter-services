@@ -154,7 +154,7 @@ class CardanoEventConsumer(Enum):
     TX_AMOUNT = "tx_amount"
     RECORDS = "Records"
     BODY = "body"
-    MESSAGE = "message"
+    MESSAGE = "Message"
 
 
 class ConverterBridgeEntities(Enum):

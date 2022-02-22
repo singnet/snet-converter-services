@@ -44,6 +44,8 @@ class ErrorCode(Enum):
     UNABLE_TO_PARSE_THE_INPUT_EVENT = "E0040"
     QUEUE_DETAILS_NOT_FOUND = "E0041"
     INVALID_TRANSACTION_OPERATION = "E0042"
+    LAMBDA_ARN_MINT_NOT_FOUND = "E0043"
+    LAMBDA_ARN_BURN_NOT_FOUND = "E0044"
 
 
 class ErrorDetails(Enum):
@@ -89,3 +91,5 @@ class ErrorDetails(Enum):
     E0040 = "Unable to parse the input event provided"
     E0041 = "Queue details not found"
     E0042 = "Invalid Transaction Operation provided"
+    E0043 = "Config of lambda arn for minting is empty"
+    E0044 = "Config of lambda arn for burn is empty"

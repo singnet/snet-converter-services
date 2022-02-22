@@ -197,6 +197,7 @@ def validate_transaction_hash(conversion_detail, transaction_hash):
 
 
 def get_next_activity_event_on_conversion(conversion_complete_detail):
+    logger.info("Getting the next activity event on conversion")
     from_blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
         TokenEntities.BLOCKCHAIN.value, {}).get(BlockchainEntities.NAME.value).lower()
     to_blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
@@ -271,6 +272,7 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
 
 
 def validate_consumer_event_against_transaction(event_type, transaction, blockchain_name):
+    logger.info("Validating the consumer event")
     if blockchain_name.lower() == BlockchainName.CARDANO.name.lower():
         if event_type == CardanoEventType.TOKEN_RECEIVED.value and transaction:
             logger.info("transaction already updated")
@@ -317,8 +319,13 @@ def check_block_confirmation(tx_hash, blockchain_network_id, required_block_conf
 
 
 def burn_token_on_cardano(address, token, tx_amount, tx_details):
-    logger.info(f"Input address={address}, {token}, tx_amount={tx_amount}, tx_details={tx_details}")
+    logger.info(
+        f"Calling the burn token service on cardano with inputs as address={address}, {token}, tx_amount={tx_amount}, tx_details={tx_details}")
     response = None
+    if not CARDANO_SERVICE_LAMBDA_ARN['BURN_TOKEN_ARN']:
+        raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value].value)
     try:
         body = generate_body_format_for_cardano_operation(address=address, tx_amount=tx_amount, tx_details=tx_details)
 
@@ -341,8 +348,13 @@ def burn_token_on_cardano(address, token, tx_amount, tx_details):
 
 def mint_token_and_transfer_on_cardano(address, token, tx_amount, tx_details, source_address):
     logger.info(
-        f"Input address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, source_address={source_address}")
+        f"Calling the mint token service on cardano with inputs as address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, source_address={source_address}")
     response = None
+    if not CARDANO_SERVICE_LAMBDA_ARN['MINT_TOKEN_ARN']:
+        raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
+
     try:
         body = generate_body_format_for_cardano_operation(address=address, tx_amount=tx_amount, tx_details=tx_details)
         body[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
