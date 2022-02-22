@@ -258,7 +258,7 @@ class TestVariables:
 
 def prepare_consumer_cardano_event_format(message):
     records = []
-    body = {"message": json.dumps(message)}
+    body = {"Message": json.dumps(message)}
     records.append({"body": json.dumps(body)})
     input_event = {"Records": records}
     return input_event

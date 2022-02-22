@@ -30,6 +30,7 @@ class ConsumerService:
         self.wallet_pair_service = WalletPairService()
 
     def converter_event_consumer(self, payload):
+        logger.info(f"Converter event consumer received the payload={payload}")
         blockchain_name = payload.get(EventConsumerEntity.BLOCKCHAIN_NAME.value)
         blockchain_event = payload.get(EventConsumerEntity.BLOCKCHAIN_EVENT.value)
 
@@ -69,6 +70,7 @@ class ConsumerService:
                                     blockchain_event=blockchain_event, blockchain_detail=blockchain_detail)
 
     def process_event_consumer(self, event_type, tx_hash, network_id, blockchain_event, blockchain_detail):
+        logger.info("Processing the event consumer payload")
         db_blockchain_name = blockchain_detail.get(BlockchainEntities.NAME.value).lower()
 
         # validate block confirmations for cardano side
@@ -81,6 +83,7 @@ class ConsumerService:
                 blockchain_confirmation = 0
 
             if required_block_confirmation > blockchain_confirmation:
+                logger.info("Block confirmation is not enough to consider, so checking the block confirmation again")
                 check_block_confirmation(tx_hash=tx_hash, blockchain_network_id=network_id,
                                          required_block_confirmation=required_block_confirmation)
 
@@ -250,6 +253,7 @@ class ConsumerService:
         return conversion
 
     def converter_bridge(self, payload):
+        logger.info(f"Converter bridge received the payload={payload}")
         blockchain_name = payload.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value)
         blockchain_event = payload.get(ConverterBridgeEntities.BLOCKCHAIN_EVENT.value, {})
 
@@ -287,6 +291,7 @@ class ConsumerService:
         return self.conversion_service.get_conversion_detail_by_tx_id(tx_id=tx_id)
 
     def process_converter_bridge_request(self, conversion_complete_detail, payload):
+        logger.info("Processing the conversion bridge request")
         db_from_blockchain_name = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
             TokenEntities.BLOCKCHAIN.value, {}).get(BlockchainEntities.NAME.value).lower()
         db_to_blockchain_name = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
