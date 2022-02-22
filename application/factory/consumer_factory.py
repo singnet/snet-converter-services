@@ -1,3 +1,4 @@
+import ast
 import json
 
 from common.logger import get_logger
@@ -26,7 +27,7 @@ def convert_consumer_event(event):
                     parsed_body = json.loads(body)
                     message = parsed_body.get(CardanoEventConsumer.MESSAGE.value)
                     if message:
-                        parsed_message = json.loads(message)
+                        parsed_message = ast.literal_eval(message)
                         new_format.append(consumer_required_format(blockchain_name=BlockchainName.CARDANO.value,
                                                                    blockchain_event=parsed_message))
     except Exception as e:
