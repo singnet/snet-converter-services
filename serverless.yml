@@ -179,6 +179,13 @@ resources:
         Queues:
           - !Ref converterEventConsumerQueue
 
+    cardanoEventListenerTopicSubscriptionForSQS:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Protocol: sqs
+        Endpoint: !GetAtt converterEventConsumerQueue.Arn
+        TopicArn: ${file(./config.${self:provider.stage}.json):CARDANO_EVENT_LISTENER_TOPIC_ARN}
+
     converterEventConsumerDLQQueue:
       Type: AWS::SQS::Queue
       Properties:
