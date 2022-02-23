@@ -24,3 +24,13 @@ class TopicName(Enum):
 
 class QueueName(Enum):
     CONVERTER_BRIDGE = "CONVERTER_BRIDGE"
+
+
+class SignatureTypeEntities(Enum):
+    CONVERSION_IN = "__conversionIn"
+    CONVERSION_OUT = "__conversionOut"
+
+
+SIGNATURE_TYPES = [SignatureTypeEntities.CONVERSION_IN.value, SignatureTypeEntities.CONVERSION_OUT.value]
+
+ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH = "CONVERTER_SIGNER_PRIVATE_KEY_PATH"

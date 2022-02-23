@@ -57,6 +57,7 @@ class SignatureMetadataEntities(Enum):
     TO_ADDRESS = "to_address"
     AMOUNT = "amount"
     BLOCK_NUMBER = "block_number"
+    SIGNATURE = "signature"
 
 
 class WalletPairEntities(Enum):

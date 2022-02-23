@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from application.service.conversion_reponse import get_latest_user_pending_conversion_request_response, \
     create_conversion_response, create_conversion_request_response, \
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
@@ -10,7 +12,7 @@ from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, CreatedBy
+from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus, TransactionOperation
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from utils.blockchain import validate_address, get_lowest_unit_amount, \
@@ -19,7 +21,7 @@ from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, paginate_items, \
     is_supported_network_conversion
 
-from utils.signature import validate_conversion_signature
+from utils.signature import validate_conversion_signature, get_signature
 
 logger = get_logger(__name__)
 
@@ -142,6 +144,7 @@ class ConversionService:
         logger.info(f"Creating the conversion request for token_pair_id={token_pair_id}, amount={amount}, "
                     f"from_address={from_address}, to_address={to_address}, block_number={block_number}, "
                     f"signature={signature}")
+        contract_signature = None
         token_pair = self.token_service.get_token_pair_internal(token_pair_id=token_pair_id)
         ConversionService.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
                                                                from_address=from_address, to_address=to_address,
@@ -159,7 +162,26 @@ class ConversionService:
         lowest_unit_amount = get_lowest_unit_amount(amount, allowed_decimal)
         conversion = self.process_conversion_request(wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
                                                      deposit_amount=lowest_unit_amount)
-        return create_conversion_request_response(wallet_pair, conversion)
+        conversion_id = conversion[ConversionEntities.ID.value]
+        deposit_address = wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
+
+        if not deposit_address:
+            conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
+            user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value).get(
+                WalletPairEntities.FROM_ADDRESS.value)
+            contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
+            contract_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_OUT.value,
+                                               user_address=user_address, conversion_id=conversion_id,
+                                               amount=Decimal(float(conversion_detail.get(
+                                                   ConversionDetailEntities.CONVERSION.value).get(
+                                                   ConversionEntities.DEPOSIT_AMOUNT.value))),
+                                               contract_address=contract_address,
+                                               chain_id=conversion_detail.get(
+                                                   ConversionDetailEntities.FROM_TOKEN.value).get(
+                                                   TokenEntities.BLOCKCHAIN.value).get(
+                                                   BlockchainEntities.CHAIN_ID.value))
+        return create_conversion_request_response(conversion_id=conversion_id, deposit_address=deposit_address,
+                                                  signature=contract_signature)
 
     def process_conversion_request(self, wallet_pair_id, deposit_amount):
         logger.info(f"Processing the conversion request with wallet_pair_id={wallet_pair_id},"
@@ -172,6 +194,10 @@ class ConversionService:
         else:
             conversion = self.create_conversion(wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount)
         return conversion
+
+    def get_token_contract_address_for_conversion_id(self, conversion_id):
+        logger.info(f"Getting the token contract address for conversion_id={conversion_id}")
+        return self.conversion_repo.get_token_contract_address_for_conversion_id(conversion_id)
 
     def get_conversion_history(self, address, page_size, page_number):
         logger.info(f"Getting the conversion history for the given address={address}, page_size={page_size}, "

@@ -1,5 +1,6 @@
 import json
 import unittest
+from unittest import mock
 from unittest.mock import patch
 
 from sqlalchemy import distinct
@@ -42,9 +43,11 @@ class TestConversion(unittest.TestCase):
         conversion_repo.session.add_all(TestVariables().transaction)
         conversion_repo.session.commit()
 
+    @patch("application.service.conversion_service.get_signature")
     @patch("utils.blockchain.validate_cardano_address")
     @patch("common.utils.Utils.report_slack")
-    def test_create_conversion_request(self, mock_report_slack, mock_validate_cardano_address):
+    def test_create_conversion_request(self, mock_report_slack, mock_validate_cardano_address, mock_signature):
+        mock_signature.return_value = "some signature"
         conversion_repo.session.query(TransactionDBModel).delete()
         conversion_repo.session.commit()
         conversion_repo.session.query(ConversionTransactionDBModel).delete()
@@ -191,7 +194,7 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 2)
+        self.assertEqual(len(body["data"]), 3)
         self.assertIsNotNone(body["data"]["id"])
         self.assertIsNone(body["data"]["deposit_address"])
         previous_request_id = body["data"]["id"]
@@ -207,9 +210,10 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 2)
+        self.assertEqual(len(body["data"]), 3)
         self.assertIsNotNone(body["data"]["id"])
         self.assertIsNone(body["data"]["deposit_address"])
+        self.assertIsNotNone(body["data"]["signature"])
         self.assertEqual(body["data"]["id"], previous_request_id)
 
         # Length of wallet pair table should be one because , the request is from same from and to address
@@ -228,7 +232,7 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 2)
+        self.assertEqual(len(body["data"]), 3)
         self.assertIsNotNone(body["data"]["id"])
         self.assertIsNotNone(body["data"]["deposit_address"])
         self.assertNotEqual(body["data"]["id"], previous_request_id)

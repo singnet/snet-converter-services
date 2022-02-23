@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-01-23 16:00:00 
+
+### Added
+- Adding the signature on ethereum side to involve the methods
+
 ## 2022-01-25 16:00:00 
 
 ### Added

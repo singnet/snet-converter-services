@@ -204,3 +204,7 @@ def validate_conversion_with_blockchain(conversion_on, address, amount, conversi
         #     is_valid = False
 
     return is_valid
+
+
+def string_to_bytes_to_hex(message):
+    return f"0x{message.encode('utf-8').hex()}"

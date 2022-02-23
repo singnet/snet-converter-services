@@ -332,9 +332,11 @@ functions:
 
   create_conversion_request:
     handler: application/handler/conversion_handlers.create_conversion_request
-    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    role: ${file(./config.${self:provider.stage}.json):ROLE_WITH_SM}
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
+    environment:
+      CONVERTER_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_SIGNER_PRIVATE_KEY_PATH}
     events:
       - http:
           path: /v1/conversion
