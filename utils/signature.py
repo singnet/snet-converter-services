@@ -82,8 +82,8 @@ def get_signature(signature_type, user_address, conversion_id, amount, contract_
         raise InternalServerErrorException(error_code=ErrorCode.INVALID_SIGNATURE_TYPE_PROVIDED.value,
                                            error_details=ErrorDetails[
                                                ErrorCode.INVALID_SIGNATURE_TYPE_PROVIDED.value].value)
-    region_name = os.environ.get('AWS_REGION', None)
-    secret_name = os.environ.get(ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH, None)
+    region_name = os.getenv('AWS_REGION', None)
+    secret_name = os.getenv(ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH, None)
     if not region_name or not secret_name:
         raise InternalServerErrorException(error_code=ErrorCode.REQUIRED_SIGNING_ENVIRONMENT_FIELDS_NOT_FOUND.value,
                                            error_details=ErrorDetails[
