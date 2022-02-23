@@ -103,7 +103,7 @@ class WalletPairDBModel(Base):
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
     token_pair = relationship(TokenPairDBModel, foreign_keys=[token_pair_id], uselist=False, lazy="select")
-    __table_args__ = (UniqueConstraint(from_address, to_address), {})
+    __table_args__ = (UniqueConstraint(token_pair_id, from_address, to_address), {})
 
 
 class ConversionDBModel(Base):

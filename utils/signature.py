@@ -1,3 +1,4 @@
+import json
 import os
 
 import web3
@@ -96,7 +97,7 @@ def get_signature(signature_type, user_address, conversion_id, amount, contract_
         raise InternalServerErrorException(error_code=ErrorCode.SECRET_KEY_NOT_FOUND.value,
                                            error_details=ErrorDetails[
                                                ErrorCode.SECRET_KEY_NOT_FOUND.value].value)
-    private_key = secrets.get(contract_address)
+    private_key = json.loads(secrets).get(contract_address)
 
     if not private_key:
         raise InternalServerErrorException(error_code=ErrorCode.SECRET_DETAILS_FOR_CONTRACT_NOT_AVAILABLE.value,
