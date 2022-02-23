@@ -99,7 +99,7 @@ class ConsumerService:
             metadata = ast.literal_eval(json_str)
 
             tx_amount = metadata.get(EthereumEventConsumerEntities.AMOUNT.value)
-            conversion_id = metadata.get(EthereumEventConsumerEntities.CONVERSION_ID.value)
+            conversion_id = metadata.get(EthereumEventConsumerEntities.CONVERSION_ID.value).decode("utf-8")
             token_holder = metadata.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value)
 
             conversion = self.process_ethereum_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
