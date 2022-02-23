@@ -46,6 +46,11 @@ class ErrorCode(Enum):
     INVALID_TRANSACTION_OPERATION = "E0042"
     LAMBDA_ARN_MINT_NOT_FOUND = "E0043"
     LAMBDA_ARN_BURN_NOT_FOUND = "E0044"
+    SECRET_KEY_NOT_FOUND = "E0045"
+    SECRET_DETAILS_FOR_CONTRACT_NOT_AVAILABLE = "E0046"
+    INVALID_SIGNATURE_TYPE_PROVIDED = "E0047"
+    SIGNING_SIGNATURE_FIELDS_EMPTY = "E0048"
+    REQUIRED_SIGNING_ENVIRONMENT_FIELDS_NOT_FOUND = "E0049"
 
 
 class ErrorDetails(Enum):
@@ -93,3 +98,9 @@ class ErrorDetails(Enum):
     E0042 = "Invalid Transaction Operation provided"
     E0043 = "Config of lambda arn for minting is empty"
     E0044 = "Config of lambda arn for burn is empty"
+    E0045 = "Secret key not found for signing"
+    E0046 = "Secret details for this contract not available"
+    E0047 = "Invalid signature type provided"
+    E0048 = "Signing signature fields is empty"
+    E0049 = "Required environment variables not found on signing"
+

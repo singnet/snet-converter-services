@@ -169,6 +169,17 @@ class ConversionRepository(BaseRepository):
         conversion_transaction.updated_at = datetime_in_utcnow()
         self.session.commit()
 
+    def get_token_contract_address_for_conversion_id(self, conversion_id):
+        contract_address = self.session.query(TokenPairDBModel.contract_address) \
+            .join(WalletPairDBModel, WalletPairDBModel.token_pair_id == TokenPairDBModel.row_id) \
+            .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
+            .filter(ConversionDBModel.id == conversion_id).first()
+
+        if not contract_address:
+            return None
+
+        return contract_address[0]
+
     def get_conversion_history(self, address, conversion_id):
         from_token = aliased(TokenDBModel)
         to_token = aliased(TokenDBModel)

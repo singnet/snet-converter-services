@@ -191,12 +191,17 @@ Converter Service│
 ```
 
   Response: 
+
+`signature` will be available only for ethereum conversion on `FROM` side
+`deposit_address` will be available only for cardano conversion on `FROM` side
+
 ```json5
 {
   "status": "success",
   "data": {
     "id": "02bdcb4e65d1491586110cbf4a16efe8",
-    "deposit_address": null
+    "deposit_address": null,
+    "signature": "0x0faa47c8744ec7c8dfbccb95010e1b8a4aeeaad43f0d3452cccdf78b8798200264598f3540cb0fea150e4d748d102a3799c77555d658bb641a7c087a02fdaefa1b",
   },
   "error": {
     "code": null,

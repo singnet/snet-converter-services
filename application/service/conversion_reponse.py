@@ -1,5 +1,5 @@
 from constants.entity import ConversionEntities, WalletPairEntities, ConversionDetailEntities, TokenEntities, \
-    BlockchainEntities, TransactionEntities, TransactionConversionEntities
+    BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities
 
 
 def get_latest_user_pending_conversion_request_response(conversion):
@@ -24,10 +24,11 @@ def create_conversion_response(conversion):
     }
 
 
-def create_conversion_request_response(wallet_pair, conversion):
+def create_conversion_request_response(conversion_id, deposit_address, signature):
     return {
-        ConversionEntities.ID.value: conversion[ConversionEntities.ID.value],
-        WalletPairEntities.DEPOSIT_ADDRESS.value: wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
+        ConversionEntities.ID.value: conversion_id,
+        WalletPairEntities.DEPOSIT_ADDRESS.value: deposit_address,
+        SignatureMetadataEntities.SIGNATURE.value: signature
     }
 
 

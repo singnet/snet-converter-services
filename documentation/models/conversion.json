@@ -46,11 +46,15 @@
           },
           "deposit_address": {
             "type": "string"
+          },
+          "signature": {
+            "type": "string"
           }
         },
         "required": [
           "id",
-          "deposit_address"
+          "deposit_address",
+          "signature"
         ]
       },
       "error": {
