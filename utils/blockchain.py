@@ -4,11 +4,12 @@ import traceback
 from decimal import Decimal
 from http import HTTPStatus
 
+import requests
 from web3.exceptions import TransactionNotFound
 
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
-from config import CARDANO_DEPOSIT_ADDRESS, CARDANO_SERVICE_LAMBDA_ARN
+from config import CARDANO_DEPOSIT_ADDRESS, CARDANO_SERVICE_API
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
     ConversionEntities, CardanoEventType, EthereumEventType, CardanoAPIEntities
@@ -16,7 +17,6 @@ from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus
 from domain.entities.converter_bridge import ConverterBridge
-from utils.boto_utils import BotoUtility, LambdaInvocationTypes
 from utils.cardano_blockchain import CardanoBlockchainUtil
 from utils.exceptions import InternalServerErrorException, BadRequestException, BlockConfirmationNotEnoughException
 from utils.general import get_ethereum_network_url, validate_conversion_with_blockchain, \
@@ -322,7 +322,8 @@ def burn_token_on_cardano(address, token, tx_amount, tx_details):
     logger.info(
         f"Calling the burn token service on cardano with inputs as address={address}, {token}, tx_amount={tx_amount}, tx_details={tx_details}")
     response = None
-    if not CARDANO_SERVICE_LAMBDA_ARN['BURN_TOKEN_ARN']:
+    base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+    if not base_path:
         raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value,
                                            error_details=ErrorDetails[
                                                ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value].value)
@@ -332,9 +333,8 @@ def burn_token_on_cardano(address, token, tx_amount, tx_details):
         payload = {CardanoAPIEntities.PATH_PARAMETERS.value: {CardanoAPIEntities.TOKEN.value: token},
                    CardanoAPIEntities.BODY.value: json.dumps(body)}
 
-        response = BotoUtility.invoke_lambda_as_api(CARDANO_SERVICE_LAMBDA_ARN['BURN_TOKEN_ARN'],
-                                                    LambdaInvocationTypes.REQUEST_RESPONSE.value,
-                                                    json.dumps(payload))
+        response = requests.post(f"{base_path}/{token}/burn", data=json.dumps(payload),
+                                 headers={"Content-Type": "application/json"})
     except Exception as e:
         traceback.print_exc()
 
@@ -350,7 +350,8 @@ def mint_token_and_transfer_on_cardano(address, token, tx_amount, tx_details, so
     logger.info(
         f"Calling the mint token service on cardano with inputs as address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, source_address={source_address}")
     response = None
-    if not CARDANO_SERVICE_LAMBDA_ARN['MINT_TOKEN_ARN']:
+    base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+    if not base_path:
         raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
                                            error_details=ErrorDetails[
                                                ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
@@ -361,9 +362,10 @@ def mint_token_and_transfer_on_cardano(address, token, tx_amount, tx_details, so
 
         payload = {CardanoAPIEntities.PATH_PARAMETERS.value: {CardanoAPIEntities.TOKEN.value: token},
                    CardanoAPIEntities.BODY.value: json.dumps(body)}
-        response = BotoUtility.invoke_lambda_as_api(CARDANO_SERVICE_LAMBDA_ARN['MINT_TOKEN_ARN'],
-                                                    LambdaInvocationTypes.REQUEST_RESPONSE.value,
-                                                    json.dumps(payload))
+
+        response = requests.post(f"{base_path}/{token}/mint", data=json.dumps(payload),
+                                 headers={"Content-Type": "application/json"})
+
     except Exception as e:
         traceback.print_exc()
 

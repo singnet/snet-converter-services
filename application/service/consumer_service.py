@@ -175,7 +175,8 @@ class ConsumerService:
 
         if not transaction:
             transaction = self.conversion_service.create_transaction_for_conversion(conversion_id=conversion_id,
-                                                                                    transaction_hash=tx_hash)
+                                                                                    transaction_hash=tx_hash,
+                                                                                    created_by=CreatedBy.BACKEND.value)
 
         if transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
             raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
