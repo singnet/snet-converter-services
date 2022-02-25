@@ -35,8 +35,8 @@ class TokenPairIdNotExitsException(Exception):
 
 
 class BlockConfirmationNotEnoughException(Exception):
-    error_message = "BAD_REQUEST"
-    status_code = 400
+    error_message = "NOT_ENOUGH_BLOCK_CONFIRMATION"
+    status_code = 500
 
     def __init__(self, error_code, error_details):
         self.error_code = error_code
