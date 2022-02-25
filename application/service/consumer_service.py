@@ -325,7 +325,7 @@ class ConsumerService:
                 environment=conversion_complete_detail.get())
             response = burn_token_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value), tx_amount=tx_amount,
                                              tx_details=tx_details, address=address)
-            tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
+            tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value).strip()
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             tx_details = generate_transaction_detail_for_cardano_operation(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
@@ -337,7 +337,7 @@ class ConsumerService:
             response = mint_token_and_transfer_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value),
                                                           tx_amount=tx_amount, tx_details=tx_details, address=address,
                                                           source_address=source_address)
-            tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
+            tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value).strip()
         elif payload_blockchain_name == BlockchainName.ETHEREUM.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             status = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
                 ConversionEntities.STATUS.value)
