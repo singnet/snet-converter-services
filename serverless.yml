@@ -153,7 +153,7 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-event-consumer
-        VisibilityTimeout: 90
+        VisibilityTimeout: 100
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 7200
         RedrivePolicy:
@@ -217,12 +217,12 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge
-        VisibilityTimeout: 300
+        VisibilityTimeout: 100
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 7200
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
-          maxReceiveCount: 5
+          maxReceiveCount: 10
 
     converterBridgeQueuePolicy:
       Type: AWS::SQS::QueuePolicy

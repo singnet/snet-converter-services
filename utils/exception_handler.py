@@ -5,7 +5,7 @@ from http import HTTPStatus
 
 from common.utils import generate_lambda_response, make_response_body, Utils
 from constants.lambdas import HttpRequestParamType, LambdaResponseStatus
-from utils.exceptions import InternalServerErrorException
+from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException
 from utils.lambdas import make_error_format
 
 utils_obj = Utils()
@@ -134,6 +134,9 @@ def consumer_exception_handler(*decorator_args, **decorator_kwargs):
 
                 logger.info(f"Time taken for handler name= {handler_name} time={difference} seconds")
                 return func_response
+            except BlockConfirmationNotEnoughException as e:
+                logger.info("Not enough blockchain confirmation, so retrying silently")
+                raise e
             except Exception as e:
                 exec_info = get_exec_info()
                 slack_message = f"```{error_message}{exec_info}```"
