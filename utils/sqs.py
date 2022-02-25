@@ -28,6 +28,6 @@ class SqsService:
             )
             logger.info(response)
         except Exception as e:
-            traceback.print_exc()
             logger.error(f"Unable to send message because of {e}")
-            raise e
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_SENDING_MESSAGE.value,
+                                               error_details=ErrorDetails[ErrorCode.UNEXPECTED_ERROR_ON_SENDING_MESSAGE.value].value)

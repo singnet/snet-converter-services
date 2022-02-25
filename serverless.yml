@@ -21,7 +21,7 @@ provider:
     serverSideEncryption: AES256 # when using server-side encryption
     tags: # Tags that will be added to each of the deployment resources
       key1: converter-service
-      key2: converter-consumer
+      key2: converter-event-consumer
       key3: converter-bridge
   deploymentPrefix: serverless
   tracing: true
@@ -153,12 +153,12 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-event-consumer
-        VisibilityTimeout: 300
+        VisibilityTimeout: 90
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 7200
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt converterEventConsumerDLQQueue.Arn
-          maxReceiveCount: 5
+          maxReceiveCount: 15
 
     converterEventConsumerQueuePolicy:
       Type: AWS::SQS::QueuePolicy
@@ -192,7 +192,7 @@ resources:
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-event-consumer-dlq
         VisibilityTimeout: 60
         ReceiveMessageWaitTimeSeconds: 20
-        MessageRetentionPeriod: 172800
+        MessageRetentionPeriod: 604800
 
     converterEventConsumerDLQQueuePolicy:
       Type: AWS::SQS::QueuePolicy
@@ -246,7 +246,7 @@ resources:
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge-dlq
         VisibilityTimeout: 60
         ReceiveMessageWaitTimeSeconds: 20
-        MessageRetentionPeriod: 172800
+        MessageRetentionPeriod: 604800
 
     converterBridgeDLQQueuePolicy:
       Type: AWS::SQS::QueuePolicy

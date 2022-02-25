@@ -51,6 +51,8 @@ class ErrorCode(Enum):
     INVALID_SIGNATURE_TYPE_PROVIDED = "E0047"
     SIGNING_SIGNATURE_FIELDS_EMPTY = "E0048"
     REQUIRED_SIGNING_ENVIRONMENT_FIELDS_NOT_FOUND = "E0049"
+    UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL = "E0050"
+    UNEXPECTED_ERROR_ON_SENDING_MESSAGE = "E0051"
 
 
 class ErrorDetails(Enum):
@@ -103,4 +105,5 @@ class ErrorDetails(Enum):
     E0047 = "Invalid signature type provided"
     E0048 = "Signing signature fields is empty"
     E0049 = "Required environment variables not found on signing"
-
+    E0050 = "Unexpected error occurred when calling the cardano service"
+    E0051 = "Unexpected error occurred while sending the message to queue"

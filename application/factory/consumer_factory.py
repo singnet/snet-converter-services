@@ -1,4 +1,3 @@
-import ast
 import json
 
 from common.logger import get_logger
@@ -6,7 +5,7 @@ from constants.entity import EventConsumerEntity, EthereumEventConsumerEntities,
     ConverterBridgeEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName
-from utils.exceptions import BadRequestException
+from utils.exceptions import InternalServerErrorException
 
 logger = get_logger(__name__)
 
@@ -27,13 +26,14 @@ def convert_consumer_event(event):
                     parsed_body = json.loads(body)
                     message = parsed_body.get(CardanoEventConsumer.MESSAGE.value)
                     if message:
-                        parsed_message = ast.literal_eval(message)
+                        parsed_message = json.loads(message)
                         new_format.append(consumer_required_format(blockchain_name=BlockchainName.CARDANO.value,
                                                                    blockchain_event=parsed_message))
     except Exception as e:
         logger.info(f"Error while trying to parse the input={json.dumps(event)} with error of {e}")
-        raise BadRequestException(error_code=ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value,
-                                  error_details=ErrorDetails[ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value].value)
+        raise InternalServerErrorException(error_code=ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value].value)
     return new_format
 
 
@@ -56,6 +56,7 @@ def convert_converter_bridge_event(event):
 
     except Exception as e:
         logger.info(f"Error while trying to parse the input={json.dumps(event)} with error of {e}")
-        raise BadRequestException(error_code=ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value,
-                                  error_details=ErrorDetails[ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value].value)
+        raise InternalServerErrorException(error_code=ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value].value)
     return new_format
