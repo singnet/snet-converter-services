@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
-## 2022-01-23 16:00:00 
+## 2022-02-28 16:00:00 
+
+### Added
+- Adding the token address
+- Adding amount to response of conversion request
+
+
+## 2022-02-23 16:00:00 
 
 ### Added
 - Adding the signature on ethereum side to involve the methods

@@ -44,6 +44,9 @@
           "id": {
             "type": "string"
           },
+          "deposit_amount": {
+            "type": "string"
+          },
           "deposit_address": {
             "type": "string"
           },

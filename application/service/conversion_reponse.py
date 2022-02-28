@@ -24,9 +24,10 @@ def create_conversion_response(conversion):
     }
 
 
-def create_conversion_request_response(conversion_id, deposit_address, signature):
+def create_conversion_request_response(conversion_id, deposit_address, signature, deposit_amount):
     return {
         ConversionEntities.ID.value: conversion_id,
+        ConversionEntities.DEPOSIT_AMOUNT.value: deposit_amount,
         WalletPairEntities.DEPOSIT_ADDRESS.value: deposit_address,
         SignatureMetadataEntities.SIGNATURE.value: signature
     }

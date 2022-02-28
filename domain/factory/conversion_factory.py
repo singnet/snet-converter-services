@@ -72,13 +72,15 @@ class ConversionFactory:
                                             description=from_token.description,
                                             symbol=from_token.symbol, logo=from_token.logo,
                                             allowed_decimal=from_token.allowed_decimal,
+                                            token_address=from_token.token_address,
                                             created_by=from_token.created_by, created_at=from_token.created_at,
                                             updated_at=from_token.updated_at, blockchain_detail=from_blockchain)
         to_token_obj = TokenFactory.token(row_id=to_token.row_id, id=to_token.id, name=to_token.name,
                                           description=to_token.description,
                                           symbol=to_token.symbol, logo=to_token.logo,
-                                          allowed_decimal=to_token.allowed_decimal, created_by=to_token.created_by,
-                                          created_at=to_token.created_at,
+                                          allowed_decimal=to_token.allowed_decimal,
+                                          token_address=from_token.token_address,
+                                          created_by=to_token.created_by, created_at=to_token.created_at,
                                           updated_at=to_token.updated_at, blockchain_detail=to_blockchain)
 
         transactions = transactions.get("transactions", [])
