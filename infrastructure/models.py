@@ -36,6 +36,7 @@ class TokenDBModel(Base):
     logo = Column("logo", VARCHAR(250))
     blockchain_id = Column("blockchain_id", BIGINT, ForeignKey(BlockChainDBModel.row_id), nullable=False)
     allowed_decimal = Column("allowed_decimal", INTEGER)
+    token_address = Column("token_address", VARCHAR(100), nullable=False)
     created_by = Column("created_by", VARCHAR(50), nullable=False)
     created_at = Column("created_at", TIMESTAMP,
                         server_default=func.current_timestamp(), nullable=False)

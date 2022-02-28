@@ -7,7 +7,7 @@ from domain.factory.conversion_fee_factory import ConversionFeeFactory
 class TokenFactory:
 
     @staticmethod
-    def token(row_id, id, name, description, symbol, logo, allowed_decimal, created_by, created_at,
+    def token(row_id, id, name, description, symbol, logo, allowed_decimal, token_address, created_by, created_at,
               updated_at, blockchain_detail):
         blockchain_obj = BlockchainFactory.blockchain(id=blockchain_detail.id, name=blockchain_detail.name,
                                                       description=blockchain_detail.description,
@@ -21,13 +21,14 @@ class TokenFactory:
                                                       updated_at=blockchain_detail.updated_at)
 
         return Token(row_id=row_id, id=id, name=name, description=description, symbol=symbol, logo=logo,
-                     allowed_decimal=allowed_decimal, created_by=created_by, created_at=created_at,
-                     updated_at=updated_at, blockchain_obj=blockchain_obj)
+                     allowed_decimal=allowed_decimal, token_address=token_address, created_by=created_by,
+                     created_at=created_at, updated_at=updated_at, blockchain_obj=blockchain_obj)
 
     @staticmethod
     def convert_token_db_object_to_object(token):
         return TokenFactory.token(row_id=token.row_id, id=token.id, name=token.name, description=token.description,
                                   symbol=token.symbol, logo=token.logo, allowed_decimal=token.allowed_decimal,
+                                  token_address=token.token_address,
                                   created_by=token.created_by, created_at=token.created_at, updated_at=token.updated_at,
                                   blockchain_detail=token.blockchain_detail)
 

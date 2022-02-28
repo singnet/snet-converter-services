@@ -101,6 +101,7 @@ Converter Service│
                 "symbol": "AGIX",
                 "logo": "www.findOurUrl.com/image.png",
                 "allowed_decimal": 5,
+                "token_address": "0xA1e841e8F770E5c9507E2f8cfd0aA6f73009715d",
                 "updated_at": "2022-01-12 04:10:54",
                 "blockchain": {
                     "id": "a38b4038c3a04810805fb26056dfabdd",
@@ -114,6 +115,7 @@ Converter Service│
                 "symbol": "AGIX",
                 "logo": "www.findOurUrl.com/image.png",
                 "allowed_decimal": 10,
+                "token_address": "ae8a0b54484418a3db56f4e9b472d51cbc860667489366ba6e150c8a",
                 "updated_at": "2022-01-12 04:10:54",
                 "blockchain": {
                     "id": "5b21294fe71a4145a40f6ab918a50f96",
@@ -140,6 +142,7 @@ Converter Service│
                 "logo": "www.findOurUrl.com/image.png",
                 "allowed_decimal": 10,
                 "updated_at": "2022-01-12 04:10:54",
+                "token_address": "ae8a0b54484418a3db56f4e9b472d51cbc860667489366ba6e150c8a",
                 "blockchain": {
                     "id": "5b21294fe71a4145a40f6ab918a50f96",
                     "name": "Cardano",
@@ -153,6 +156,7 @@ Converter Service│
                 "logo": "www.findOurUrl.com/image.png",
                 "allowed_decimal": 5,
                 "updated_at": "2022-01-12 04:10:54",
+                "token_address": "0xA1e841e8F770E5c9507E2f8cfd0aA6f73009715d",
                 "blockchain": {
                     "id": "a38b4038c3a04810805fb26056dfabdd",
                     "name": "Ethereum",
@@ -200,6 +204,7 @@ Converter Service│
   "status": "success",
   "data": {
     "id": "02bdcb4e65d1491586110cbf4a16efe8",
+    "amount": "1.33305E+8",
     "deposit_address": null,
     "signature": "0x0faa47c8744ec7c8dfbccb95010e1b8a4aeeaad43f0d3452cccdf78b8798200264598f3540cb0fea150e4d748d102a3799c77555d658bb641a7c087a02fdaefa1b",
   },

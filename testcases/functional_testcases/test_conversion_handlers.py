@@ -194,8 +194,9 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 3)
+        self.assertEqual(len(body["data"]), 4)
         self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNotNone(body["data"]["deposit_amount"])
         self.assertIsNone(body["data"]["deposit_address"])
         previous_request_id = body["data"]["id"]
 
@@ -210,8 +211,9 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 3)
+        self.assertEqual(len(body["data"]), 4)
         self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNotNone(body["data"]["deposit_amount"])
         self.assertIsNone(body["data"]["deposit_address"])
         self.assertIsNotNone(body["data"]["signature"])
         self.assertEqual(body["data"]["id"], previous_request_id)
@@ -232,8 +234,9 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 3)
+        self.assertEqual(len(body["data"]), 4)
         self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNotNone(body["data"]["deposit_amount"])
         self.assertIsNotNone(body["data"]["deposit_address"])
         self.assertNotEqual(body["data"]["id"], previous_request_id)
 

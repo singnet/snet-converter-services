@@ -17,19 +17,20 @@ def create_blockchain_record(row_id, id, name, description, symbol, logo, chain_
                              created_at=created_at, updated_at=updated_at)
 
 
-def create_token_record(row_id, id, name, description, symbol, logo, blockchain_id, allowed_decimal, created_by,
-                        created_at, updated_at):
+def create_token_record(row_id, id, name, description, symbol, logo, blockchain_id, allowed_decimal, token_address,
+                        created_by, created_at, updated_at):
     return TokenDBModel(row_id=row_id, id=id, name=name, description=description, symbol=symbol,
-                        logo=logo, blockchain_id=blockchain_id, allowed_decimal=allowed_decimal, created_by=created_by,
-                        created_at=created_at, updated_at=updated_at)
+                        logo=logo, blockchain_id=blockchain_id, allowed_decimal=allowed_decimal,
+                        token_address=token_address, created_by=created_by, created_at=created_at,
+                        updated_at=updated_at)
 
 
 def create_token_pair_record(row_id, id, from_token_id, to_token_id, min_value, max_value, contract_address,
                              conversion_fee_id, is_enabled, created_by, created_at, updated_at):
     return TokenPairDBModel(row_id=row_id, id=id, from_token_id=from_token_id, to_token_id=to_token_id,
-                            min_value=min_value,
-                            max_value=max_value, contract_address=contract_address, conversion_fee_id=conversion_fee_id,
-                            is_enabled=is_enabled, created_by=created_by, created_at=created_at, updated_at=updated_at)
+                            min_value=min_value, max_value=max_value, contract_address=contract_address,
+                            conversion_fee_id=conversion_fee_id, is_enabled=is_enabled, created_by=created_by,
+                            created_at=created_at, updated_at=updated_at)
 
 
 def create_conversion_fee(row_id, id, percentage_from_source, created_by, created_at, updated_at):
@@ -124,6 +125,7 @@ class TestVariables:
                                                   description="We are crazy on blockchain",
                                                   symbol="AGIX", logo="www.findOurUrl.com/image.png",
                                                   blockchain_id=self.blockchain_row_id_1, allowed_decimal=5,
+                                                  token_address="0xA1e841e8F770E5c9507E2f8cfd0aA6f73009715d",
                                                   created_by=DAPP_AS_CREATED_BY,
                                                   created_at=created_at, updated_at=updated_at)
         self.token_record_2 = create_token_record(row_id=self.token_row_id_2, id="aa5763de861e4a52ab24464790a5c017",
@@ -131,6 +133,7 @@ class TestVariables:
                                                   description="We are crazy on blockchain",
                                                   symbol="AGIX", logo="www.findOurUrl.com/image.png",
                                                   blockchain_id=self.blockchain_row_id_2, allowed_decimal=10,
+                                                  token_address="ae8a0b54484418a3db56f4e9b472d51cbc860667489366ba6e150c8a",
                                                   created_by=DAPP_AS_CREATED_BY,
                                                   created_at=created_at, updated_at=updated_at)
         self.token = [self.token_record_1, self.token_record_2]

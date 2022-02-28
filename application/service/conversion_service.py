@@ -164,7 +164,7 @@ class ConversionService:
                                                      deposit_amount=lowest_unit_amount)
         conversion_id = conversion[ConversionEntities.ID.value]
         deposit_address = wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
-
+        deposit_amount = conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)
         if not deposit_address:
             conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
             user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value).get(
@@ -172,16 +172,14 @@ class ConversionService:
             contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
             contract_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_OUT.value,
                                                user_address=user_address, conversion_id=conversion_id,
-                                               amount=Decimal(float(conversion_detail.get(
-                                                   ConversionDetailEntities.CONVERSION.value).get(
-                                                   ConversionEntities.DEPOSIT_AMOUNT.value))),
+                                               amount=deposit_amount,
                                                contract_address=contract_address,
                                                chain_id=conversion_detail.get(
                                                    ConversionDetailEntities.FROM_TOKEN.value).get(
                                                    TokenEntities.BLOCKCHAIN.value).get(
                                                    BlockchainEntities.CHAIN_ID.value))
         return create_conversion_request_response(conversion_id=conversion_id, deposit_address=deposit_address,
-                                                  signature=contract_signature)
+                                                  signature=contract_signature, deposit_amount=deposit_amount)
 
     def process_conversion_request(self, wallet_pair_id, deposit_amount):
         logger.info(f"Processing the conversion request with wallet_pair_id={wallet_pair_id},"

@@ -23,6 +23,7 @@ class TokenEntities(Enum):
     SYMBOL = "symbol"
     LOGO = "logo"
     ALLOWED_DECIMAL = "allowed_decimal"
+    TOKEN_ADDRESS = "token_address"
     BLOCKCHAIN = "blockchain"
     CREATED_BY = "created_by"
     CREATED_AT = "created_at"
