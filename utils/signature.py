@@ -3,6 +3,7 @@ import os
 
 import web3
 from eth_account.messages import defunct_hash_message, encode_defunct
+from eth_utils import ValidationError
 from web3 import Web3
 
 from common.boto_utils import BotoUtils
@@ -10,7 +11,7 @@ from common.logger import get_logger
 from constants.entity import SignatureMetadataEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import SIGNATURE_TYPES, ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH
-from utils.exceptions import InternalServerErrorException
+from utils.exceptions import InternalServerErrorException, BadRequestException
 from utils.general import get_ethereum_network_url, string_to_bytes_to_hex
 
 logger = get_logger(__name__)
@@ -36,6 +37,32 @@ def validate_conversion_signature(token_pair_id, amount, from_address, to_addres
     )
 
     return signer_address == target_address
+
+
+def validate_conversion_claim_signature(conversion_id, amount, from_address, to_address, signature, chain_id):
+    logger.info("Validating the signature")
+    try:
+        message = web3.Web3.soliditySha3(
+            ["string", "string", "string", "string"],
+            [conversion_id, amount, from_address, to_address],
+        )
+
+        hash_message = defunct_hash_message(message)
+        web3_object = Web3(web3.providers.HTTPProvider(get_ethereum_network_url(chain_id=chain_id)))
+        signer_address = web3_object.eth.account.recoverHash(
+            message_hash=hash_message, signature=signature
+        )
+    except ValidationError as e:
+        logger.info(e)
+        raise BadRequestException(error_code=ErrorCode.INCORRECT_SIGNATURE_LENGTH.value,
+                                  error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE_LENGTH.value].value)
+    except Exception as e:
+        logger.exception(e)
+        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION.value].value)
+
+    return signer_address == to_address
 
 
 def create_signature_metadata(token_pair_id, amount, from_address, to_address, block_number):

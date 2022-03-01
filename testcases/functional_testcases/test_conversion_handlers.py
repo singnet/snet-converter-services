@@ -1,14 +1,15 @@
 import json
 import unittest
-from unittest import mock
+from decimal import Decimal
 from unittest.mock import patch
 
 from sqlalchemy import distinct
 
 from application.handler.conversion_handlers import create_conversion_request, get_conversion_history, \
-    create_transaction_for_conversion
+    create_transaction_for_conversion, claim_conversion
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.lambdas import LambdaResponseStatus
+from constants.status import ConversionStatus
 from infrastructure.models import TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel, \
     WalletPairDBModel, ConversionDBModel, TransactionDBModel, ConversionTransactionDBModel
 from infrastructure.repositories.conversion_repository import ConversionRepository
@@ -468,6 +469,133 @@ class TestConversion(unittest.TestCase):
         # body = json.loads(response["body"])
         # self.assertEqual(body["status"], LambdaResponseStatus.SUCCESS.value)
         # self.assertIsNotNone(body["data"]["id"])
+
+    @patch("application.service.conversion_service.get_signature")
+    @patch("common.utils.Utils.report_slack")
+    def test_claim_conversion(self, mock_report_slack, mock_signature):
+        mock_signature.return_value = "some signature"
+        event = dict()
+
+        bad_request_missing_body = {'status': 'failed', 'data': None,
+                                    'error': {'code': 'E0001', 'message': 'BAD_REQUEST', 'details': 'Missing body'}}
+        bad_request_schema_not_matching = {'status': 'failed', 'data': None,
+                                           'error': {'code': 'E0003', 'message': 'BAD_REQUEST',
+                                                     'details': 'Schema is not matching with request'}}
+        bad_request_property_value_empty = {'status': 'failed', 'data': None,
+                                            'error': {'code': 'E0005', 'message': 'BAD_REQUEST',
+                                                      'details': 'Property value is empty'}}
+        bad_request_invalid_conversion_id = {'status': 'failed', 'data': None,
+                                             'error': {'code': 'E0008', 'message': 'BAD_REQUEST',
+                                                       'details': 'Invalid conversion id provided'}}
+        bad_request_conversion_not_ready_for_claim = {'status': 'failed', 'data': None,
+                                                      'error': {'code': 'E0052', 'message': 'BAD_REQUEST',
+                                                                'details': 'Conversion is not ready for claim'}}
+        bad_request_invalid_claim_for_blockchain = {'status': 'failed', 'data': None,
+                                                    'error': {'code': 'E0053', 'message': 'BAD_REQUEST',
+                                                              'details': 'Invalid claim operation for the blockchain'}}
+        bad_request_incorrect_signature_value_or_length = {'status': 'failed', 'data': None,
+                                                           'error': {'code': 'E0055', 'message': 'BAD_REQUEST',
+                                                                     'details': 'Incorrect signature value or length provided'}}
+        bad_request_invalid_signature = {'status': 'failed', 'data': None,
+                                         'error': {'code': 'E0006', 'message': 'BAD_REQUEST',
+                                                   'details': 'Incorrect signature provided'}}
+        success_response = {'status': 'success', 'data': {'claim_amount': '1E+3', 'signature': 'some signature'},
+                            'error': {'code': None, 'message': None, 'details': None}}
+
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_missing_body)
+
+        body = {}
+        event = {"pathParameters": {"conversion_id": ""}, "body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_schema_not_matching)
+
+        body = {"from_address": "",
+                "to_address": "",
+                "amount": "",
+                "signature": ""}
+        event = {"body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_property_value_empty)
+
+        body = {"from_address": "test",
+                "to_address": "test",
+                "amount": "re",
+                "signature": "ee"}
+        event = {"pathParameters": {"conversion_id": "test"}, "body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_invalid_conversion_id)
+
+        body = {"from_address": "test",
+                "to_address": "test",
+                "amount": "re",
+                "signature": "ee"}
+        event = {"pathParameters": {"conversion_id": "51769f201e46446fb61a9c197cb0706b"}, "body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_conversion_not_ready_for_claim)
+
+        conversion_repo.update_conversion(conversion_id="51769f201e46446fb61a9c197cb0706b", claim_amount=Decimal(1000),
+                                          deposit_amount=Decimal(1000), fee_amount=None, status="PROCESSING",
+                                          claim_signature=None)
+
+        body = {"from_address": "test",
+                "to_address": "test",
+                "amount": "re",
+                "signature": "ee"}
+        event = {"pathParameters": {"conversion_id": "51769f201e46446fb61a9c197cb0706b"}, "body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_invalid_claim_for_blockchain)
+
+        conversion_repo.update_conversion(conversion_id="5086b5245cd046a68363d9ca8ed0027e", claim_amount=Decimal(1000),
+                                          deposit_amount=Decimal(1000), fee_amount=None, status="PROCESSING",
+                                          claim_signature=None)
+
+        body = {"from_address": "test",
+                "to_address": "test",
+                "amount": "re",
+                "signature": "ee"}
+        event = {"pathParameters": {"conversion_id": "5086b5245cd046a68363d9ca8ed0027e"}, "body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_conversion_not_ready_for_claim)
+
+        conversion_repo.update_conversion(conversion_id="5086b5245cd046a68363d9ca8ed0027e", claim_amount=Decimal(1000),
+                                          deposit_amount=Decimal(1000), fee_amount=None,
+                                          status=ConversionStatus.WAITING_FOR_CLAIM.value,
+                                          claim_signature=None)
+        body = {"from_address": "test",
+                "to_address": "test",
+                "amount": "re",
+                "signature": "ee"}
+        event = {"pathParameters": {"conversion_id": "5086b5245cd046a68363d9ca8ed0027e"}, "body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_incorrect_signature_value_or_length)
+
+        body = {"from_address": "test",
+                "to_address": "test",
+                "amount": "re",
+                "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"}
+        event = {"pathParameters": {"conversion_id": "5086b5245cd046a68363d9ca8ed0027e"}, "body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_invalid_signature)
+
+        body = {
+            "from_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "amount": "1000",
+            "signature": "0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b"}
+        event = {"pathParameters": {"conversion_id": "5086b5245cd046a68363d9ca8ed0027e"}, "body": json.dumps(body)}
+        response = claim_conversion(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, success_response)
 
     def tearDown(self):
         TestConversion.delete_all_tables()

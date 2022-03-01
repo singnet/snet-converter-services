@@ -33,6 +33,13 @@ def create_conversion_request_response(conversion_id, deposit_address, signature
     }
 
 
+def claim_conversion_response(signature, claim_amount):
+    return {
+        ConversionEntities.CLAIM_AMOUNT.value: claim_amount,
+        SignatureMetadataEntities.SIGNATURE.value: signature
+    }
+
+
 def get_conversion_detail_for_conversion_internal_response(conversion):
     return {
         ConversionEntities.ROW_ID.value: conversion[ConversionEntities.ROW_ID.value],

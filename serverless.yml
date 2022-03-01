@@ -110,6 +110,16 @@ custom:
         contentType: "application/json"
         schema: ${file(documentation/models/conversion.json):CreateTransactionForConversionOutput}
 
+      - name: "ClaimConversionRequestInput"
+        description: "Claim conversion request model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):ClaimConversionRequestInput}
+
+      - name: "ClaimConversionRequestOutput"
+        description: "Claim conversion response model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):ClaimConversionRequestOutput}
+
 package:
   patterns:
     - "!.circleci/**"
@@ -428,6 +438,44 @@ functions:
                   description: "Getting the conversion history"
                 responseModels:
                   "application/json": "GetConversionHistoryOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+
+  claim_conversion:
+    handler: application/handler/conversion_handlers.claim_conversion
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/conversion/{conversion_id}/claim
+          method: post
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyBody
+          request:
+            paths:
+              conversion_id: true
+          documentation:
+            summary: "Claim the conversion"
+            description: "Claim the conversion"
+            tags:
+              - "Conversion"
+              - "Claim"
+            requestModels:
+              "application/json": "ClaimConversionRequestInput"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Claim the conversion"
+                responseModels:
+                  "application/json": "ClaimConversionRequestOutput"
               - statusCode: "403"
                 responseModels:
                   "application/json": "ApiErrorMessage"
