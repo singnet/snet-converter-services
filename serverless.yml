@@ -509,6 +509,7 @@ functions:
             Fn::GetAtt:
               - converterBridgeQueue
               - Arn
+          batchSize: 1
 
 
 
