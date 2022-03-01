@@ -401,5 +401,45 @@
       "data",
       "error"
     ]
+  },
+  "ClaimConversionRequestInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "string"
+      },
+      "from_address": {
+        "type": "string"
+      },
+      "to_address": {
+        "type": "string"
+      },
+      "signature": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "amount",
+      "from_address",
+      "to_address",
+      "signature"
+    ]
+  },
+  "ClaimConversionRequestOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "claim_amount": {
+        "type": "string"
+      },
+      "signature": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "claim_amount",
+      "signature"
+    ]
   }
 }

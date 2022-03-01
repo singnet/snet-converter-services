@@ -15,6 +15,8 @@ Converter Service│
 │   │       ├── POST          ----> (3)
 │   │       ├── history        
 │   │           ├── POST      ----> (5)
+|   |       |__{converion_id}
+|   |          |__ claim     -----> (6)
 │   │   ├── transaction  
 │   │       ├── POST          ----> (4)
 │   │   └── other-services
@@ -28,6 +30,7 @@ Converter Service│
  3. [Create conversion request](#3-create-a-conversion-request)
  4. [Create a Transaction for Conversion](#4-create-a-transaction-for-conversion)
  5. [Get Conversion History](#5-get-conversion-history)
+ 6. [Claim Conversion](#6-claim-conversion)
 
 
 ## LIST OF Internal Lambda
@@ -400,6 +403,32 @@ Converter Service│
 }
 ```
 
+### 6. Claim conversion
+  API Url: `{DOMAIN_URL}/{STAGE}/v1/conversion/{conversion_id}/claim` 
+
+  Method: `POST`
+ 
+  PathParameter:
+    Required `conversion_id`
+
+  Request Body :
+
+```json5
+{
+  "amount": "1000",
+  "from_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+  "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+  "signature": "0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b"
+}
+```
+
+    Response:
+```json5
+{
+  "claim_amount": "1000",
+  "signature": "0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b"
+}
+```
 
 ###Internal Lambda
 

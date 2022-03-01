@@ -14,13 +14,15 @@ from constants.entity import BlockchainEntities, TokenEntities, ConversionDetail
     ConversionEntities, CardanoEventType, EthereumEventType, CardanoAPIEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn
-from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus
+from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus, \
+    ConversionStatus
 from domain.entities.converter_bridge import ConverterBridge
 from utils.cardano_blockchain import CardanoBlockchainUtil
 from utils.exceptions import InternalServerErrorException, BadRequestException, BlockConfirmationNotEnoughException
 from utils.general import get_ethereum_network_url, validate_conversion_with_blockchain, \
     get_cardano_network_url_and_project_id, check_existing_transaction_succeed, get_transactions_operation, \
     is_supported_network_conversion
+from utils.signature import validate_conversion_claim_signature
 
 logger = get_logger(__name__)
 
@@ -407,3 +409,41 @@ def generate_payload_format_for_cardano_operation(address, tx_amount, tx_details
         CardanoAPIEntities.CARDANO_ADDRESS.value: address, CardanoAPIEntities.AMOUNT.value: tx_amount,
         CardanoAPIEntities.TRANSACTION_DETAILS.value: tx_details
     }
+
+
+def validate_conversion_claim_request_signature(conversion_detail, amount, from_address, to_address, signature,
+                                                chain_id):
+    conversion = conversion_detail.get(ConversionDetailEntities.CONVERSION.value)
+    conversion_id = conversion.get(ConversionEntities.ID.value)
+    claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
+    claim_signature = conversion.get(ConversionEntities.CLAIM_SIGNATURE.value)
+    conversion_status = conversion.get(ConversionEntities.STATUS.value)
+    to_blockchain_name = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
+        TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.NAME.value)
+
+    if not claim_amount or not conversion_status or not to_blockchain_name or not conversion_id:
+        raise BadRequestException(error_code=ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value].value)
+
+    if to_blockchain_name.lower() != BlockchainName.ETHEREUM.value.lower():
+        raise BadRequestException(error_code=ErrorCode.INVALID_CLAIM_OPERATION_ON_BLOCKCHAIN.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.INVALID_CLAIM_OPERATION_ON_BLOCKCHAIN.value].value)
+
+    if claim_signature:
+        raise BadRequestException(error_code=ErrorCode.CONVERSION_ALREADY_CLAIMED.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.CONVERSION_ALREADY_CLAIMED.value].value)
+
+    if conversion_status != ConversionStatus.WAITING_FOR_CLAIM.value:
+        raise BadRequestException(error_code=ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value].value)
+
+    result = validate_conversion_claim_signature(conversion_id=conversion_id, amount=amount,
+                                                 from_address=from_address, to_address=to_address,
+                                                 signature=signature, chain_id=chain_id)
+    if result is False:
+        raise BadRequestException(error_code=ErrorCode.INCORRECT_SIGNATURE.value,
+                                  error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE.value].value)

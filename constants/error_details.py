@@ -53,6 +53,11 @@ class ErrorCode(Enum):
     REQUIRED_SIGNING_ENVIRONMENT_FIELDS_NOT_FOUND = "E0049"
     UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL = "E0050"
     UNEXPECTED_ERROR_ON_SENDING_MESSAGE = "E0051"
+    CONVERSION_NOT_READY_FOR_CLAIM = "E0052"
+    INVALID_CLAIM_OPERATION_ON_BLOCKCHAIN = 'E0053'
+    CONVERSION_ALREADY_CLAIMED = "E0054"
+    INCORRECT_SIGNATURE_LENGTH = "E0055"
+    UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION = "E0056"
 
 
 class ErrorDetails(Enum):
@@ -107,3 +112,8 @@ class ErrorDetails(Enum):
     E0049 = "Required environment variables not found on signing"
     E0050 = "Unexpected error occurred when calling the cardano service"
     E0051 = "Unexpected error occurred while sending the message to queue"
+    E0052 = "Conversion is not ready for claim"
+    E0053 = "Invalid claim operation for the blockchain"
+    E0054 = "Conversion had been claimed already"
+    E0055 = "Incorrect signature value or length provided"
+    E0056 = "Unexpected error occurred while validating the claim signature"

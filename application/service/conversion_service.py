@@ -4,7 +4,7 @@ from application.service.conversion_reponse import get_latest_user_pending_conve
     create_conversion_response, create_conversion_request_response, \
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
     create_transaction_response, create_transaction_for_conversion_response, \
-    get_waiting_conversion_deposit_on_address_response, get_transaction_by_hash_response
+    get_waiting_conversion_deposit_on_address_response, get_transaction_by_hash_response, claim_conversion_response
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
@@ -16,11 +16,10 @@ from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus, TransactionOperation
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from utils.blockchain import validate_address, get_lowest_unit_amount, \
-    validate_transaction_hash
+    validate_transaction_hash, validate_conversion_claim_request_signature
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, paginate_items, \
     is_supported_network_conversion
-
 from utils.signature import validate_conversion_signature, get_signature
 
 logger = get_logger(__name__)
@@ -92,11 +91,14 @@ class ConversionService:
                     f"status={status}")
         self.conversion_repo.update_conversion_status(conversion_id=conversion_id, status=status)
 
-    def update_conversion(self, conversion_id, deposit_amount=None, claim_amount=None, fee_amount=None, status=None):
+    def update_conversion(self, conversion_id, deposit_amount=None, claim_amount=None, fee_amount=None, status=None,
+                          claim_signature=None):
         logger.info(f"Updating the conversion  for the conversion_id={conversion_id}, "
-                    f"deposit_amount={deposit_amount}, claim_amount={claim_amount}, fee_amount={fee_amount}, status={status}")
+                    f"deposit_amount={deposit_amount}, claim_amount={claim_amount}, fee_amount={fee_amount}, "
+                    f"status={status}, claim_signature={claim_signature}")
         self.conversion_repo.update_conversion(conversion_id=conversion_id, deposit_amount=deposit_amount,
-                                               claim_amount=claim_amount, fee_amount=fee_amount, status=status)
+                                               claim_amount=claim_amount, fee_amount=fee_amount, status=status,
+                                               claim_signature=claim_signature)
 
     def update_conversion_transaction(self, conversion_transaction_id, status):
         logger.info(
@@ -172,7 +174,7 @@ class ConversionService:
             contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
             contract_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_OUT.value,
                                                user_address=user_address, conversion_id=conversion_id,
-                                               amount=deposit_amount,
+                                               amount=Decimal(float(deposit_amount)),
                                                contract_address=contract_address,
                                                chain_id=conversion_detail.get(
                                                    ConversionDetailEntities.FROM_TOKEN.value).get(
@@ -285,3 +287,33 @@ class ConversionService:
         logger.info(f"Getting the transaction by tx_hash={tx_hash}")
         transaction = self.conversion_repo.get_transaction_by_hash(tx_hash)
         return get_transaction_by_hash_response(transaction.to_dict()) if transaction else None
+
+    def claim_conversion(self, conversion_id, amount, from_address, to_address, signature):
+        logger.info(
+            f"Claim the conversion for the conversion_id={conversion_id}, amount={amount}, from_address={from_address},"
+            f"to_address={to_address}, signature={signature}")
+        conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
+        chain_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
+            TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.CHAIN_ID.value)
+
+        # validate the request signature
+        validate_conversion_claim_request_signature(conversion_detail=conversion_detail, amount=amount,
+                                                    from_address=from_address, to_address=to_address,
+                                                    signature=signature, chain_id=chain_id)
+
+        conversion = conversion_detail.get(ConversionDetailEntities.CONVERSION.value)
+        claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
+        user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value).get(
+            WalletPairEntities.TO_ADDRESS.value)
+        contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
+
+        # Generate claim signature
+        claim_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_IN.value,
+                                        user_address=user_address, conversion_id=conversion_id,
+                                        amount=Decimal(float(claim_amount)),
+                                        contract_address=contract_address, chain_id=chain_id)
+        # Update the signature and status
+        self.update_conversion(conversion_id=conversion_id, status=ConversionStatus.CLAIM_INITIATED.value,
+                               claim_signature=claim_signature)
+
+        return claim_conversion_response(signature=claim_signature, claim_amount=claim_amount)

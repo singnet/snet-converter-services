@@ -146,7 +146,7 @@ class ConversionRepository(BaseRepository):
         conversion.updated_at = datetime_in_utcnow()
         self.session.commit()
 
-    def update_conversion(self, conversion_id, deposit_amount, claim_amount, fee_amount, status):
+    def update_conversion(self, conversion_id, deposit_amount, claim_amount, fee_amount, status, claim_signature):
         conversion = self.session.query(ConversionDBModel) \
             .filter(ConversionDBModel.id == conversion_id).first()
         if deposit_amount:
@@ -157,6 +157,8 @@ class ConversionRepository(BaseRepository):
             conversion.fee_amount = fee_amount
         if status:
             conversion.status = status
+        if claim_signature:
+            conversion.claim_signature = claim_signature
 
         conversion.updated_at = datetime_in_utcnow()
         self.session.commit()

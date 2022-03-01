@@ -6,6 +6,7 @@ class ConversionStatus(Enum):
     PROCESSING = "PROCESSING"
     WAITING_FOR_CLAIM = "WAITING_FOR_CLAIM"
     SUCCESS = "SUCCESS"
+    CLAIM_INITIATED = "CLAIM_INITIATED"
 
 
 class ConversionTransactionStatus(Enum):

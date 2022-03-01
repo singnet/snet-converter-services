@@ -29,12 +29,12 @@ file_path = os.path.realpath(__file__)
 @exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
 def create_conversion_request(event, context):
     logger.debug(f"create conversion request event={json.dumps(event)}")
+
     body = get_valid_value(event, HttpRequestParamType.REQUEST_BODY.value)
 
     if not len(body) or body is None:
         raise BadRequestException(error_code=ErrorCode.MISSING_BODY.value,
                                   error_details=ErrorDetails[ErrorCode.MISSING_BODY.value].value)
-
     body = json.loads(body)
     validate_schema(filepath=os.path.dirname(file_path) + "/../../documentation/models/conversion.json",
                     schema_key="CreateConversionRequestInput", input_json=body)
@@ -107,3 +107,34 @@ def get_conversion_history(event, context):
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def claim_conversion(event, context):
+    logger.debug(f"Claim the conversion request event={json.dumps(event)}")
+    path_param = get_valid_value(event, HttpRequestParamType.REQUEST_PARAM_PATH.value)
+    body = get_valid_value(event, HttpRequestParamType.REQUEST_BODY.value)
+
+    if not len(body) or body is None:
+        raise BadRequestException(error_code=ErrorCode.MISSING_BODY.value,
+                                  error_details=ErrorDetails[ErrorCode.MISSING_BODY.value].value)
+    conversion_id = path_param.get(ApiParameters.CONVERSION_ID.value, None)
+    body = json.loads(body)
+    validate_schema(filepath=os.path.dirname(file_path) + "/../../documentation/models/conversion.json",
+                    schema_key="ClaimConversionRequestInput", input_json=body)
+    amount = body.get(ApiParameters.AMOUNT.value)
+    from_address = body.get(ApiParameters.FROM_ADDRESS.value)
+    to_address = body.get(ApiParameters.TO_ADDRESS.value)
+    signature = body.get(ApiParameters.SIGNATURE.value)
+
+    if not conversion_id or not amount or not from_address or not to_address or not signature:
+        raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
+                                  error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
+
+    response = conversion_service.claim_conversion(conversion_id=conversion_id, amount=amount,
+                                                   from_address=from_address, to_address=to_address,
+                                                   signature=signature)
+    return generate_lambda_response(HTTPStatus.OK.value,
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
+                                                       error=make_error_format()), cors_enabled=True)
+
