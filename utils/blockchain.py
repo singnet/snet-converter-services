@@ -347,10 +347,10 @@ def check_block_confirmation(tx_hash, blockchain_network_id, required_block_conf
                                                       ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
 
 
-def burn_token_on_cardano(address, token, tx_amount, tx_details):
+def burn_token_on_cardano(address, token, tx_amount, tx_details, deposit_address_details):
     logger.info(
         f"Calling the burn token service on cardano with inputs as address={address}, {token}, tx_amount={tx_amount}, "
-        f"tx_details={tx_details}")
+        f"tx_details={tx_details}, deposit_address_details={deposit_address_details}")
 
     base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
     if not base_path:
@@ -361,6 +361,7 @@ def burn_token_on_cardano(address, token, tx_amount, tx_details):
         payload = generate_payload_format_for_cardano_operation(address=address,
                                                                 tx_amount=str(Decimal(float(tx_amount))),
                                                                 tx_details=tx_details)
+        payload[CardanoAPIEntities.DEPOSIT_ADDRESS_DETAILS.value] = deposit_address_details
         logger.info(f"Payload for burning ={json.dumps(payload)}")
         response = requests.post(f"{base_path}/{token}/burn", data=json.dumps(payload),
                                  headers={"Content-Type": "application/json"})
@@ -429,6 +430,14 @@ def generate_transaction_detail_for_cardano_operation(hash, environment):
     return {
         CardanoAPIEntities.HASH.value: hash,
         CardanoAPIEntities.ENVIRONMENT.value: environment
+    }
+
+
+def generate_deposit_address_details_for_cardano_operation(deposit_address, index=1, role=0):
+    return {
+        CardanoAPIEntities.ADDRESS.value: deposit_address,
+        CardanoAPIEntities.INDEX.value: index,
+        CardanoAPIEntities.ROLE.value: role
     }
 
 
