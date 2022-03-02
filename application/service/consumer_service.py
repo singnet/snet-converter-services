@@ -148,12 +148,13 @@ class ConsumerService:
     def process_ethereum_event(self, event_type, tx_hash, tx_amount, conversion_id, transaction, token_holder):
 
         if not tx_hash or not tx_amount or not conversion_id:
-            raise BadRequestException(error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
-                                      error_details=ErrorDetails[ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
-
-        conversion_detail = self.conversion_service.get_conversion_detail(conversion_id=conversion_id)
-
-        if not conversion_detail:
+            raise InternalServerErrorException(error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
+        try:
+            conversion_detail = self.conversion_service.get_conversion_detail(conversion_id=conversion_id)
+        except Exception as e:
+            logger.info(e)
             raise InternalServerErrorException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
                                                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
         wallet_pair = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {})
@@ -207,8 +208,9 @@ class ConsumerService:
             CardanoEventConsumer.TX_AMOUNT.value)
 
         if deposit_address is None or tx_amount is None or tx_hash is None:
-            raise BadRequestException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
-                                      error_details=ErrorDetails[ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
 
         tx_amount = Decimal(float(tx_amount))
 
@@ -322,7 +324,7 @@ class ConsumerService:
                 WalletPairEntities.FROM_ADDRESS.value)
             tx_details = generate_transaction_detail_for_cardano_operation(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
-                environment=conversion_complete_detail.get())
+                environment=db_from_blockchain_name)
             response = burn_token_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value), tx_amount=tx_amount,
                                              tx_details=tx_details, address=address)
             tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value).strip()

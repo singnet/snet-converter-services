@@ -1,12 +1,14 @@
 import json
 import unittest
 from decimal import Decimal
-from unittest.mock import patch
+from unittest import mock
+from unittest.mock import patch, Mock
 
 from sqlalchemy import distinct
 
+import utils.blockchain
 from application.handler.conversion_handlers import create_conversion_request, get_conversion_history, \
-    create_transaction_for_conversion, claim_conversion
+    create_transaction_for_conversion, claim_conversion, get_all_deposit_address
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.lambdas import LambdaResponseStatus
 from constants.status import ConversionStatus
@@ -44,11 +46,13 @@ class TestConversion(unittest.TestCase):
         conversion_repo.session.add_all(TestVariables().transaction)
         conversion_repo.session.commit()
 
+    @patch("utils.blockchain.get_cardano_deposit_address", Mock(return_value="some derived address"))
     @patch("application.service.conversion_service.get_signature")
     @patch("utils.blockchain.validate_cardano_address")
     @patch("common.utils.Utils.report_slack")
     def test_create_conversion_request(self, mock_report_slack, mock_validate_cardano_address, mock_signature):
         mock_signature.return_value = "some signature"
+
         conversion_repo.session.query(TransactionDBModel).delete()
         conversion_repo.session.commit()
         conversion_repo.session.query(ConversionTransactionDBModel).delete()
@@ -596,6 +600,25 @@ class TestConversion(unittest.TestCase):
         response = claim_conversion(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, success_response)
+
+    @patch("common.utils.Utils.report_slack")
+    def test_get_all_deposit_address(self, mock_report_slack):
+        event = dict()
+        success_response = {'status': 'success', 'data': {'addresses': [
+            'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8']},
+                            'error': {'code': None, 'message': None, 'details': None}}
+        success_response_no_addresses = {'status': 'success', 'data': {'addresses': []},
+                                         'error': {'code': None, 'message': None, 'details': None}}
+
+        response = get_all_deposit_address(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, success_response)
+
+        TestConversion.delete_all_tables()
+
+        response = get_all_deposit_address(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, success_response_no_addresses)
 
     def tearDown(self):
         TestConversion.delete_all_tables()

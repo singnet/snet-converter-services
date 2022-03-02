@@ -511,6 +511,12 @@ functions:
               - Arn
           batchSize: 1
 
+  get_all_deposit_address:
+    handler: application/handler/conversion_handlers.get_all_deposit_address
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+
 
 
 

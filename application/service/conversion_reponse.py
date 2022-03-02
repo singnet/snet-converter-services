@@ -196,3 +196,9 @@ def get_transaction_by_hash_response(transaction):
     response[TransactionEntities.CONVERSION_TRANSACTION_ID.value] = transaction[
         TransactionEntities.CONVERSION_TRANSACTION_ID.value]
     return response
+
+
+def get_all_deposit_address_response(addresses):
+    return {
+        "addresses": addresses
+    }

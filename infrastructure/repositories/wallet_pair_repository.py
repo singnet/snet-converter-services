@@ -76,8 +76,8 @@ class WalletPairRepository(BaseRepository):
                                              updated_at=wallet_pair.updated_at)
 
     def get_wallet_pair_by_conversion_id(self, conversion_id):
-        wallet_pair = self.session.query(WalletPairDBModel)\
-            .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id)\
+        wallet_pair = self.session.query(WalletPairDBModel) \
+            .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
             .filter(ConversionDBModel.id == conversion_id).first()
 
         if wallet_pair is None:
@@ -93,3 +93,18 @@ class WalletPairRepository(BaseRepository):
                                              signature_expiry=wallet_pair.signature_expiry,
                                              created_by=wallet_pair.created_by, created_at=wallet_pair.created_at,
                                              updated_at=wallet_pair.updated_at)
+
+    def get_all_deposit_address(self):
+        wallet_pairs = self.session.query(WalletPairDBModel) \
+            .filter(WalletPairDBModel.deposit_address.isnot(None)).all()
+
+        return [WalletPairFactory.wallet_pair(row_id=wallet_pair.row_id, id=wallet_pair.id,
+                                              token_pair_id=wallet_pair.token_pair_id,
+                                              from_address=wallet_pair.from_address,
+                                              to_address=wallet_pair.to_address,
+                                              deposit_address=wallet_pair.deposit_address,
+                                              signature=wallet_pair.signature,
+                                              signature_metadata=wallet_pair.signature_metadata,
+                                              signature_expiry=wallet_pair.signature_expiry,
+                                              created_by=wallet_pair.created_by, created_at=wallet_pair.created_at,
+                                              updated_at=wallet_pair.updated_at) for wallet_pair in wallet_pairs]

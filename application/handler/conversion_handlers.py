@@ -138,3 +138,11 @@ def claim_conversion(event, context):
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
 
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def get_all_deposit_address(event, context):
+    logger.debug(f"Getting all the deposit address request event={json.dumps(event)}")
+    response = conversion_service.get_all_deposit_address()
+    return generate_lambda_response(HTTPStatus.OK.value,
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
+                                                       error=make_error_format()), cors_enabled=True)

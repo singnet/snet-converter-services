@@ -58,6 +58,7 @@ class ErrorCode(Enum):
     CONVERSION_ALREADY_CLAIMED = "E0054"
     INCORRECT_SIGNATURE_LENGTH = "E0055"
     UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION = "E0056"
+    DERIVED_ADDRESS_NOT_FOUND = "E0057"
 
 
 class ErrorDetails(Enum):
@@ -117,3 +118,4 @@ class ErrorDetails(Enum):
     E0054 = "Conversion had been claimed already"
     E0055 = "Incorrect signature value or length provided"
     E0056 = "Unexpected error occurred while validating the claim signature"
+    E0057 = "Derived address not found"

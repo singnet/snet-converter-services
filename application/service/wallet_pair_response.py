@@ -38,3 +38,7 @@ def get_wallet_pair_detail_by_deposit_address_response(wallet_pair):
 
 def get_wallet_pair_by_conversion_id_response(wallet_pair):
     return get_wallet_pair_by_addresses_response(wallet_pair)
+
+
+def get_all_deposit_address_response(wallet_pairs):
+    return [wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]  for wallet_pair in wallet_pairs]
