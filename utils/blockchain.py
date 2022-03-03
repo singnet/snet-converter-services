@@ -315,7 +315,7 @@ def validate_consumer_event_against_transaction(event_type, transaction, blockch
                                           error_details=ErrorDetails[
                                               ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
     elif blockchain_name.lower() == BlockchainName.ETHEREUM.name.lower():
-        if event_type is not EthereumEventType.TOKEN_BURNT.value and event_type is not EthereumEventType.TOKEN_MINTED.value:
+        if event_type != EthereumEventType.TOKEN_BURNT.value and event_type != EthereumEventType.TOKEN_MINTED.value:
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
                                                error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
 
@@ -378,11 +378,11 @@ def burn_token_on_cardano(address, token, tx_amount, tx_details, deposit_address
                                            error_details=ErrorDetails[
                                                ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
 
-    if not response.get(CardanoAPIEntities.TRANSACTION_ID.value):
-        raise InternalServerErrorException(error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
+    tx_id = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
+    if not tx_id or not tx_id.strip():
+        raise InternalServerErrorException(error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
                                            error_details=ErrorDetails[
-                                               ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
-
+                                               ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
     return response
 
 
@@ -417,12 +417,11 @@ def mint_token_and_transfer_on_cardano(address, token, tx_amount, tx_details, so
         raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
                                            error_details=ErrorDetails[
                                                ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
-
-    if not response.get(CardanoAPIEntities.TRANSACTION_ID.value):
-        raise InternalServerErrorException(error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
+    tx_id = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
+    if not tx_id or not tx_id.strip():
+        raise InternalServerErrorException(error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
                                            error_details=ErrorDetails[
-                                               ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
-
+                                               ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
     return response
 
 
