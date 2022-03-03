@@ -37,6 +37,7 @@ Converter Service│
 
  1. [Cardano Event Consumer](#1-converter-event-consumer)
  2. [Converter Bridge](#2-converter-bridge)
+ 3. [Get all deposit address](#3-get-all-the-deposit-address)
 
 ### 1. Get all blockchain
   API Url: `{DOMAIN_URL}/{STAGE}/v1/blockchain` 
@@ -485,5 +486,25 @@ Another sample  payload
             "awsRegion": "us-east-1"
         }
     ]
+}
+```
+### 3. Get all the deposit address
+
+    Request: `None`
+    
+    Response:
+```json5
+{
+    "status": "success",
+    "data": {
+        "addresses": [
+            "addr_test1vpmh8nfmj353v80ehdn9dh0dyln70x7vs68jvf7rl6wxglsyjck38"
+        ]
+    },
+    "error": {
+        "code": null,
+        "message": null,
+        "details": null
+    }
 }
 ```

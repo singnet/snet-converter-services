@@ -16,7 +16,7 @@ from constants.status import TransactionStatus, TransactionVisibility, Transacti
     ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS, ConversionStatus, ConversionTransactionStatus
 from utils.blockchain import get_next_activity_event_on_conversion, validate_consumer_event_against_transaction, \
     check_block_confirmation, burn_token_on_cardano, mint_token_and_transfer_on_cardano, \
-    generate_transaction_detail_for_cardano_operation
+    generate_transaction_detail_for_cardano_operation, generate_deposit_address_details_for_cardano_operation
 from utils.exceptions import BadRequestException, InternalServerErrorException
 
 logger = get_logger(__name__)
@@ -148,12 +148,13 @@ class ConsumerService:
     def process_ethereum_event(self, event_type, tx_hash, tx_amount, conversion_id, transaction, token_holder):
 
         if not tx_hash or not tx_amount or not conversion_id:
-            raise BadRequestException(error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
-                                      error_details=ErrorDetails[ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
-
-        conversion_detail = self.conversion_service.get_conversion_detail(conversion_id=conversion_id)
-
-        if not conversion_detail:
+            raise InternalServerErrorException(error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
+        try:
+            conversion_detail = self.conversion_service.get_conversion_detail(conversion_id=conversion_id)
+        except Exception as e:
+            logger.info(e)
             raise InternalServerErrorException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
                                                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
         wallet_pair = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {})
@@ -207,8 +208,9 @@ class ConsumerService:
             CardanoEventConsumer.TX_AMOUNT.value)
 
         if deposit_address is None or tx_amount is None or tx_hash is None:
-            raise BadRequestException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
-                                      error_details=ErrorDetails[ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
 
         tx_amount = Decimal(float(tx_amount))
 
@@ -322,9 +324,13 @@ class ConsumerService:
                 WalletPairEntities.FROM_ADDRESS.value)
             tx_details = generate_transaction_detail_for_cardano_operation(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
-                environment=conversion_complete_detail.get())
+                environment=db_from_blockchain_name)
+            deposit_address_details = generate_deposit_address_details_for_cardano_operation(
+                deposit_address=conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
+                    WalletPairEntities.DEPOSIT_ADDRESS.value))
             response = burn_token_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value), tx_amount=tx_amount,
-                                             tx_details=tx_details, address=address)
+                                             tx_details=tx_details, address=address,
+                                             deposit_address_details=deposit_address_details)
             tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value).strip()
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             tx_details = generate_transaction_detail_for_cardano_operation(

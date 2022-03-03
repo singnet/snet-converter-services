@@ -5,7 +5,7 @@ from http import HTTPStatus
 
 from common.utils import generate_lambda_response, make_response_body, Utils
 from constants.lambdas import HttpRequestParamType, LambdaResponseStatus
-from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException
+from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException, BadRequestException
 from utils.lambdas import make_error_format
 
 utils_obj = Utils()
@@ -137,17 +137,15 @@ def consumer_exception_handler(*decorator_args, **decorator_kwargs):
             except BlockConfirmationNotEnoughException as e:
                 logger.info("Not enough blockchain confirmation, so retrying silently")
                 raise e
+            except BadRequestException as e:
+                logger.info(e)
             except Exception as e:
                 exec_info = get_exec_info()
                 slack_message = f"```{error_message}{exec_info}```"
 
-                if e.status_code != HTTPStatus.BAD_REQUEST.value:
-                    logger.exception(slack_message)
-                    utils_obj.report_slack(slack_msg=slack_message, SLACK_HOOK=SLACK_HOOK)
-                    raise e
-                else:
-                    logger.info(slack_message)
-                    return "Success"
+                logger.exception(slack_message)
+                utils_obj.report_slack(slack_msg=slack_message, SLACK_HOOK=SLACK_HOOK)
+                raise e
 
         return wrapper
 

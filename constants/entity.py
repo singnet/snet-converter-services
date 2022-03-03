@@ -203,3 +203,8 @@ class CardanoAPIEntities(Enum):
     TRANSACTION_DETAILS = "transaction_details"
     SOURCE_ADDRESS = "source_address"
     TRANSACTION_ID = "transaction_id"
+    DERIVED_ADDRESS = "derived_address"
+    DEPOSIT_ADDRESS_DETAILS = "deposit_address_details"
+    ADDRESS = "address"
+    INDEX = "index"
+    ROLE = "role"

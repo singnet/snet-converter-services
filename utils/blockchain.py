@@ -8,7 +8,7 @@ from web3.exceptions import TransactionNotFound
 
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
-from config import CARDANO_DEPOSIT_ADDRESS, CARDANO_SERVICE_API
+from config import CARDANO_SERVICE_API
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
     ConversionEntities, CardanoEventType, EthereumEventType, CardanoAPIEntities
@@ -36,10 +36,33 @@ def get_deposit_address(blockchain_name):
 
 
 def get_cardano_deposit_address():
-    """
-    TODO: call cardano cli web to get the public address
-    """
-    return CARDANO_DEPOSIT_ADDRESS
+    logger.info("Getting the deposit address")
+    base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+    if not base_path:
+        raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
+    try:
+        response = requests.post(f"{base_path}/address/derive", data=json.dumps({}),
+                                 headers={"Content-Type": "application/json"})
+
+        if response.status_code != HTTPStatus.OK.value:
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+
+        response = json.loads(response.content.decode("utf-8"))
+    except Exception as e:
+        logger.exception(f"Unexpected error while calling the cardano get deposit address={e}")
+        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+
+    if not response.get(CardanoAPIEntities.DERIVED_ADDRESS.value):
+        raise InternalServerErrorException(error_code=ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value,
+                                           error_details=ErrorDetails[ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value].value)
+
+    return response.get(CardanoAPIEntities.DERIVED_ADDRESS.value)
 
 
 def validate_cardano_address(address, chain_id):
@@ -207,9 +230,9 @@ def get_next_activity_event_on_conversion(conversion_complete_detail):
 
     if not len(transactions):
         logger.info("transactions can't be empty, expecting atleast one transaction should be success")
-        raise BadRequestException(error_code=ErrorCode.NO_TRANSACTIONS_AVAILABLE.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.NO_TRANSACTIONS_AVAILABLE.value].value)
+        raise InternalServerErrorException(error_code=ErrorCode.NO_TRANSACTIONS_AVAILABLE.value,
+                                           error_details=ErrorDetails[
+                                               ErrorCode.NO_TRANSACTIONS_AVAILABLE.value].value)
 
     expected_events_flow = []
 
@@ -282,8 +305,9 @@ def validate_consumer_event_against_transaction(event_type, transaction, blockch
         elif event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNT.value:
             if transaction is None:
                 logger.info("Transaction is not available")
-                raise BadRequestException(error_code=ErrorCode.TRANSACTION_NOT_FOUND.value,
-                                          error_details=ErrorDetails[ErrorCode.TRANSACTION_NOT_FOUND.value].value)
+                raise InternalServerErrorException(error_code=ErrorCode.TRANSACTION_NOT_FOUND.value,
+                                                   error_details=ErrorDetails[
+                                                       ErrorCode.TRANSACTION_NOT_FOUND.value].value)
 
             if transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
                 logger.info("Transaction already confirmed")
@@ -291,6 +315,10 @@ def validate_consumer_event_against_transaction(event_type, transaction, blockch
                                           error_details=ErrorDetails[
                                               ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
     elif blockchain_name.lower() == BlockchainName.ETHEREUM.name.lower():
+        if event_type is not EthereumEventType.TOKEN_BURNT.value and event_type is not EthereumEventType.TOKEN_MINTED.value:
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
+                                               error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+
         if (event_type == EthereumEventType.TOKEN_BURNT.value or event_type == EthereumEventType.TOKEN_MINTED.value) and \
                 transaction and transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
             logger.info("Transaction already confirmed")
@@ -319,10 +347,10 @@ def check_block_confirmation(tx_hash, blockchain_network_id, required_block_conf
                                                       ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
 
 
-def burn_token_on_cardano(address, token, tx_amount, tx_details):
+def burn_token_on_cardano(address, token, tx_amount, tx_details, deposit_address_details):
     logger.info(
         f"Calling the burn token service on cardano with inputs as address={address}, {token}, tx_amount={tx_amount}, "
-        f"tx_details={tx_details}")
+        f"tx_details={tx_details}, deposit_address_details={deposit_address_details}")
 
     base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
     if not base_path:
@@ -333,6 +361,7 @@ def burn_token_on_cardano(address, token, tx_amount, tx_details):
         payload = generate_payload_format_for_cardano_operation(address=address,
                                                                 tx_amount=str(Decimal(float(tx_amount))),
                                                                 tx_details=tx_details)
+        payload[CardanoAPIEntities.DEPOSIT_ADDRESS_DETAILS.value] = deposit_address_details
         logger.info(f"Payload for burning ={json.dumps(payload)}")
         response = requests.post(f"{base_path}/{token}/burn", data=json.dumps(payload),
                                  headers={"Content-Type": "application/json"})
@@ -401,6 +430,14 @@ def generate_transaction_detail_for_cardano_operation(hash, environment):
     return {
         CardanoAPIEntities.HASH.value: hash,
         CardanoAPIEntities.ENVIRONMENT.value: environment
+    }
+
+
+def generate_deposit_address_details_for_cardano_operation(deposit_address, index=1, role=0):
+    return {
+        CardanoAPIEntities.ADDRESS.value: deposit_address,
+        CardanoAPIEntities.INDEX.value: index,
+        CardanoAPIEntities.ROLE.value: role
     }
 
 

@@ -4,7 +4,8 @@ from application.service.conversion_reponse import get_latest_user_pending_conve
     create_conversion_response, create_conversion_request_response, \
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
     create_transaction_response, create_transaction_for_conversion_response, \
-    get_waiting_conversion_deposit_on_address_response, get_transaction_by_hash_response, claim_conversion_response
+    get_waiting_conversion_deposit_on_address_response, get_transaction_by_hash_response, claim_conversion_response, \
+    get_all_deposit_address_response
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
@@ -317,3 +318,9 @@ class ConversionService:
                                claim_signature=claim_signature)
 
         return claim_conversion_response(signature=claim_signature, claim_amount=claim_amount)
+
+    def get_all_deposit_address(self):
+        logger.info("Getting all the deposit addresses")
+        addresses = self.wallet_pair_service.get_all_deposit_address()
+        return get_all_deposit_address_response(addresses)
+

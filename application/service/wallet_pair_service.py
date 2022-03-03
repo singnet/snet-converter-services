@@ -1,9 +1,11 @@
 from application.service.wallet_pair_response import get_wallet_pair_by_addresses_response, create_wallet_pair_response, \
-    get_wallet_pair_detail_by_deposit_address_response, get_wallet_pair_by_conversion_id_response
+    get_wallet_pair_detail_by_deposit_address_response, get_wallet_pair_by_conversion_id_response, \
+    get_all_deposit_address_response
 from common.logger import get_logger
 from constants.entity import TokenPairEntities, BlockchainEntities, TokenEntities
 from infrastructure.repositories.wallet_pair_repository import WalletPairRepository
 from utils.blockchain import get_deposit_address
+from utils.general import get_response_from_entities
 from utils.signature import create_signature_metadata
 
 logger = get_logger(__name__)
@@ -58,3 +60,8 @@ class WalletPairService:
         logger.info(f"Getting the wallet pair detail for the conversion id ={conversion_id}")
         wallet_pair = self.wallet_pair_repo.get_wallet_pair_by_conversion_id(conversion_id=conversion_id)
         return get_wallet_pair_by_conversion_id_response(wallet_pair.to_dict()) if wallet_pair else None
+
+    def get_all_deposit_address(self):
+        logger.info("Getting all the deposit address")
+        addresses = self.wallet_pair_repo.get_all_deposit_address()
+        return get_all_deposit_address_response(get_response_from_entities(addresses))
