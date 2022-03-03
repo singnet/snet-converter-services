@@ -59,6 +59,7 @@ class ErrorCode(Enum):
     INCORRECT_SIGNATURE_LENGTH = "E0055"
     UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION = "E0056"
     DERIVED_ADDRESS_NOT_FOUND = "E0057"
+    TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API = "E0058"
 
 
 class ErrorDetails(Enum):
@@ -119,3 +120,4 @@ class ErrorDetails(Enum):
     E0055 = "Incorrect signature value or length provided"
     E0056 = "Unexpected error occurred while validating the claim signature"
     E0057 = "Derived address not found"
+    E0058 = "Transaction Id not present in the cardano service api response"
