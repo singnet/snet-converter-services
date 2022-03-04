@@ -44,7 +44,8 @@ class TestConversion(unittest.TestCase):
         conversion_repo.session.add_all(TestVariables().transaction)
         conversion_repo.session.commit()
 
-    @patch("application.service.cardano_service.CardanoService.get_deposit_address", Mock(return_value="some derived address"))
+    @patch("application.service.cardano_service.CardanoService.get_deposit_address",
+           Mock(return_value={"derived_address": "some derived address", "index": 1, "role": 0}))
     @patch("application.service.conversion_service.get_signature")
     @patch("utils.blockchain.validate_cardano_address")
     @patch("common.utils.Utils.report_slack")

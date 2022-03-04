@@ -23,7 +23,7 @@ class CardanoService:
                                                    ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
         try:
             response = requests.get(f"{base_path}/address/derive", data=json.dumps({}),
-                                     headers={"Content-Type": "application/json"})
+                                    headers={"Content-Type": "application/json"})
 
             if response.status_code != HTTPStatus.OK.value:
                 raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
@@ -31,19 +31,13 @@ class CardanoService:
                                                        ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
 
             response = json.loads(response.content.decode("utf-8"))
-            logger.info(f"Response={response}")
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano get deposit address={e}")
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
                                                error_details=ErrorDetails[
                                                    ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
-
-        if not response.get(CardanoAPIEntities.DERIVED_ADDRESS.value):
-            raise InternalServerErrorException(error_code=ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value].value)
-
-        return response.get(CardanoAPIEntities.DERIVED_ADDRESS.value)
+        logger.info(f"Response={response}")
+        return response
 
     @staticmethod
     def burn_token(address, token, tx_amount, tx_details, deposit_address_details):
@@ -69,19 +63,13 @@ class CardanoService:
                                                    error_details=ErrorDetails[
                                                        ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
             response = json.loads(response.content.decode("utf-8"))
-            logger.info(f"Response={response}")
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano burn service={e}")
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
                                                error_details=ErrorDetails[
                                                    ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+        logger.info(f"Response={response}")
 
-        tx_id = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
-        if not tx_id or not tx_id.strip():
-            raise InternalServerErrorException(
-                error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
-                error_details=ErrorDetails[
-                    ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
         return response
 
     @staticmethod
@@ -110,18 +98,12 @@ class CardanoService:
                                                        ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
 
             response = json.loads(response.content.decode("utf-8"))
-            logger.info(f"Response={response}")
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano mint service={e}")
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
                                                error_details=ErrorDetails[
                                                    ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
-        tx_id = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
-        if not tx_id or not tx_id.strip():
-            raise InternalServerErrorException(
-                error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
-                error_details=ErrorDetails[
-                    ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
+        logger.info(f"Response={response}")
         return response
 
     @staticmethod

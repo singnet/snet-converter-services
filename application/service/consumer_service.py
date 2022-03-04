@@ -332,7 +332,13 @@ class ConsumerService:
                                                  tx_amount=tx_amount,
                                                  tx_details=tx_details, address=address,
                                                  deposit_address_details=deposit_address_details)
-            tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value).strip()
+            tx_id = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
+            if not tx_id or not tx_id.strip():
+                raise InternalServerErrorException(
+                    error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
+                    error_details=ErrorDetails[
+                        ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
+            tx_hash = tx_id.strip()
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             tx_details = CardanoService.generate_transaction_detail(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
@@ -344,7 +350,13 @@ class ConsumerService:
             response = CardanoService.mint_token(token=target_token.get(TokenEntities.SYMBOL.value),
                                                  tx_amount=tx_amount, tx_details=tx_details, address=address,
                                                  source_address=source_address)
-            tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value).strip()
+            tx_id = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
+            if not tx_id or not tx_id.strip():
+                raise InternalServerErrorException(
+                    error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
+                    error_details=ErrorDetails[
+                        ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
+            tx_hash = tx_id.strip()
         elif payload_blockchain_name == BlockchainName.ETHEREUM.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             status = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
                 ConversionEntities.STATUS.value)

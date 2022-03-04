@@ -28,7 +28,14 @@ logger = get_logger(__name__)
 def get_deposit_address(blockchain_name):
     deposit_address = None
     if blockchain_name == BlockchainName.CARDANO.value:
-        deposit_address = CardanoService.get_deposit_address()
+        deposit_response = CardanoService.get_deposit_address()
+
+        derived_address = deposit_response.get(CardanoAPIEntities.DERIVED_ADDRESS.value)
+        if not derived_address:
+            raise InternalServerErrorException(error_code=ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value].value)
+        deposit_address = derived_address
 
     return deposit_address
 
