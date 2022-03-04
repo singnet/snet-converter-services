@@ -22,7 +22,7 @@ class CardanoService:
                                                error_details=ErrorDetails[
                                                    ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
         try:
-            response = requests.post(f"{base_path}/address/derive", data=json.dumps({}),
+            response = requests.get(f"{base_path}/address/derive", data=json.dumps({}),
                                      headers={"Content-Type": "application/json"})
 
             if response.status_code != HTTPStatus.OK.value:
