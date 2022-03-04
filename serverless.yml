@@ -460,9 +460,11 @@ functions:
 
   claim_conversion:
     handler: application/handler/conversion_handlers.claim_conversion
-    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    role: ${file(./config.${self:provider.stage}.json):ROLE_WITH_SM}
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
+    environment:
+      CONVERTER_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_SIGNER_PRIVATE_KEY_PATH}
     events:
       - http:
           path: /v1/conversion/{conversion_id}/claim
@@ -543,8 +545,9 @@ functions:
           cors: ${self:custom.defaultCors}
           reqValidatorName: onlyParams
           request:
-            querystrings:
-              ethereum_address: true
+            parameters:
+              querystrings:
+                ethereum_address: true
           documentation:
             summary: "Get wallets address by ethereum address"
             description: "Get wallets address by ethereum address"

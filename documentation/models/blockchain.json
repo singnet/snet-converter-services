@@ -35,6 +35,9 @@
             "chain_id": {
               "type": "integer"
             },
+            "block_confirmation": {
+              "type": "integer"
+            },
             "updated_at": {
               "type": "string"
             }
