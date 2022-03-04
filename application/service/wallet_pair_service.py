@@ -1,8 +1,8 @@
 from application.service.wallet_pair_response import get_wallet_pair_by_addresses_response, create_wallet_pair_response, \
     get_wallet_pair_detail_by_deposit_address_response, get_wallet_pair_by_conversion_id_response, \
-    get_all_deposit_address_response
+    get_all_deposit_address_response, get_wallets_address_by_ethereum_address_response
 from common.logger import get_logger
-from constants.entity import TokenPairEntities, BlockchainEntities, TokenEntities
+from constants.entity import TokenPairEntities, BlockchainEntities, TokenEntities, WalletPairEntities
 from infrastructure.repositories.wallet_pair_repository import WalletPairRepository
 from utils.blockchain import get_deposit_address
 from utils.general import get_response_from_entities
@@ -65,3 +65,17 @@ class WalletPairService:
         logger.info("Getting all the deposit address")
         addresses = self.wallet_pair_repo.get_all_deposit_address()
         return get_all_deposit_address_response(get_response_from_entities(addresses))
+
+    def get_wallets_address_by_ethereum_address(self, ethereum_address):
+        logger.info(f"Get wallets address by ethereum address={ethereum_address}")
+        wallet_pair = self.wallet_pair_repo.get_wallets_address_by_address(address=ethereum_address)
+
+        if wallet_pair:
+            wallet_pair = wallet_pair.to_dict()
+            cardano_address = wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value)
+            if ethereum_address == cardano_address:
+                cardano_address = wallet_pair.get(WalletPairEntities.TO_ADDRESS.value)
+        else:
+            cardano_address = None
+
+        return get_wallets_address_by_ethereum_address_response(address=cardano_address)

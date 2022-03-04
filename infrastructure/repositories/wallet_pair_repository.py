@@ -108,3 +108,22 @@ class WalletPairRepository(BaseRepository):
                                               signature_expiry=wallet_pair.signature_expiry,
                                               created_by=wallet_pair.created_by, created_at=wallet_pair.created_at,
                                               updated_at=wallet_pair.updated_at) for wallet_pair in wallet_pairs]
+
+    def get_wallets_address_by_address(self, address):
+        wallet_pair = self.session.query(WalletPairDBModel) \
+            .filter(or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address)) \
+            .order_by(WalletPairDBModel.created_at.desc()).first()
+
+        if not wallet_pair:
+            return None
+
+        return WalletPairFactory.wallet_pair(row_id=wallet_pair.row_id, id=wallet_pair.id,
+                                             token_pair_id=wallet_pair.token_pair_id,
+                                             from_address=wallet_pair.from_address,
+                                             to_address=wallet_pair.to_address,
+                                             deposit_address=wallet_pair.deposit_address,
+                                             signature=wallet_pair.signature,
+                                             signature_metadata=wallet_pair.signature_metadata,
+                                             signature_expiry=wallet_pair.signature_expiry,
+                                             created_by=wallet_pair.created_by, created_at=wallet_pair.created_at,
+                                             updated_at=wallet_pair.updated_at)

@@ -3,6 +3,7 @@ import json
 from decimal import Decimal
 
 from application.service.blockchain_service import BlockchainService
+from application.service.cardano_service import CardanoService
 from application.service.conversion_service import ConversionService
 from application.service.notification_service import NotificationService
 from application.service.wallet_pair_service import WalletPairService
@@ -15,8 +16,7 @@ from constants.general import BlockchainName, CreatedBy, QueueName
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
     ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS, ConversionStatus, ConversionTransactionStatus
 from utils.blockchain import get_next_activity_event_on_conversion, validate_consumer_event_against_transaction, \
-    check_block_confirmation, burn_token_on_cardano, mint_token_and_transfer_on_cardano, \
-    generate_transaction_detail_for_cardano_operation, generate_deposit_address_details_for_cardano_operation
+    check_block_confirmation, generate_deposit_address_details_for_cardano_operation
 from utils.exceptions import BadRequestException, InternalServerErrorException
 
 logger = get_logger(__name__)
@@ -322,27 +322,28 @@ class ConsumerService:
         if payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_BURNT.value:
             address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                 WalletPairEntities.FROM_ADDRESS.value)
-            tx_details = generate_transaction_detail_for_cardano_operation(
+            tx_details = CardanoService.generate_transaction_detail(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
                 environment=db_from_blockchain_name)
             deposit_address_details = generate_deposit_address_details_for_cardano_operation(
                 deposit_address=conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                     WalletPairEntities.DEPOSIT_ADDRESS.value))
-            response = burn_token_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value), tx_amount=tx_amount,
-                                             tx_details=tx_details, address=address,
-                                             deposit_address_details=deposit_address_details)
+            response = CardanoService.burn_token(token=target_token.get(TokenEntities.SYMBOL.value),
+                                                 tx_amount=tx_amount,
+                                                 tx_details=tx_details, address=address,
+                                                 deposit_address_details=deposit_address_details)
             tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value).strip()
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
-            tx_details = generate_transaction_detail_for_cardano_operation(
+            tx_details = CardanoService.generate_transaction_detail(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
                 environment=db_to_blockchain_name)
             address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                 WalletPairEntities.TO_ADDRESS.value)
             source_address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                 WalletPairEntities.FROM_ADDRESS.value)
-            response = mint_token_and_transfer_on_cardano(token=target_token.get(TokenEntities.SYMBOL.value),
-                                                          tx_amount=tx_amount, tx_details=tx_details, address=address,
-                                                          source_address=source_address)
+            response = CardanoService.mint_token(token=target_token.get(TokenEntities.SYMBOL.value),
+                                                 tx_amount=tx_amount, tx_details=tx_details, address=address,
+                                                 source_address=source_address)
             tx_hash = response.get(CardanoAPIEntities.TRANSACTION_ID.value).strip()
         elif payload_blockchain_name == BlockchainName.ETHEREUM.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             status = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(

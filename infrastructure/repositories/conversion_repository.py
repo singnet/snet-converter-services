@@ -201,6 +201,7 @@ class ConversionRepository(BaseRepository):
         if address:
             conversions_detail_query = conversions_detail_query.filter(
                 or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address))
+
         if conversion_id:
             conversions_detail_query = conversions_detail_query.filter(ConversionDBModel.id == conversion_id)
 

@@ -31,6 +31,8 @@ Converter Service│
  4. [Create a Transaction for Conversion](#4-create-a-transaction-for-conversion)
  5. [Get Conversion History](#5-get-conversion-history)
  6. [Claim Conversion](#6-claim-conversion)
+ 7. [Get conversion](#7-get-conversion)
+ 8. [Get wallets address by ethereum address](#8-get-wallets-address-by-ethereum-address)
 
 
 ## LIST OF Internal Lambda
@@ -283,7 +285,8 @@ Converter Service│
                 },
                 "wallet_pair": {
                     "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-                    "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8"
+                    "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+                   "deposit_address": null
                 },
                 "from_token": {
                     "name": "Singularity Ethereum",
@@ -316,7 +319,8 @@ Converter Service│
                 },
                 "wallet_pair": {
                     "from_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-                    "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"
+                    "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+                   "deposit_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3"
                 },
                 "from_token": {
                     "name": "Singularity Cardano",
@@ -349,7 +353,8 @@ Converter Service│
                 },
                 "wallet_pair": {
                     "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-                    "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8"
+                    "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+                    "deposit_address": null, 
                 },
                 "from_token": {
                     "name": "Singularity Ethereum",
@@ -430,6 +435,102 @@ Converter Service│
   "signature": "0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b"
 }
 ```
+
+### 7. Get conversion
+  API Url: `{DOMAIN_URL}/{STAGE}/v1/conversion/{conversion_id}` 
+
+  Method: `POST`
+ 
+  PathParameter:
+    Required `conversion_id`
+
+  Response:
+```json5
+{
+    "status": "success",
+    "data": {
+        "conversion": {
+            "id": "9deef40cfd59404c91dc7f5454c3cc6e",
+            "deposit_amount": "7E+7",
+            "claim_amount": null,
+            "fee_amount": null,
+            "status": "SUCCESS",
+            "updated_at": "2022-03-01 15:03:06"
+        },
+        "wallet_pair": {
+            "from_address": "0xCc3cD60FF9936B7C9272a649b24f290ADa562469",
+            "to_address": "addr_test1qquj76vq3q4wut49m43dgxa8839uc0llepyyuyn3kjy7fn3kyuuqxnr3wlf2dgts9djqkju4ycn06vjmyj035eyfufxsmq9mn5",
+            "deposit_address": null
+        },
+        "from_token": {
+            "name": "Singularity AGIX Ethereum",
+            "symbol": "AGIX",
+            "blockchain": {
+                "name": "Ethereum",
+                "symbol": "ETH",
+                "chain_id": 3
+            }
+        },
+        "to_token": {
+            "name": "Singularity AGIX Cardano",
+            "symbol": "TMAT",
+            "blockchain": {
+                "name": "Cardano",
+                "symbol": "ADA",
+                "chain_id": 2
+            }
+        },
+        "transactions": [
+            {
+                "id": "8a3dce9f6640452bbc68dd9dcc87d323",
+                "transaction_operation": "TOKEN_BURNT",
+                "transaction_hash": "0xdf7585ce324f5c0951f67ffa80ed1ad07c88589135d3d7c0eaedc5e04ada6f77",
+                "transaction_amount": "7E+7",
+                "status": "SUCCESS",
+                "updated_at": "2022-03-01 14:59:11"
+            },
+            {
+                "id": "df3c55f163a741e2a54ae4da6b218a7c",
+                "transaction_operation": "TOKEN_MINTED",
+                "transaction_hash": "c7faf2333715818868c58dea289446af88779497f9400e7b8f8d010c1b386700",
+                "transaction_amount": "7E+7",
+                "status": "SUCCESS",
+                "updated_at": "2022-03-01 15:03:06"
+            }
+        ]
+    },
+    "error": {
+        "code": null,
+        "message": null,
+        "details": null
+    }
+}
+```
+
+### 8. Get wallets address by ethereum address
+
+  API Url: `{DOMAIN_URL}/{STAGE}/v1/wallet/address?ethereum_address={ethereum_address}` 
+
+  Method: `POST`
+ 
+  Query String Parameter:
+    Required `ethereum_address`
+
+  Response:
+```json5
+{
+    "status": "success",
+    "data": {
+        "cardano_address": "addr_test1qq02e0v7zhl8xveugy6xjdml6qxkh9fxeh9860yew2ld3nv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8q6s4gt5"
+    },
+    "error": {
+        "code": null,
+        "message": null,
+        "details": null
+    }
+}
+```
+
 
 ###Internal Lambda
 

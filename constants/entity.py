@@ -208,3 +208,8 @@ class CardanoAPIEntities(Enum):
     ADDRESS = "address"
     INDEX = "index"
     ROLE = "role"
+
+
+class WalletPairResponseEntities(Enum):
+    ADDRESSES = "addresses"
+    CARDANO_ADDRESS = "cardano_address"

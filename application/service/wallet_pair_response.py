@@ -1,4 +1,4 @@
-from constants.entity import WalletPairEntities
+from constants.entity import WalletPairEntities, WalletPairResponseEntities
 
 
 def get_wallet_pair_by_addresses_response(wallet_pair):
@@ -41,4 +41,12 @@ def get_wallet_pair_by_conversion_id_response(wallet_pair):
 
 
 def get_all_deposit_address_response(wallet_pairs):
-    return [wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]  for wallet_pair in wallet_pairs]
+    return {
+        WalletPairResponseEntities.ADDRESSES.value: [wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value] for wallet_pair in wallet_pairs]
+    }
+
+
+def get_wallets_address_by_ethereum_address_response(address):
+    return {
+        WalletPairResponseEntities.CARDANO_ADDRESS.value: address
+    }
