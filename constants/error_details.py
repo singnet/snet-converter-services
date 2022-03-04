@@ -60,6 +60,7 @@ class ErrorCode(Enum):
     UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION = "E0056"
     DERIVED_ADDRESS_NOT_FOUND = "E0057"
     TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API = "E0058"
+    INVALID_ETHEREUM_ADDRESS = "E0059"
 
 
 class ErrorDetails(Enum):
@@ -121,3 +122,4 @@ class ErrorDetails(Enum):
     E0056 = "Unexpected error occurred while validating the claim signature"
     E0057 = "Derived address not found"
     E0058 = "Transaction Id not present in the cardano service api response"
+    E0059 = "Invalid ethereum address provided"

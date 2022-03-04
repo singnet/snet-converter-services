@@ -140,9 +140,16 @@ def claim_conversion(event, context):
 
 
 @exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
-def get_all_deposit_address(event, context):
-    logger.debug(f"Getting all the deposit address request event={json.dumps(event)}")
-    response = conversion_service.get_all_deposit_address()
+def get_conversion(event, context):
+    logger.debug(f"Get conversion request event={json.dumps(event)}")
+    path_param = get_valid_value(event, HttpRequestParamType.REQUEST_PARAM_PATH.value)
+    conversion_id = path_param.get(ApiParameters.CONVERSION_ID.value)
+
+    if not conversion_id:
+        raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
+                                  error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
+
+    response = conversion_service.get_conversion(conversion_id=conversion_id)
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)

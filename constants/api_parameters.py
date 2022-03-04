@@ -13,5 +13,6 @@ class ApiParameters(Enum):
     PAGE_SIZE = "page_size"
     PAGE_NUMBER = "page_number"
     ADDRESS = "address"
+    ETHEREUM_ADDRESS = "ethereum_address"
 
 

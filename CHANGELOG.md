@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-03-04 12:00:00 
+
+### Added
+- Added api to get the previous connected cardano address based on ethereum address 
+- Added api to get the conversion detail(stepper)
+
+### Moved
+- get deposit function has been moved from conversion service to wallet service
+- Moved cardano api's to cardano service
+
 ## 2022-02-28 16:00:00 
 
 ### Added

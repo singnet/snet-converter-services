@@ -120,6 +120,16 @@ custom:
         contentType: "application/json"
         schema: ${file(documentation/models/conversion.json):ClaimConversionRequestOutput}
 
+      - name: "GetConversionRequestOutput"
+        description: "Get conversion response model"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):GetConversionRequestOutput}
+
+      - name: "WalletsAddressRequestOutput"
+        description: "Get wallet's address "
+        contentType: "application/json"
+        schema: ${file(documentation/models/wallet.json):WalletsAddressRequestOutput}
+
 package:
   patterns:
     - "!.circleci/**"
@@ -486,6 +496,76 @@ functions:
                 responseModels:
                   "application/json": "LambdaErrorMessage"
 
+  get_conversion:
+    handler: application/handler/conversion_handlers.get_conversion
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/conversion/{conversion_id}
+          method: get
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyParams
+          request:
+            paths:
+              conversion_id: true
+          documentation:
+            summary: "Get the conversion detail"
+            description: "Get the  conversion detail"
+            tags:
+              - "Conversion"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Get the conversion"
+                responseModels:
+                  "application/json": "GetConversionRequestOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+
+  get_wallets_address_by_ethereum_address:
+    handler: application/handler/wallet_handlers.get_wallets_address_by_ethereum_address
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/wallet/address
+          method: get
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyParams
+          request:
+            querystrings:
+              ethereum_address: true
+          documentation:
+            summary: "Get wallets address by ethereum address"
+            description: "Get wallets address by ethereum address"
+            tags:
+              - "Wallet"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Get wallets address by ethereum address"
+                responseModels:
+                  "application/json": "WalletsAddressRequestOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+
   converter_event_consumer:
     handler: application/handler/consumer_handlers.converter_event_consumer
     role: ${file(./config.${self:provider.stage}.json):ROLE}
@@ -512,7 +592,7 @@ functions:
           batchSize: 1
 
   get_all_deposit_address:
-    handler: application/handler/conversion_handlers.get_all_deposit_address
+    handler: application/handler/wallet_handlers.get_all_deposit_address
     role: ${file(./config.${self:provider.stage}.json):ROLE}
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}

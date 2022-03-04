@@ -56,6 +56,7 @@ def get_wallet_pair_response(wallet_pair):
     return {
         WalletPairEntities.FROM_ADDRESS.value: wallet_pair[WalletPairEntities.FROM_ADDRESS.value],
         WalletPairEntities.TO_ADDRESS.value: wallet_pair[WalletPairEntities.TO_ADDRESS.value],
+        WalletPairEntities.DEPOSIT_ADDRESS.value: wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
     }
 
 
@@ -129,8 +130,8 @@ def get_conversion_history_for_conversion_response(conversion):
     }
 
 
-def get_conversion_history_response(history):
-    return [{
+def get_conversion_response(conversion):
+    return {
         ConversionDetailEntities.CONVERSION.value: get_conversion_history_for_conversion_response(
             conversion[ConversionDetailEntities.CONVERSION.value]),
         ConversionDetailEntities.WALLET_PAIR.value: get_wallet_pair_response(
@@ -141,7 +142,11 @@ def get_conversion_history_response(history):
             conversion[ConversionDetailEntities.TO_TOKEN.value]),
         ConversionDetailEntities.TRANSACTIONS.value: get_transaction_response(
             conversion[ConversionDetailEntities.TRANSACTIONS.value])
-    } for conversion in history]
+    }
+
+
+def get_conversion_history_response(history):
+    return [get_conversion_response(conversion=conversion) for conversion in history]
 
 
 def create_transaction_for_conversion_response(transaction):
@@ -196,9 +201,3 @@ def get_transaction_by_hash_response(transaction):
     response[TransactionEntities.CONVERSION_TRANSACTION_ID.value] = transaction[
         TransactionEntities.CONVERSION_TRANSACTION_ID.value]
     return response
-
-
-def get_all_deposit_address_response(addresses):
-    return {
-        "addresses": addresses
-    }

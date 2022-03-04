@@ -5,7 +5,7 @@ from application.service.conversion_reponse import get_latest_user_pending_conve
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
     create_transaction_response, create_transaction_for_conversion_response, \
     get_waiting_conversion_deposit_on_address_response, get_transaction_by_hash_response, claim_conversion_response, \
-    get_all_deposit_address_response
+    get_conversion_response
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
@@ -61,6 +61,16 @@ class ConversionService:
                                                               transaction_amount=transaction_amount, status=status,
                                                               created_by=created_by)
         return create_transaction_response(transaction.to_dict())
+
+    def get_conversion(self, conversion_id):
+        logger.info(f"Getting the conversion for the conversion_id={conversion_id} ")
+        conversion = self.get_conversion_complete_detail(conversion_id=conversion_id)
+
+        if conversion is None:
+            raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
+                                      error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
+
+        return get_conversion_response(conversion)
 
     def get_conversion_detail_by_tx_id(self, tx_id):
         logger.info(f"Get the conversion detail by tx_id={tx_id}")
@@ -319,8 +329,4 @@ class ConversionService:
 
         return claim_conversion_response(signature=claim_signature, claim_amount=claim_amount)
 
-    def get_all_deposit_address(self):
-        logger.info("Getting all the deposit addresses")
-        addresses = self.wallet_pair_service.get_all_deposit_address()
-        return get_all_deposit_address_response(addresses)
 
