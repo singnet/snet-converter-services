@@ -9,7 +9,7 @@ from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
-    ConversionEntities, CardanoEventType, EthereumEventType, CardanoAPIEntities
+    ConversionEntities, CardanoEventType, EthereumEventType, CardanoAPIEntities, WalletPairEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus, \
@@ -25,19 +25,33 @@ from utils.signature import validate_conversion_claim_signature
 logger = get_logger(__name__)
 
 
-def get_deposit_address(blockchain_name):
-    deposit_address = None
+def get_deposit_address_details(blockchain_name):
+    deposit_address_details = {}
     if blockchain_name == BlockchainName.CARDANO.value:
         deposit_response = CardanoService.get_deposit_address()
 
         derived_address = deposit_response.get(CardanoAPIEntities.DERIVED_ADDRESS.value)
-        if not derived_address:
+        derived_address_index = deposit_response.get(CardanoAPIEntities.INDEX.value)
+        derived_address_role = deposit_response.get(CardanoAPIEntities.ROLE.value)
+
+        if not derived_address or derived_address_index is None or derived_address_role is None:
             raise InternalServerErrorException(error_code=ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value,
                                                error_details=ErrorDetails[
                                                    ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value].value)
-        deposit_address = derived_address
 
-    return deposit_address
+        deposit_address_details = get_deposit_address_details_format(derived_address=derived_address,
+                                                                     index=derived_address_index,
+                                                                     role=derived_address_role)
+
+    return deposit_address_details
+
+
+def get_deposit_address_details_format(derived_address, index, role):
+    return {
+        CardanoAPIEntities.DERIVED_ADDRESS.value: derived_address,
+        CardanoAPIEntities.INDEX.value: index,
+        CardanoAPIEntities.ROLE.value: role
+    }
 
 
 def validate_cardano_address(address, chain_id):
@@ -322,11 +336,13 @@ def check_block_confirmation(tx_hash, blockchain_network_id, required_block_conf
                                                       ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
 
 
-def generate_deposit_address_details_for_cardano_operation(deposit_address, index=1, role=0):
+def generate_deposit_address_details_for_cardano_operation(wallet_pair):
+    deposit_address = wallet_pair.get(WalletPairEntities.DEPOSIT_ADDRESS.value)
+    deposit_address_details = wallet_pair.get(WalletPairEntities.DEPOSIT_ADDRESS_DETAIL.value)
     return {
         CardanoAPIEntities.ADDRESS.value: deposit_address,
-        CardanoAPIEntities.INDEX.value: index,
-        CardanoAPIEntities.ROLE.value: role
+        CardanoAPIEntities.INDEX.value: deposit_address_details.get(CardanoAPIEntities.INDEX.value),
+        CardanoAPIEntities.ROLE.value: deposit_address_details.get(CardanoAPIEntities.ROLE.value)
     }
 
 

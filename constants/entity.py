@@ -68,6 +68,7 @@ class WalletPairEntities(Enum):
     FROM_ADDRESS = "from_address"
     TO_ADDRESS = "to_address"
     DEPOSIT_ADDRESS = "deposit_address"
+    DEPOSIT_ADDRESS_DETAIL = "deposit_address_detail"
     SIGNATURE = "signature"
     SIGNATURE_METADATA = "signature_metadata"
     SIGNATURE_EXPIRY = "signature_expiry"

@@ -326,8 +326,7 @@ class ConsumerService:
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
                 environment=db_from_blockchain_name)
             deposit_address_details = generate_deposit_address_details_for_cardano_operation(
-                deposit_address=conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
-                    WalletPairEntities.DEPOSIT_ADDRESS.value))
+                wallet_pair=conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}))
             response = CardanoService.burn_token(token=target_token.get(TokenEntities.SYMBOL.value),
                                                  tx_amount=tx_amount,
                                                  tx_details=tx_details, address=address,

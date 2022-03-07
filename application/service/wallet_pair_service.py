@@ -2,9 +2,10 @@ from application.service.wallet_pair_response import get_wallet_pair_by_addresse
     get_wallet_pair_detail_by_deposit_address_response, get_wallet_pair_by_conversion_id_response, \
     get_all_deposit_address_response, get_wallets_address_by_ethereum_address_response
 from common.logger import get_logger
-from constants.entity import TokenPairEntities, BlockchainEntities, TokenEntities, WalletPairEntities
+from constants.entity import TokenPairEntities, BlockchainEntities, TokenEntities, WalletPairEntities, \
+    CardanoAPIEntities
 from infrastructure.repositories.wallet_pair_repository import WalletPairRepository
-from utils.blockchain import get_deposit_address
+from utils.blockchain import get_deposit_address_details
 from utils.general import get_response_from_entities
 from utils.signature import create_signature_metadata
 
@@ -17,9 +18,10 @@ class WalletPairService:
         self.wallet_pair_repo = WalletPairRepository()
 
     def create_wallet_pair(self, from_address, to_address, token_pair_id, signature, signature_expiry,
-                           signature_metadata, deposit_address):
+                           signature_metadata, deposit_address, deposit_address_detail):
         wallet_pair = self.wallet_pair_repo.create_wallet_pair(from_address, to_address, token_pair_id, signature,
-                                                               signature_expiry, signature_metadata, deposit_address)
+                                                               signature_expiry, signature_metadata, deposit_address,
+                                                               deposit_address_detail)
         return create_wallet_pair_response(wallet_pair.to_dict()) if wallet_pair else None
 
     def get_wallet_pair_by_addresses(self, from_address, to_address, token_pair_id):
@@ -43,12 +45,14 @@ class WalletPairService:
             signature_metadata = create_signature_metadata(token_pair_id=token_pair_id, amount=amount,
                                                            from_address=from_address, to_address=to_address,
                                                            block_number=block_number)
+            deposit_address_details = get_deposit_address_details(blockchain_name=from_blockchain_name)
             wallet_pair = self.create_wallet_pair(from_address=from_address, to_address=to_address,
                                                   token_pair_id=token_pair_row_id,
                                                   signature=signature, signature_expiry=None,
                                                   signature_metadata=signature_metadata,
-                                                  deposit_address=get_deposit_address(
-                                                      blockchain_name=from_blockchain_name))
+                                                  deposit_address=deposit_address_details.get(
+                                                      CardanoAPIEntities.DERIVED_ADDRESS.value),
+                                                  deposit_address_detail=deposit_address_details)
         return wallet_pair
 
     def get_wallet_pair_by_deposit_address(self, deposit_address):
