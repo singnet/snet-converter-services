@@ -38,10 +38,12 @@ def create_conversion_fee(row_id, id, percentage_from_source, created_by, create
                                 created_by=created_by, created_at=created_at, updated_at=updated_at)
 
 
-def create_wallet_pair(row_id, id, token_pair_id, from_address, to_address, deposit_address, signature,
+def create_wallet_pair(row_id, id, token_pair_id, from_address, to_address, deposit_address, deposit_address_detail,
+                       signature,
                        signature_metadata, signature_expiry, created_by, created_at, updated_at):
     return WalletPairDBModel(row_id=row_id, id=id, token_pair_id=token_pair_id, from_address=from_address,
-                             to_address=to_address, deposit_address=deposit_address, signature=signature,
+                             to_address=to_address, deposit_address=deposit_address,
+                             deposit_address_detail=deposit_address_detail, signature=signature,
                              signature_metadata=signature_metadata, signature_expiry=signature_expiry,
                              created_by=created_by, created_at=created_at, updated_at=updated_at)
 
@@ -179,7 +181,7 @@ class TestVariables:
                                token_pair_id=self.token_pair_row_id_1,
                                from_address="0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
                                to_address="addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-                               deposit_address=None,
+                               deposit_address=None, deposit_address_detail=None,
                                signature="0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b",
                                signature_metadata={"amount": "1333.05",
                                                    "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
@@ -193,6 +195,7 @@ class TestVariables:
                                from_address="addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
                                to_address="0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
                                deposit_address="addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+                               deposit_address_detail={"derived_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8", "index": 1, "role": 0},
                                signature="0x84cad9a7adbd444f156906a44381135ae2d81140fb4a0a0ea286287706c36eda643268252c6760f18309aa6f8396b53a48d1ffa9784f326b880758b8f11f03d21b",
                                signature_metadata={"amount": "1333.05",
                                                    "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",

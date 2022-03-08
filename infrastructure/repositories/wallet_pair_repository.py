@@ -10,13 +10,7 @@ from utils.general import get_uuid, datetime_in_utcnow
 class WalletPairRepository(BaseRepository):
 
     def get_wallet_pair_by_addresses(self, from_address, to_address, token_pair_id):
-        wallet_pair = self.session.query(WalletPairDBModel.row_id, WalletPairDBModel.id,
-                                         WalletPairDBModel.token_pair_id,
-                                         WalletPairDBModel.from_address, WalletPairDBModel.to_address,
-                                         WalletPairDBModel.deposit_address, WalletPairDBModel.signature,
-                                         WalletPairDBModel.signature_metadata,
-                                         WalletPairDBModel.signature_expiry, WalletPairDBModel.created_by,
-                                         WalletPairDBModel.created_at, WalletPairDBModel.updated_at).filter(
+        wallet_pair = self.session.query(WalletPairDBModel).filter(
             or_(WalletPairDBModel.from_address == from_address, WalletPairDBModel.from_address == to_address),
             or_(WalletPairDBModel.to_address == from_address, WalletPairDBModel.to_address == to_address),
             WalletPairDBModel.token_pair_id == token_pair_id,
@@ -30,6 +24,7 @@ class WalletPairRepository(BaseRepository):
                                              from_address=wallet_pair.from_address,
                                              to_address=wallet_pair.to_address,
                                              deposit_address=wallet_pair.deposit_address,
+                                             deposit_address_detail=wallet_pair.deposit_address_detail,
                                              signature=wallet_pair.signature,
                                              signature_metadata=wallet_pair.signature_metadata,
                                              signature_expiry=wallet_pair.signature_expiry,
@@ -37,9 +32,11 @@ class WalletPairRepository(BaseRepository):
                                              updated_at=wallet_pair.updated_at)
 
     def create_wallet_pair(self, from_address, to_address, token_pair_id, signature, signature_expiry,
-                           signature_metadata, deposit_address):
+                           signature_metadata, deposit_address, deposit_address_detail):
+
         wallet_pair_item = WalletPairDBModel(id=get_uuid(), token_pair_id=token_pair_id, from_address=from_address,
                                              to_address=to_address, deposit_address=deposit_address,
+                                             deposit_address_detail=deposit_address_detail,
                                              signature=signature, signature_metadata=signature_metadata,
                                              signature_expiry=signature_expiry, created_by=CreatedBy.DAPP.value,
                                              created_at=datetime_in_utcnow(), updated_at=datetime_in_utcnow())
@@ -50,6 +47,7 @@ class WalletPairRepository(BaseRepository):
                                              from_address=wallet_pair_item.from_address,
                                              to_address=wallet_pair_item.to_address,
                                              deposit_address=wallet_pair_item.deposit_address,
+                                             deposit_address_detail=wallet_pair_item.deposit_address_detail,
                                              signature=wallet_pair_item.signature,
                                              signature_metadata=wallet_pair_item.signature_metadata,
                                              signature_expiry=wallet_pair_item.signature_expiry,
@@ -69,6 +67,7 @@ class WalletPairRepository(BaseRepository):
                                              from_address=wallet_pair.from_address,
                                              to_address=wallet_pair.to_address,
                                              deposit_address=wallet_pair.deposit_address,
+                                             deposit_address_detail=wallet_pair.deposit_address_detail,
                                              signature=wallet_pair.signature,
                                              signature_metadata=wallet_pair.signature_metadata,
                                              signature_expiry=wallet_pair.signature_expiry,
@@ -88,6 +87,7 @@ class WalletPairRepository(BaseRepository):
                                              from_address=wallet_pair.from_address,
                                              to_address=wallet_pair.to_address,
                                              deposit_address=wallet_pair.deposit_address,
+                                             deposit_address_detail=wallet_pair.deposit_address_detail,
                                              signature=wallet_pair.signature,
                                              signature_metadata=wallet_pair.signature_metadata,
                                              signature_expiry=wallet_pair.signature_expiry,
@@ -103,6 +103,7 @@ class WalletPairRepository(BaseRepository):
                                               from_address=wallet_pair.from_address,
                                               to_address=wallet_pair.to_address,
                                               deposit_address=wallet_pair.deposit_address,
+                                              deposit_address_detail=wallet_pair.deposit_address_detail,
                                               signature=wallet_pair.signature,
                                               signature_metadata=wallet_pair.signature_metadata,
                                               signature_expiry=wallet_pair.signature_expiry,
@@ -122,6 +123,7 @@ class WalletPairRepository(BaseRepository):
                                              from_address=wallet_pair.from_address,
                                              to_address=wallet_pair.to_address,
                                              deposit_address=wallet_pair.deposit_address,
+                                             deposit_address_detail=wallet_pair.deposit_address_detail,
                                              signature=wallet_pair.signature,
                                              signature_metadata=wallet_pair.signature_metadata,
                                              signature_expiry=wallet_pair.signature_expiry,
