@@ -373,7 +373,7 @@ functions:
             methodResponses:
               - statusCode: "200"
                 responseBody:
-                  description: "Successfully made a  conversion request"
+                  description: "Successfully made a conversion request"
                 responseModels:
                   "application/json": "CreateConversionRequestOutput"
               - statusCode: "403"
@@ -445,7 +445,7 @@ functions:
             methodResponses:
               - statusCode: "200"
                 responseBody:
-                  description: "Getting the conversion history"
+                  description: "Getting the  conversion history"
                 responseModels:
                   "application/json": "GetConversionHistoryOutput"
               - statusCode: "403"
@@ -476,7 +476,7 @@ functions:
               conversion_id: true
           documentation:
             summary: "Claim the conversion"
-            description: "Claim the conversion"
+            description: "Claim  the conversion"
             tags:
               - "Conversion"
               - "Claim"
@@ -514,7 +514,7 @@ functions:
               conversion_id: true
           documentation:
             summary: "Get the conversion detail"
-            description: "Get the  conversion detail"
+            description: "Get the conversion detail"
             tags:
               - "Conversion"
             methodResponses:
