@@ -61,6 +61,7 @@ class ConversionFactory:
                                                         from_address=wallet_pair.from_address,
                                                         to_address=wallet_pair.to_address,
                                                         deposit_address=wallet_pair.deposit_address,
+                                                        deposit_address_detail=wallet_pair.deposit_address_detail,
                                                         signature=wallet_pair.signature,
                                                         signature_metadata=wallet_pair.signature_metadata,
                                                         signature_expiry=wallet_pair.signature_expiry,

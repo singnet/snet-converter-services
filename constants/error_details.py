@@ -61,6 +61,7 @@ class ErrorCode(Enum):
     DERIVED_ADDRESS_NOT_FOUND = "E0057"
     TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API = "E0058"
     INVALID_ETHEREUM_ADDRESS = "E0059"
+    DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS = "E0060"
 
 
 class ErrorDetails(Enum):
@@ -123,3 +124,4 @@ class ErrorDetails(Enum):
     E0057 = "Derived address not found"
     E0058 = "Transaction Id not present in the cardano service api response"
     E0059 = "Invalid ethereum address provided"
+    E0060 = "Data not available in the cardano derived address response"

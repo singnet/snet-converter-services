@@ -14,15 +14,15 @@ logger = get_logger(__name__)
 class CardanoService:
 
     @staticmethod
-    def get_deposit_address():
-        logger.info("Getting the deposit address")
+    def get_deposit_address(token_name):
+        logger.info(f"Getting the deposit address for the token={token_name}")
         base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
                                                error_details=ErrorDetails[
                                                    ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
         try:
-            response = requests.get(f"{base_path}/address/derive", data=json.dumps({}),
+            response = requests.get(f"{base_path}/address/derive?token={token_name}", data=json.dumps({}),
                                     headers={"Content-Type": "application/json"})
 
             if response.status_code != HTTPStatus.OK.value:

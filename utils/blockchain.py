@@ -25,14 +25,20 @@ from utils.signature import validate_conversion_claim_signature
 logger = get_logger(__name__)
 
 
-def get_deposit_address_details(blockchain_name):
+def get_deposit_address_details(blockchain_name, token_name):
     deposit_address_details = {}
     if blockchain_name == BlockchainName.CARDANO.value:
-        deposit_response = CardanoService.get_deposit_address()
+        deposit_response = CardanoService.get_deposit_address(token_name=token_name)
 
-        derived_address = deposit_response.get(CardanoAPIEntities.DERIVED_ADDRESS.value)
-        derived_address_index = deposit_response.get(CardanoAPIEntities.INDEX.value)
-        derived_address_role = deposit_response.get(CardanoAPIEntities.ROLE.value)
+        data = deposit_response.get(CardanoAPIEntities.DATA.value)
+        if not data:
+            raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
+
+        derived_address = data.get(CardanoAPIEntities.DERIVED_ADDRESS.value)
+        derived_address_index = data.get(CardanoAPIEntities.INDEX.value)
+        derived_address_role = data.get(CardanoAPIEntities.ROLE.value)
 
         if not derived_address or derived_address_index is None or derived_address_role is None:
             raise InternalServerErrorException(error_code=ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value,
