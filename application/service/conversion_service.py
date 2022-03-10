@@ -3,21 +3,22 @@ from decimal import Decimal
 from application.service.conversion_reponse import get_latest_user_pending_conversion_request_response, \
     create_conversion_response, create_conversion_request_response, \
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
-    create_transaction_response, create_transaction_for_conversion_response, \
-    get_waiting_conversion_deposit_on_address_response, get_transaction_by_hash_response, claim_conversion_response, \
-    get_conversion_response
+    create_transaction_response, create_transaction_for_conversion_response, get_transaction_by_hash_response, \
+    claim_conversion_response, \
+    get_conversion_response, update_conversion_response
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
 from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
-    TransactionEntities
+    TransactionEntities, ConversionFeeEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus, TransactionOperation
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from utils.blockchain import validate_address, get_lowest_unit_amount, \
-    validate_transaction_hash, validate_conversion_claim_request_signature
+    validate_transaction_hash, validate_conversion_claim_request_signature, calculate_fee_amount, \
+    validate_conversion_request_amount
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, paginate_items, \
     is_supported_network_conversion
@@ -33,11 +34,13 @@ class ConversionService:
         self.token_service = TokenService()
         self.wallet_pair_service = WalletPairService()
 
-    def create_conversion(self, wallet_pair_id, deposit_amount, created_by=CreatedBy.DAPP.value):
+    def create_conversion(self, wallet_pair_id, deposit_amount, fee_amount, claim_amount,
+                          created_by=CreatedBy.DAPP.value):
         logger.info(f"Creating the conversion with wallet_pair_id={wallet_pair_id}, deposit_amount={deposit_amount}, "
-                    f"created_by={created_by}")
+                    f" fee_amount={fee_amount} claim_amount={claim_amount} created_by={created_by}")
         conversion = self.conversion_repo.create_conversion(wallet_pair_id=wallet_pair_id,
-                                                            deposit_amount=deposit_amount, created_by=created_by)
+                                                            deposit_amount=deposit_amount, fee_amount=fee_amount,
+                                                            claim_amount=claim_amount, created_by=created_by)
         return create_conversion_response(conversion.to_dict())
 
     def create_conversion_transaction(self, conversion_id, created_by):
@@ -92,11 +95,6 @@ class ConversionService:
                                                                                      status=ConversionStatus.USER_INITIATED.value)
         return get_latest_user_pending_conversion_request_response(conversion.to_dict()) if conversion else None
 
-    def update_conversion_amount(self, conversion_id, deposit_amount):
-        logger.info(f"Updating the conversion amount for the conversion_id={conversion_id}, "
-                    f"deposit_amount={deposit_amount}")
-        self.conversion_repo.update_conversion_amount(conversion_id=conversion_id, deposit_amount=deposit_amount)
-
     def update_conversion_status(self, conversion_id, status):
         logger.info(f"Updating the conversion status for the conversion_id={conversion_id}, "
                     f"status={status}")
@@ -107,9 +105,10 @@ class ConversionService:
         logger.info(f"Updating the conversion  for the conversion_id={conversion_id}, "
                     f"deposit_amount={deposit_amount}, claim_amount={claim_amount}, fee_amount={fee_amount}, "
                     f"status={status}, claim_signature={claim_signature}")
-        self.conversion_repo.update_conversion(conversion_id=conversion_id, deposit_amount=deposit_amount,
-                                               claim_amount=claim_amount, fee_amount=fee_amount, status=status,
-                                               claim_signature=claim_signature)
+        conversion = self.conversion_repo.update_conversion(conversion_id=conversion_id, deposit_amount=deposit_amount,
+                                                            claim_amount=claim_amount, fee_amount=fee_amount,
+                                                            status=status, claim_signature=claim_signature)
+        return update_conversion_response(conversion.to_dict())
 
     def update_conversion_transaction(self, conversion_transaction_id, status):
         logger.info(
@@ -158,7 +157,14 @@ class ConversionService:
                     f"from_address={from_address}, to_address={to_address}, block_number={block_number}, "
                     f"signature={signature}")
         contract_signature = None
+        fee_amount = Decimal(0)
         token_pair = self.token_service.get_token_pair_internal(token_pair_id=token_pair_id)
+        allowed_decimal = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
+            TokenEntities.ALLOWED_DECIMAL.value)
+
+        validate_conversion_request_amount(amount=get_lowest_unit_amount(amount, allowed_decimal),
+                                           min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
+                                           max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
         ConversionService.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
                                                                from_address=from_address, to_address=to_address,
                                                                block_number=block_number, signature=signature,
@@ -168,42 +174,51 @@ class ConversionService:
                                                                            signature=signature,
                                                                            block_number=block_number,
                                                                            token_pair=token_pair)
-        allowed_decimal = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
-            TokenEntities.ALLOWED_DECIMAL.value)
 
         # Always we store in the lowest unit in db
         lowest_unit_amount = get_lowest_unit_amount(amount, allowed_decimal)
+
+        if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
+            fee_amount = calculate_fee_amount(amount=lowest_unit_amount, percentage=token_pair.get(
+                TokenPairEntities.CONVERSION_FEE.value).get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
+
         conversion = self.process_conversion_request(wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
-                                                     deposit_amount=lowest_unit_amount)
+                                                     deposit_amount=lowest_unit_amount, fee_amount=fee_amount)
+
         conversion_id = conversion[ConversionEntities.ID.value]
         deposit_address = wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
         deposit_amount = conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)
+
         if not deposit_address:
-            conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
-            user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value).get(
-                WalletPairEntities.FROM_ADDRESS.value)
+            user_address = wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value)
             contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
             contract_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_OUT.value,
                                                user_address=user_address, conversion_id=conversion_id,
                                                amount=Decimal(float(deposit_amount)),
                                                contract_address=contract_address,
-                                               chain_id=conversion_detail.get(
-                                                   ConversionDetailEntities.FROM_TOKEN.value).get(
+                                               chain_id=token_pair.get(
+                                                   TokenPairEntities.FROM_TOKEN.value).get(
                                                    TokenEntities.BLOCKCHAIN.value).get(
                                                    BlockchainEntities.CHAIN_ID.value))
         return create_conversion_request_response(conversion_id=conversion_id, deposit_address=deposit_address,
                                                   signature=contract_signature, deposit_amount=deposit_amount)
 
-    def process_conversion_request(self, wallet_pair_id, deposit_amount):
+    def process_conversion_request(self, wallet_pair_id: str, deposit_amount: Decimal, fee_amount: Decimal,
+                                   created_by: str = CreatedBy.DAPP.value):
         logger.info(f"Processing the conversion request with wallet_pair_id={wallet_pair_id},"
-                    f" deposit_amount={deposit_amount}")
+                    f" deposit_amount={deposit_amount}, fee_amount={fee_amount}")
         conversion = self.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id)
 
         if conversion:
-            self.update_conversion_amount(conversion_id=conversion[ConversionEntities.ID.value],
-                                          deposit_amount=deposit_amount)
+            if Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value))) != deposit_amount or \
+                    Decimal(float(conversion.get(ConversionEntities.FEE_AMOUNT.value))) != fee_amount:
+                conversion = self.update_conversion(conversion_id=conversion[ConversionEntities.ID.value],
+                                                    deposit_amount=deposit_amount, fee_amount=fee_amount,
+                                                    claim_amount=deposit_amount - fee_amount)
         else:
-            conversion = self.create_conversion(wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount)
+            conversion = self.create_conversion(wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,
+                                                fee_amount=fee_amount, claim_amount=deposit_amount - fee_amount,
+                                                created_by=created_by)
         return conversion
 
     def get_token_contract_address_for_conversion_id(self, conversion_id):
@@ -280,11 +295,6 @@ class ConversionService:
 
         return transaction
 
-    def get_waiting_conversion_deposit_on_address(self, deposit_address):
-        logger.info("Getting waiting for deposit amount on cardano")
-        conversion = self.conversion_repo.get_waiting_conversion_deposit_on_address(deposit_address=deposit_address)
-        return get_waiting_conversion_deposit_on_address_response(conversion.to_dict()) if conversion else None
-
     def update_transaction_by_id(self, tx_id, tx_operation=None, tx_visibility=None, tx_amount=None, tx_status=None,
                                  created_by=None):
         logger.info(
@@ -328,5 +338,3 @@ class ConversionService:
                                claim_signature=claim_signature)
 
         return claim_conversion_response(signature=claim_signature, claim_amount=claim_amount)
-
-

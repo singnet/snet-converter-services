@@ -94,6 +94,10 @@ def validate_address(from_address, to_address, from_blockchain, to_blockchain):
         validate_cardano_address(address=to_address, chain_id=to_blockchain_chain_id)
 
 
+def calculate_fee_amount(amount: Decimal, percentage: str) -> Decimal:
+    return amount * Decimal(float(percentage)) / 100
+
+
 def get_lowest_unit_amount(amount, allowed_decimal):
     if allowed_decimal is None or allowed_decimal <= 0:
         return Decimal(amount)
@@ -272,9 +276,7 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
     elif conversion_side == ConversionOn.TO.value:
         blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
             TokenEntities.BLOCKCHAIN.value, {})
-        fee_amount = conversion.get(ConversionEntities.FEE_AMOUNT.value)
-        if fee_amount:
-            tx_amount = tx_amount - Decimal(float(fee_amount))
+        tx_amount = Decimal(conversion.get(ConversionEntities.CLAIM_AMOUNT.value))
     else:
         blockchain = None
 
@@ -388,3 +390,16 @@ def validate_conversion_claim_request_signature(conversion_detail, amount, from_
     if result is False:
         raise BadRequestException(error_code=ErrorCode.INCORRECT_SIGNATURE.value,
                                   error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE.value].value)
+
+
+def validate_conversion_request_amount(amount: Decimal, min_value: str, max_value: str) -> None:
+    min_value = Decimal(float(min_value))
+    max_value = Decimal(float(max_value))
+
+    if amount < min_value:
+        raise BadRequestException(error_code=ErrorCode.AMOUNT_LESS_THAN_MIN_VALUE.value,
+                                  error_details=ErrorDetails[ErrorCode.AMOUNT_LESS_THAN_MIN_VALUE.value].value)
+
+    if amount > max_value:
+        raise BadRequestException(error_code=ErrorCode.AMOUNT_GREATER_THAN_MAX_VALUE.value,
+                                  error_details=ErrorDetails[ErrorCode.AMOUNT_GREATER_THAN_MAX_VALUE.value].value)

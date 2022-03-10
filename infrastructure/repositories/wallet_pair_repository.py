@@ -4,11 +4,13 @@ from constants.general import CreatedBy
 from domain.factory.wallet_pair_factory import WalletPairFactory
 from infrastructure.models import WalletPairDBModel, ConversionDBModel
 from infrastructure.repositories.base_repository import BaseRepository
+from utils.database import read_from_db
 from utils.general import get_uuid, datetime_in_utcnow
 
 
 class WalletPairRepository(BaseRepository):
 
+    @read_from_db()
     def get_wallet_pair_by_addresses(self, from_address, to_address, token_pair_id):
         wallet_pair = self.session.query(WalletPairDBModel).filter(
             or_(WalletPairDBModel.from_address == from_address, WalletPairDBModel.from_address == to_address),
@@ -55,6 +57,7 @@ class WalletPairRepository(BaseRepository):
                                              created_at=wallet_pair_item.created_at,
                                              updated_at=wallet_pair_item.updated_at)
 
+    @read_from_db()
     def get_wallet_pair_by_deposit_address(self, deposit_address):
         wallet_pair = self.session.query(WalletPairDBModel).filter(WalletPairDBModel.deposit_address == deposit_address) \
             .order_by(WalletPairDBModel.created_at.desc()).first()
@@ -74,6 +77,7 @@ class WalletPairRepository(BaseRepository):
                                              created_by=wallet_pair.created_by, created_at=wallet_pair.created_at,
                                              updated_at=wallet_pair.updated_at)
 
+    @read_from_db()
     def get_wallet_pair_by_conversion_id(self, conversion_id):
         wallet_pair = self.session.query(WalletPairDBModel) \
             .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
@@ -94,6 +98,7 @@ class WalletPairRepository(BaseRepository):
                                              created_by=wallet_pair.created_by, created_at=wallet_pair.created_at,
                                              updated_at=wallet_pair.updated_at)
 
+    @read_from_db()
     def get_all_deposit_address(self):
         wallet_pairs = self.session.query(WalletPairDBModel) \
             .filter(WalletPairDBModel.deposit_address.isnot(None)).all()
@@ -110,6 +115,7 @@ class WalletPairRepository(BaseRepository):
                                               created_by=wallet_pair.created_by, created_at=wallet_pair.created_at,
                                               updated_at=wallet_pair.updated_at) for wallet_pair in wallet_pairs]
 
+    @read_from_db()
     def get_wallets_address_by_address(self, address):
         wallet_pair = self.session.query(WalletPairDBModel) \
             .filter(or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address)) \

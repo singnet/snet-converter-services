@@ -2,26 +2,29 @@ from constants.entity import ConversionEntities, WalletPairEntities, ConversionD
     BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities
 
 
-def get_latest_user_pending_conversion_request_response(conversion):
+def conversion_response(conversion):
     return {
         ConversionEntities.ROW_ID.value: conversion[ConversionEntities.ROW_ID.value],
         ConversionEntities.ID.value: conversion[ConversionEntities.ID.value],
         ConversionEntities.WALLET_PAIR_ID.value: conversion[ConversionEntities.WALLET_PAIR_ID.value],
         ConversionEntities.DEPOSIT_AMOUNT.value: conversion[ConversionEntities.DEPOSIT_AMOUNT.value],
+        ConversionEntities.FEE_AMOUNT.value: conversion[ConversionEntities.FEE_AMOUNT.value],
+        ConversionEntities.CLAIM_AMOUNT.value: conversion[ConversionEntities.CLAIM_AMOUNT.value],
         ConversionEntities.STATUS.value: conversion[ConversionEntities.STATUS.value],
         ConversionEntities.UPDATED_AT.value: conversion[ConversionEntities.UPDATED_AT.value]
     }
+
+
+def get_latest_user_pending_conversion_request_response(conversion):
+    return conversion_response(conversion)
 
 
 def create_conversion_response(conversion):
-    return {
-        ConversionEntities.ROW_ID.value: conversion[ConversionEntities.ROW_ID.value],
-        ConversionEntities.ID.value: conversion[ConversionEntities.ID.value],
-        ConversionEntities.WALLET_PAIR_ID.value: conversion[ConversionEntities.WALLET_PAIR_ID.value],
-        ConversionEntities.DEPOSIT_AMOUNT.value: conversion[ConversionEntities.DEPOSIT_AMOUNT.value],
-        ConversionEntities.STATUS.value: conversion[ConversionEntities.STATUS.value],
-        ConversionEntities.UPDATED_AT.value: conversion[ConversionEntities.UPDATED_AT.value]
-    }
+    return conversion_response(conversion)
+
+
+def update_conversion_response(conversion):
+    return conversion_response(conversion)
 
 
 def create_conversion_request_response(conversion_id, deposit_address, signature, deposit_amount):
@@ -170,18 +173,6 @@ def create_conversion_transaction_response(conversion_transaction):
 def create_transaction_response(transaction):
     return {
         TransactionEntities.ID.value: transaction[TransactionEntities.ID.value]
-    }
-
-
-def get_waiting_conversion_deposit_on_address_response(conversion):
-    return {
-        ConversionEntities.ROW_ID.value: conversion[ConversionEntities.ROW_ID.value],
-        ConversionEntities.ID.value: conversion[ConversionEntities.ID.value],
-        ConversionEntities.DEPOSIT_AMOUNT.value: conversion[ConversionEntities.DEPOSIT_AMOUNT.value],
-        ConversionEntities.CLAIM_AMOUNT.value: conversion[ConversionEntities.CLAIM_AMOUNT.value],
-        ConversionEntities.FEE_AMOUNT.value: conversion[ConversionEntities.FEE_AMOUNT.value],
-        ConversionEntities.STATUS.value: conversion[ConversionEntities.STATUS.value],
-        ConversionEntities.UPDATED_AT.value: conversion[ConversionEntities.UPDATED_AT.value]
     }
 
 

@@ -172,7 +172,7 @@ class TestConsumer(unittest.TestCase):
                                                       message=json.dumps({'blockchain_name': 'Cardano',
                                                                           'blockchain_event': {
                                                                               'conversion_id': '7298bce110974411b260cac758b37ee0',
-                                                                              'tx_amount': '1.33305E+8',
+                                                                              'tx_amount': '131305425',
                                                                               'tx_operation': 'TOKEN_MINTED'},
                                                                           'blockchain_network_id': 2}))
         conversion_count = conversion_repo.session.query(ConversionDBModel).all()
@@ -258,7 +258,7 @@ class TestConsumer(unittest.TestCase):
         converter_bridge(prepare_converter_bridge_event_format({'blockchain_name': 'Cardano',
                                                                 'blockchain_event': {
                                                                     'conversion_id': '7298bce110974411b260cac758b37ee0',
-                                                                    'tx_amount': '1.33305E+8',
+                                                                    'tx_amount': '131305425',
                                                                     'tx_operation': 'TOKEN_MINTED'},
                                                                 'blockchain_network_id': 2}), {})
         transactions = conversion_repo.session.query(TransactionDBModel).all()
