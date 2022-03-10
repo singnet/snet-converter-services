@@ -13,8 +13,8 @@ class Conversion:
         self.id = id
         self.wallet_pair_id = int(wallet_pair_id)
         self.deposit_amount = str(deposit_amount.normalize())
-        self.claim_amount = str(claim_amount.normalize()) if claim_amount else None
-        self.fee_amount = str(fee_amount.normalize()) if fee_amount else None
+        self.claim_amount = str(claim_amount.normalize())
+        self.fee_amount = str(fee_amount.normalize())
         self.status = status
         self.claim_signature = claim_signature
         self.created_by = created_by

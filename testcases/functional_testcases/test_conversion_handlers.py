@@ -83,6 +83,10 @@ class TestConversion(unittest.TestCase):
                                                        'error': {'code': 'E0017', 'message': 'INTERNAL_SERVER_ERROR',
                                                                  'details': 'Unexpected error occurred during address '
                                                                             'validation'}}
+        bad_request_min_value = {'status': 'failed', 'data': None, 'error': {'code': 'E0061', 'message': 'BAD_REQUEST',
+                                                                             'details': 'Amount is less than expected min value '}}
+        bad_request_max_value = {'status': 'failed', 'data': None, 'error': {'code': 'E0062', 'message': 'BAD_REQUEST',
+                                                                             'details': 'Amount is greater than expected max value'}}
 
         # Bad Request
         event = dict()
@@ -148,6 +152,32 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(body, bad_request_incorrect_signature)
 
         body_input = json.dumps({
+            "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
+            "amount": "0.0000000001",
+            "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "block_number": 123456789,
+            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+        })
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_min_value)
+
+        body_input = json.dumps({
+            "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
+            "amount": "111111111111111111111111111111111111111111",
+            "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "block_number": 123456789,
+            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+        })
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_max_value)
+
+        body_input = json.dumps({
             "token_pair_id": "32477fd4ea994689a04646cbbaafd133",
             "amount": "1333.05",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
@@ -204,6 +234,10 @@ class TestConversion(unittest.TestCase):
         self.assertIsNone(body["data"]["deposit_address"])
         previous_request_id = body["data"]["id"]
 
+        conversion = conversion_repo.session.query(ConversionDBModel).filter(
+            ConversionDBModel.id == previous_request_id).first()
+        last_updated_dt = conversion.updated_at
+
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
             "amount": "1333.05",
@@ -221,6 +255,12 @@ class TestConversion(unittest.TestCase):
         self.assertIsNone(body["data"]["deposit_address"])
         self.assertIsNotNone(body["data"]["signature"])
         self.assertEqual(body["data"]["id"], previous_request_id)
+
+        conversion = conversion_repo.session.query(ConversionDBModel).filter(
+            ConversionDBModel.id == previous_request_id).first()
+        current_last_updated_dt = conversion.updated_at
+
+        self.assertEqual(last_updated_dt, current_last_updated_dt)
 
         # Length of wallet pair table should be one because , the request is from same from and to address
         wallet_pair_count = conversion_repo.session.query(distinct(WalletPairDBModel.id)).all()
@@ -257,8 +297,8 @@ class TestConversion(unittest.TestCase):
                                             'error': {'code': 'E0005', 'message': 'BAD_REQUEST',
                                                       'details': 'Property value is empty'}}
         success_response_with_history = {'status': 'success', 'data': {'items': [{'conversion': {
-            'id': '7298bce110974411b260cac758b37ee0', 'deposit_amount': '1.33305E+8', 'claim_amount': None,
-            'fee_amount': None, 'status': 'USER_INITIATED', 'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
+            'id': '7298bce110974411b260cac758b37ee0', 'deposit_amount': '1.33305E+8', 'claim_amount': '131305425',
+            'fee_amount': '1999575', 'status': 'USER_INITIATED', 'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
             'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
             'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
             'deposit_address': None}, 'from_token': {'name': 'Singularity Ethereum', 'symbol': 'AGIX',
@@ -266,8 +306,8 @@ class TestConversion(unittest.TestCase):
                                                                     'chain_id': 42}}, 'to_token': {
             'name': 'Singularity Cardano', 'symbol': 'AGIX',
             'blockchain': {'name': 'Cardano', 'symbol': 'ADA', 'chain_id': 2}}, 'transactions': []}, {'conversion': {
-            'id': '5086b5245cd046a68363d9ca8ed0027e', 'deposit_amount': '1.33305E+18', 'claim_amount': None,
-            'fee_amount': None, 'status': 'USER_INITIATED', 'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
+            'id': '5086b5245cd046a68363d9ca8ed0027e', 'deposit_amount': '1.33305E+18', 'claim_amount': '1.33305E+18',
+            'fee_amount': '0', 'status': 'USER_INITIATED', 'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
             'from_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
             'to_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
             'deposit_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8'},
@@ -289,8 +329,8 @@ class TestConversion(unittest.TestCase):
             {'conversion': {
                 'id': '51769f201e46446fb61a9c197cb0706b',
                 'deposit_amount': '1.66305E+18',
-                'claim_amount': None,
-                'fee_amount': None,
+                'claim_amount': '1.638104E+18',
+                'fee_amount': '2.4946E+16',
                 'status': 'PROCESSING',
                 'updated_at': '2022-01-12 04:10:54'},
                 'wallet_pair': {
@@ -370,7 +410,7 @@ class TestConversion(unittest.TestCase):
                                                        'details': 'Invalid conversion id provided'}}
         success_response = {'status': 'success', 'data': {
             'conversion': {'id': '51769f201e46446fb61a9c197cb0706b', 'deposit_amount': '1.66305E+18',
-                           'claim_amount': None, 'fee_amount': None, 'status': 'PROCESSING',
+                           'claim_amount': '1.638104E+18', 'fee_amount': '2.4946E+16', 'status': 'PROCESSING',
                            'updated_at': '2022-01-12 04:10:54'},
             'wallet_pair': {'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
                             'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
@@ -573,15 +613,6 @@ class TestConversion(unittest.TestCase):
         response = claim_conversion(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_invalid_conversion_id)
-
-        body = {"from_address": "test",
-                "to_address": "test",
-                "amount": "re",
-                "signature": "ee"}
-        event = {"pathParameters": {"conversion_id": "51769f201e46446fb61a9c197cb0706b"}, "body": json.dumps(body)}
-        response = claim_conversion(event, {})
-        body = json.loads(response["body"])
-        self.assertEqual(body, bad_request_conversion_not_ready_for_claim)
 
         conversion_repo.update_conversion(conversion_id="51769f201e46446fb61a9c197cb0706b", claim_amount=Decimal(1000),
                                           deposit_amount=Decimal(1000), fee_amount=None, status="PROCESSING",

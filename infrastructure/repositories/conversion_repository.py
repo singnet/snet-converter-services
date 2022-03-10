@@ -7,11 +7,13 @@ from domain.factory.conversion_factory import ConversionFactory
 from infrastructure.models import ConversionDBModel, WalletPairDBModel, TokenPairDBModel, TokenDBModel, \
     BlockChainDBModel, ConversionTransactionDBModel, TransactionDBModel
 from infrastructure.repositories.base_repository import BaseRepository
+from utils.database import read_from_db, update_in_db
 from utils.general import get_uuid, datetime_in_utcnow
 
 
 class ConversionRepository(BaseRepository):
 
+    @read_from_db()
     def get_conversion_detail(self, conversion_id):
         from_token = aliased(TokenDBModel)
         to_token = aliased(TokenDBModel)
@@ -38,6 +40,7 @@ class ConversionRepository(BaseRepository):
                                                    from_blockchain=conversion[4], to_blockchain=conversion[5],
                                                    transactions=transaction_detail.get(conversion[0].id, {}))
 
+    @read_from_db()
     def get_transaction_detail(self, conversion_ids):
         transaction_details = self.session.query(ConversionDBModel.id, TransactionDBModel) \
             .join(ConversionTransactionDBModel, ConversionTransactionDBModel.conversion_id == ConversionDBModel.row_id) \
@@ -49,9 +52,9 @@ class ConversionRepository(BaseRepository):
 
         return ConversionFactory.convert_transaction_by_conversion_id(transaction_details=transaction_details)
 
-    def create_conversion(self, wallet_pair_id, deposit_amount, created_by):
+    def create_conversion(self, wallet_pair_id, deposit_amount, fee_amount, claim_amount, created_by):
         conversion_item = ConversionDBModel(id=get_uuid(), wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,
-                                            claim_amount=None, fee_amount=None,
+                                            claim_amount=claim_amount, fee_amount=fee_amount,
                                             status=ConversionStatus.USER_INITIATED.value, claim_signature=None,
                                             created_by=created_by, created_at=datetime_in_utcnow(),
                                             updated_at=datetime_in_utcnow())
@@ -111,6 +114,7 @@ class ConversionRepository(BaseRepository):
                                              created_at=transaction_item.created_at,
                                              updated_at=transaction_item.updated_at)
 
+    @read_from_db()
     def get_latest_user_pending_conversion_request(self, wallet_pair_id, status):
         conversion = self.session.query(ConversionDBModel.row_id, ConversionDBModel.id,
                                         ConversionDBModel.wallet_pair_id, ConversionDBModel.deposit_amount,
@@ -132,13 +136,7 @@ class ConversionRepository(BaseRepository):
                                             created_by=conversion.created_by, created_at=conversion.created_at,
                                             updated_at=conversion.updated_at)
 
-    def update_conversion_amount(self, conversion_id, deposit_amount):
-        conversion = self.session.query(ConversionDBModel) \
-            .filter(ConversionDBModel.id == conversion_id).one()
-        conversion.deposit_amount = deposit_amount
-        conversion.updated_at = datetime_in_utcnow()
-        self.session.commit()
-
+    @update_in_db()
     def update_conversion_status(self, conversion_id, status):
         conversion = self.session.query(ConversionDBModel) \
             .filter(ConversionDBModel.id == conversion_id).one()
@@ -146,6 +144,7 @@ class ConversionRepository(BaseRepository):
         conversion.updated_at = datetime_in_utcnow()
         self.session.commit()
 
+    @update_in_db()
     def update_conversion(self, conversion_id, deposit_amount, claim_amount, fee_amount, status, claim_signature):
         conversion = self.session.query(ConversionDBModel) \
             .filter(ConversionDBModel.id == conversion_id).first()
@@ -153,7 +152,7 @@ class ConversionRepository(BaseRepository):
             conversion.deposit_amount = deposit_amount
         if claim_amount:
             conversion.claim_amount = claim_amount
-        if fee_amount:
+        if fee_amount is not None:
             conversion.fee_amount = fee_amount
         if status:
             conversion.status = status
@@ -163,6 +162,15 @@ class ConversionRepository(BaseRepository):
         conversion.updated_at = datetime_in_utcnow()
         self.session.commit()
 
+        return ConversionFactory.conversion(row_id=conversion.row_id, id=conversion.id,
+                                            wallet_pair_id=conversion.wallet_pair_id,
+                                            deposit_amount=conversion.deposit_amount,
+                                            claim_amount=conversion.claim_amount, fee_amount=conversion.fee_amount,
+                                            status=conversion.status, claim_signature=conversion.claim_signature,
+                                            created_by=conversion.created_by, created_at=conversion.created_at,
+                                            updated_at=conversion.updated_at)
+
+    @update_in_db()
     def update_conversion_transaction(self, conversion_transaction_id, status):
         conversion_transaction = self.session.query(ConversionTransactionDBModel) \
             .filter(ConversionTransactionDBModel.row_id == conversion_transaction_id).first()
@@ -171,6 +179,7 @@ class ConversionRepository(BaseRepository):
         conversion_transaction.updated_at = datetime_in_utcnow()
         self.session.commit()
 
+    @read_from_db()
     def get_token_contract_address_for_conversion_id(self, conversion_id):
         contract_address = self.session.query(TokenPairDBModel.contract_address) \
             .join(WalletPairDBModel, WalletPairDBModel.token_pair_id == TokenPairDBModel.row_id) \
@@ -182,6 +191,7 @@ class ConversionRepository(BaseRepository):
 
         return contract_address[0]
 
+    @read_from_db()
     def get_conversion_history(self, address, conversion_id):
         from_token = aliased(TokenDBModel)
         to_token = aliased(TokenDBModel)
@@ -218,24 +228,7 @@ class ConversionRepository(BaseRepository):
                                                     transactions=transaction_detail.get(conversion_detail[0].id, {}))
                 for conversion_detail in conversions_detail]
 
-    def get_waiting_conversion_deposit_on_address(self, deposit_address):
-        conversion = self.session.query(ConversionDBModel) \
-            .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
-            .filter(WalletPairDBModel.deposit_address == deposit_address,
-                    ConversionDBModel.status == ConversionStatus.USER_INITIATED.value) \
-            .order_by(ConversionDBModel.created_by.desc()).first()
-
-        if conversion is None:
-            return None
-
-        return ConversionFactory.conversion(row_id=conversion.row_id, id=conversion.id,
-                                            wallet_pair_id=conversion.wallet_pair_id,
-                                            deposit_amount=conversion.deposit_amount,
-                                            claim_amount=conversion.claim_amount, fee_amount=conversion.fee_amount,
-                                            status=conversion.status, claim_signature=conversion.claim_signature,
-                                            created_by=conversion.created_by, created_at=conversion.created_at,
-                                            updated_at=conversion.updated_at)
-
+    @update_in_db()
     def update_transaction_by_id(self, tx_id, tx_operation, tx_visibility, tx_amount, tx_status, created_by):
         transaction = self.session.query(TransactionDBModel) \
             .filter(TransactionDBModel.id == tx_id).one()
@@ -252,6 +245,7 @@ class ConversionRepository(BaseRepository):
         transaction.updated_at = datetime_in_utcnow()
         self.session.commit()
 
+    @read_from_db()
     def get_transaction_by_hash(self, tx_hash):
         transaction = self.session.query(TransactionDBModel) \
             .filter(TransactionDBModel.transaction_hash == tx_hash).first()
@@ -273,6 +267,7 @@ class ConversionRepository(BaseRepository):
                                              created_at=transaction.created_at,
                                              updated_at=transaction.updated_at)
 
+    @read_from_db()
     def get_conversion_detail_by_tx_id(self, tx_id):
         conversion = self.session.query(ConversionDBModel) \
             .join(ConversionTransactionDBModel, ConversionTransactionDBModel.conversion_id == ConversionDBModel.row_id) \

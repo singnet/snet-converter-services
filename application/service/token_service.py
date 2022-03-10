@@ -22,8 +22,7 @@ class TokenService:
         token_pair = self.token_repo.get_token_pair(token_pair_id=token_pair_id)
         return get_token_pair_response(token_pair.to_dict())
 
-    def get_token_pair_internal(self, token_pair_id):
-        logger.info(f"Getting the token pair for the given id={token_pair_id}")
-        token_pair = self.token_repo.get_token_pair(token_pair_id=token_pair_id)
+    def get_token_pair_internal(self, token_pair_id, token_pair_row_id=None):
+        logger.info(f"Getting the token pair for the given id={token_pair_id} or token_pair_row_id={token_pair_row_id}")
+        token_pair = self.token_repo.get_token_pair(token_pair_id=token_pair_id, token_pair_row_id=token_pair_row_id)
         return get_token_pair_internal_response(token_pair.to_dict())
-

@@ -1,10 +1,12 @@
 from domain.factory.blockchain_factory import BlockchainFactory
 from infrastructure.models import BlockChainDBModel
 from infrastructure.repositories.base_repository import BaseRepository
+from utils.database import read_from_db
 
 
 class BlockchainRepository(BaseRepository):
 
+    @read_from_db()
     def get_all_blockchain(self):
         blockchains = self.session.query(BlockChainDBModel.id, BlockChainDBModel.name, BlockChainDBModel.description,
                                          BlockChainDBModel.symbol, BlockChainDBModel.logo, BlockChainDBModel.chain_id,
@@ -23,6 +25,7 @@ class BlockchainRepository(BaseRepository):
                                              updated_at=blockchain.updated_at)
                 for blockchain in blockchains]
 
+    @read_from_db()
     def get_blockchain(self, name):
         blockchain = self.session.query(BlockChainDBModel) \
             .filter(BlockChainDBModel.name.ilike(name)).first()
