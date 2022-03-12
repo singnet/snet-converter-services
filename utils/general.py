@@ -11,7 +11,7 @@ from config import BLOCKCHAIN_DETAILS
 from constants.blockchain import EthereumSupportedNetwork, CardanoSupportedNetwork, EthereumNetwork, CardanoNetwork, \
     EthereumEnvironment, CardanoEnvironment
 from constants.entity import TokenPairEntities, TokenEntities, BlockchainEntities, PaginationEntity, \
-    ConversionDetailEntities, WalletPairEntities, TransactionEntities, ConversionEntities
+    ConversionDetailEntities, WalletPairEntities, TransactionEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, ConversionOn
 from constants.lambdas import PaginationDefaults
