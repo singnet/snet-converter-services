@@ -65,6 +65,7 @@ class ErrorCode(Enum):
     AMOUNT_LESS_THAN_MIN_VALUE = "E0061"
     AMOUNT_GREATER_THAN_MAX_VALUE = "E0062"
     CONVERSION_AMOUNT_CANT_BE_ZERO = "E0063"
+    DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE = "E0064"
 
 
 class ErrorDetails(Enum):
@@ -131,3 +132,5 @@ class ErrorDetails(Enum):
     E0061 = "Amount is less than expected min value "
     E0062 = "Amount is greater than expected max value"
     E0063 = "Conversion amount must be greater tha zero"
+    E0064 = "Not authorized to update the cardano transaction hash"
+

@@ -9,15 +9,15 @@ from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
-    ConversionEntities, CardanoEventType, EthereumEventType, CardanoAPIEntities, WalletPairEntities, \
+    ConversionEntities, CardanoEventType, CardanoAPIEntities, WalletPairEntities, \
     EthereumAllowedEventType, CardanoAllowedEventType
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn
+from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn, CreatedBy
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus, \
     ConversionStatus
 from domain.entities.converter_bridge import ConverterBridge
 from utils.cardano_blockchain import CardanoBlockchainUtil
-from utils.exceptions import InternalServerErrorException, BadRequestException, BlockConfirmationNotEnoughException
+from utils.exceptions import InternalServerErrorException, BadRequestException
 from utils.general import get_ethereum_network_url, validate_conversion_with_blockchain, \
     get_cardano_network_url_and_project_id, check_existing_transaction_succeed, get_transactions_operation, \
     is_supported_network_conversion
@@ -138,7 +138,8 @@ def validate_ethereum_transaction_details_against_conversion(chain_id, transacti
 
     if not validate_conversion_with_blockchain(conversion_on=conversion_on,
                                                address=blockchain_transaction.get("from"),
-                                               amount=None, conversion_detail=conversion_detail):
+                                               amount=None, conversion_detail=conversion_detail,
+                                               blockchain_name=BlockchainName.ETHEREUM.value):
         raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value,
                                   error_details=ErrorDetails[
                                       ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value].value)
@@ -162,7 +163,8 @@ def validate_cardano_transaction_details_against_conversion(chain_id, transactio
     blockchain_transaction = get_cardano_transaction_details(chain_id=chain_id, transaction_hash=transaction_hash)
     if not validate_conversion_with_blockchain(conversion_on=conversion_on,
                                                address=blockchain_transaction.inputs[0].address,
-                                               amount=None, conversion_detail=conversion_detail):
+                                               amount=None, conversion_detail=conversion_detail,
+                                               blockchain_name=BlockchainName.CARDANO.value):
         raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value,
                                   error_details=ErrorDetails[
                                       ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value].value)
@@ -182,7 +184,7 @@ def check_existing_transaction_state(transactions, conversion_on):
                                           ErrorCode.TRANSACTION_ALREADY_CREATED.value].value)
 
 
-def validate_transaction_hash(conversion_detail, transaction_hash):
+def validate_transaction_hash(conversion_detail, transaction_hash, created_by):
     transactions = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
 
     from_blockchain = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
@@ -206,6 +208,11 @@ def validate_transaction_hash(conversion_detail, transaction_hash):
 
     blockchain_name = blockchain.get(BlockchainEntities.NAME.value).lower()
     chain_id = blockchain.get(BlockchainEntities.CHAIN_ID.value)
+
+    if created_by == CreatedBy.DAPP.value and blockchain_name == BlockchainName.CARDANO.value:
+        raise BadRequestException(error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
 
     check_existing_transaction_state(transactions=transactions, conversion_on=conversion_on)
 

@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-03-13 12:00:00 
+
+### Added
+- Added confirmation to the transaction table
+- API will be sending the confirmation to each transaction
+- Consumer logic changed to handle the block confirmation
+
+### Fixed
+- Disabled cardano transaction updation from DApp because of security concerns
+- Fixed address check on ethereum transaction updation from DApp and Consumer
+- Avoid inserting 0 deposit amount into the conversion
+
+
 ## 2022-03-04 12:00:00 
 
 ### Added

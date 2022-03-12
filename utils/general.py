@@ -181,13 +181,13 @@ def get_cardano_network_url_and_project_id(chain_id):
     return url, project_id
 
 
-def validate_conversion_with_blockchain(conversion_on, address, amount, conversion_detail):
+def validate_conversion_with_blockchain(conversion_on, address, amount, conversion_detail, blockchain_name):
     logger.info(
-        f"Validating the conversion with blockchain details conversion_on={conversion_on}, address={address}, amount={amount}")
+        f"Validating the conversion with blockchain details conversion_on={conversion_on}, address={address}, "
+        f"amount={amount}, blockchain_name={blockchain_name}")
     is_valid = True
-
     if conversion_on == ConversionOn.FROM.value:
-        if address != conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
+        if blockchain_name != BlockchainName.CARDANO.value and address != conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                 WalletPairEntities.FROM_ADDRESS.value):
             is_valid = False
 

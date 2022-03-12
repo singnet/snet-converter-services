@@ -253,7 +253,7 @@ class ConversionService:
         logger.info(f"Creating the new transaction for the conversion_id={conversion_id} with "
                     f"transaction_hash={transaction_hash}, created_by={created_by}")
         conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
-        validate_transaction_hash(conversion_detail=conversion_detail, transaction_hash=transaction_hash)
+        validate_transaction_hash(conversion_detail=conversion_detail, transaction_hash=transaction_hash, created_by=created_by)
         transaction = self.proces_transaction_creation(conversion_detail=conversion_detail,
                                                        transaction_hash=transaction_hash, created_by=created_by)
         return create_transaction_for_conversion_response(transaction)
