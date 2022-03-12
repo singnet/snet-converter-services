@@ -83,6 +83,12 @@ class TestConversion(unittest.TestCase):
                                                        'error': {'code': 'E0017', 'message': 'INTERNAL_SERVER_ERROR',
                                                                  'details': 'Unexpected error occurred during address '
                                                                             'validation'}}
+        bad_request_amount_should_be_greater_than_zero = {'data': None,
+                                                          'error': {'code': 'E0063',
+                                                                    'details': 'Conversion amount must be greater tha zero',
+                                                                    'message': 'BAD_REQUEST'},
+                                                          'status': 'failed'}
+
         bad_request_min_value = {'status': 'failed', 'data': None, 'error': {'code': 'E0061', 'message': 'BAD_REQUEST',
                                                                              'details': 'Amount is less than expected min value '}}
         bad_request_max_value = {'status': 'failed', 'data': None, 'error': {'code': 'E0062', 'message': 'BAD_REQUEST',
@@ -154,6 +160,19 @@ class TestConversion(unittest.TestCase):
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
             "amount": "0.0000000001",
+            "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "block_number": 123456789,
+            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+        })
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_amount_should_be_greater_than_zero)
+
+        body_input = json.dumps({
+            "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
+            "amount": "0.00001",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
             "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
             "block_number": 123456789,
@@ -354,6 +373,7 @@ class TestConversion(unittest.TestCase):
                     'transaction_operation': 'TOKEN_RECEIVED',
                     'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
                     'transaction_amount': '1.66305E+18',
+                    'confirmation': 10,
                     'status': 'SUCCESS',
                     'updated_at': '2022-01-12 04:10:54'},
                     {
@@ -361,6 +381,7 @@ class TestConversion(unittest.TestCase):
                         'transaction_operation': 'TOKEN_RECEIVED',
                         'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
                         'transaction_amount': '1.66305E+18',
+                        'confirmation': 10,
                         'status': 'WAITING_FOR_CONFIRMATION',
                         'updated_at': '2022-01-12 04:10:54'}]}],
             'meta': {'total_records': 3, 'page_count': 1,
@@ -421,10 +442,10 @@ class TestConversion(unittest.TestCase):
                          'blockchain': {'name': 'Cardano', 'symbol': 'ADA', 'chain_id': 2}}, 'transactions': [
                 {'id': '391be6385abf4b608bdd20a44acd6abc', 'transaction_operation': 'TOKEN_RECEIVED',
                  'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
-                 'status': 'SUCCESS', 'updated_at': '2022-01-12 04:10:54'},
+                 'confirmation': 10, 'status': 'SUCCESS', 'updated_at': '2022-01-12 04:10:54'},
                 {'id': '1df60a2369f34247a5dc3ed29a8eef67', 'transaction_operation': 'TOKEN_RECEIVED',
                  'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
-                 'status': 'WAITING_FOR_CONFIRMATION', 'updated_at': '2022-01-12 04:10:54'}]},
+                 'confirmation': 10, 'status': 'WAITING_FOR_CONFIRMATION', 'updated_at': '2022-01-12 04:10:54'}]},
                             'error': {'code': None, 'message': None, 'details': None}}
 
         response = get_conversion(event, {})

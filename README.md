@@ -380,6 +380,7 @@ Converter Service│
                         "transaction_operation": "TOKEN_RECEIVED",
                         "transaction_hash": "22477fd4ea994689a04646cbbaafd133",
                         "transaction_amount": "1.66305E+18",
+                        "confirmation": 10,
                         "status": "SUCCESS",
                         "updated_at": "2022-01-12 04:10:54"
                     },
@@ -388,6 +389,7 @@ Converter Service│
                         "transaction_operation": "TOKEN_RECEIVED",
                         "transaction_hash": "22477fd4ea994689a04646cbbaafd133",
                         "transaction_amount": "1.66305E+18",
+                        "confirmation": 10,
                         "status": "WAITING_FOR_CONFIRMATION",
                         "updated_at": "2022-01-12 04:10:54"
                     }
@@ -486,6 +488,7 @@ Converter Service│
                 "transaction_operation": "TOKEN_BURNT",
                 "transaction_hash": "0xdf7585ce324f5c0951f67ffa80ed1ad07c88589135d3d7c0eaedc5e04ada6f77",
                 "transaction_amount": "7E+7",
+                "confirmation": 10,
                 "status": "SUCCESS",
                 "updated_at": "2022-03-01 14:59:11"
             },
@@ -494,6 +497,7 @@ Converter Service│
                 "transaction_operation": "TOKEN_MINTED",
                 "transaction_hash": "c7faf2333715818868c58dea289446af88779497f9400e7b8f8d010c1b386700",
                 "transaction_amount": "7E+7",
+                "confirmation": 10,
                 "status": "SUCCESS",
                 "updated_at": "2022-03-01 15:03:06"
             }

@@ -276,6 +276,9 @@
                       "transaction_amount": {
                         "type": "string"
                       },
+                      "confirmation": {
+                        "type": "integer"
+                      },
                       "status": {
                         "type": "string",
                         "enum": [
@@ -625,6 +628,9 @@
                 },
                 "transaction_amount": {
                   "type": "string"
+                },
+                "confirmation": {
+                  "type": "integer"
                 },
                 "status": {
                   "type": "string",

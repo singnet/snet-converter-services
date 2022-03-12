@@ -119,6 +119,7 @@ class TransactionEntities(Enum):
     TRANSACTION_OPERATION = "transaction_operation"
     TRANSACTION_HASH = "transaction_hash"
     TRANSACTION_AMOUNT = "transaction_amount"
+    CONFIRMATION = "confirmation"
     STATUS = "status"
     CREATED_BY = "created_by"
     CREATED_AT = "created_at"
@@ -178,6 +179,10 @@ class CardanoEventType(Enum):
     TOKEN_MINTED = "TOKEN_MINTED"
 
 
+CardanoAllowedEventType = [CardanoEventType.TOKEN_RECEIVED.value, CardanoEventType.TOKEN_BURNT.value,
+                           CardanoEventType.TOKEN_MINTED.value]
+
+
 class EthereumEventConsumerEntities(Enum):
     CONVERSION_ID = "conversionId"
     TRANSACTION_HASH = "transactionHash"
@@ -191,6 +196,9 @@ class EthereumEventConsumerEntities(Enum):
 class EthereumEventType(Enum):
     TOKEN_BURNT = "ConversionOut"
     TOKEN_MINTED = "ConversionIn"
+
+
+EthereumAllowedEventType = [EthereumEventType.TOKEN_BURNT.value, EthereumEventType.TOKEN_MINTED.value]
 
 
 class CardanoAPIEntities(Enum):

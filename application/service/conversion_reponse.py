@@ -182,6 +182,7 @@ def get_transaction(transaction):
         TransactionEntities.TRANSACTION_OPERATION.value: transaction[TransactionEntities.TRANSACTION_OPERATION.value],
         TransactionEntities.TRANSACTION_HASH.value: transaction[TransactionEntities.TRANSACTION_HASH.value],
         TransactionEntities.TRANSACTION_AMOUNT.value: transaction[TransactionEntities.TRANSACTION_AMOUNT.value],
+        TransactionEntities.CONFIRMATION.value: transaction[TransactionEntities.CONFIRMATION.value],
         TransactionEntities.STATUS.value: transaction[TransactionEntities.STATUS.value],
         TransactionEntities.UPDATED_AT.value: transaction[TransactionEntities.UPDATED_AT.value]
     }

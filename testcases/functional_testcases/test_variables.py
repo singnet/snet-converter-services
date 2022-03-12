@@ -62,13 +62,14 @@ def create_conversion_transaction(row_id, id, conversion_id, status, created_by,
 
 
 def create_transaction(row_id, id, conversion_transaction_id, from_token_id, to_token_id, transaction_visibility,
-                       transaction_operation, transaction_hash, transaction_amount, status, created_by, created_at,
-                       updated_at):
+                       transaction_operation, transaction_hash, transaction_amount, confirmation, status, created_by,
+                       created_at,updated_at):
     return TransactionDBModel(row_id=row_id, id=id, conversion_transaction_id=conversion_transaction_id,
                               from_token_id=from_token_id, to_token_id=to_token_id,
                               transaction_visibility=transaction_visibility,
                               transaction_operation=transaction_operation, transaction_hash=transaction_hash,
-                              transaction_amount=transaction_amount, status=status, created_by=created_by,
+                              transaction_amount=transaction_amount, confirmation=confirmation, status=status,
+                              created_by=created_by,
                               created_at=created_at, updated_at=updated_at)
 
 
@@ -195,7 +196,9 @@ class TestVariables:
                                from_address="addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
                                to_address="0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
                                deposit_address="addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-                               deposit_address_detail={"derived_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8", "index": 1, "role": 0},
+                               deposit_address_detail={
+                                   "derived_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+                                   "index": 1, "role": 0},
                                signature="0x84cad9a7adbd444f156906a44381135ae2d81140fb4a0a0ea286287706c36eda643268252c6760f18309aa6f8396b53a48d1ffa9784f326b880758b8f11f03d21b",
                                signature_metadata={"amount": "1333.05",
                                                    "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
@@ -247,7 +250,8 @@ class TestVariables:
                                transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                transaction_operation=TransactionOperation.TOKEN_RECEIVED.value,
                                transaction_hash="22477fd4ea994689a04646cbbaafd133",
-                               transaction_amount=1663050000000000000, status=TransactionStatus.SUCCESS.value,
+                               transaction_amount=1663050000000000000, confirmation=10,
+                               status=TransactionStatus.SUCCESS.value,
                                created_by=DAPP_AS_CREATED_BY,
                                created_at=created_at, updated_at=updated_at),
             create_transaction(row_id=self.transaction_id_3, id="1df60a2369f34247a5dc3ed29a8eef67",
@@ -256,7 +260,7 @@ class TestVariables:
                                transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                transaction_operation=TransactionOperation.TOKEN_RECEIVED.value,
                                transaction_hash="22477fd4ea994689a04646cbbaafd133",
-                               transaction_amount=1663050000000000000,
+                               transaction_amount=1663050000000000000, confirmation=10,
                                status=TransactionStatus.WAITING_FOR_CONFIRMATION.value,
                                created_by=DAPP_AS_CREATED_BY, created_at=created_at, updated_at=updated_at)
         ]

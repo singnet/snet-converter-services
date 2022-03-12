@@ -1,10 +1,8 @@
 import json
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
-import utils.blockchain
 from application.handler.consumer_handlers import converter_event_consumer, converter_bridge
-from constants.error_details import ErrorCode, ErrorDetails
 from constants.status import ConversionTransactionStatus, TransactionVisibility, TransactionOperation, TransactionStatus
 from infrastructure.models import TransactionDBModel, ConversionTransactionDBModel, ConversionDBModel, \
     WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel
@@ -12,7 +10,7 @@ from infrastructure.repositories.conversion_repository import ConversionReposito
 from testcases.functional_testcases.test_variables import TestVariables, consumer_token_received_event_message, \
     prepare_consumer_cardano_event_format, prepare_converter_bridge_event_format, \
     prepare_consumer_ethereum_event_format, create_conversion_transaction, DAPP_AS_CREATED_BY, create_transaction
-from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException, BadRequestException
+from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException
 
 conversion_repo = ConversionRepository()
 
@@ -43,12 +41,11 @@ class TestConsumer(unittest.TestCase):
     @patch("utils.sqs.SqsService.send_message_to_queue")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_block")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_transaction")
-    @patch("utils.blockchain.check_block_confirmation")
     @patch("application.service.notification_service.NotificationService.send_message_to_queue")
     @patch("utils.blockchain.validate_cardano_address")
     @patch("common.utils.Utils.report_slack")
     def test_converter_event_consumer(self, mock_report_slack, mock_validate_cardano_address,
-                                      mock_send_message_to_queue, mock_check_block_confirmation, mock_get_transaction,
+                                      mock_send_message_to_queue, mock_get_transaction,
                                       mock_get_block, mock_send_message_to_sqs,
                                       mock_validate_cardano_transaction_details_against_conversion,
                                       mock_get_ethereum_transaction_details):
@@ -239,7 +236,7 @@ class TestConsumer(unittest.TestCase):
                                 transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                 transaction_operation=TransactionOperation.TOKEN_BURNT.value,
                                 transaction_hash="22477fd4ea994689a04646cbbaafd133",
-                                transaction_amount=1663050000000000000,
+                                transaction_amount=1663050000000000000, confirmation=0,
                                 status=TransactionStatus.SUCCESS.value,
                                 created_by=DAPP_AS_CREATED_BY,
                                 created_at="2022-01-12 04:10:54",

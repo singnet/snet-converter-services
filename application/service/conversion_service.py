@@ -50,18 +50,20 @@ class ConversionService:
         return create_conversion_transaction_response(conversion_transaction.to_dict())
 
     def create_transaction(self, conversion_transaction_id, from_token_id, to_token_id, transaction_visibility,
-                           transaction_operation, transaction_hash, transaction_amount, status, created_by):
+                           transaction_operation, transaction_hash, transaction_amount, confirmation, status,
+                           created_by):
         logger.info(f"Creating the transaction with the details conversion_transaction_id={conversion_transaction_id},"
                     f" from_token_id={from_token_id}, to_token_id={to_token_id}, transaction_visibility="
                     f"{transaction_visibility}, transaction_operation={transaction_operation}, "
                     f"transaction_hash={transaction_hash}, transaction_amount={transaction_amount}, "
-                    f"status={status}, created_by={created_by}")
+                    f" confirmation={confirmation}, status={status}, created_by={created_by}")
         transaction = self.conversion_repo.create_transaction(conversion_transaction_id=conversion_transaction_id,
                                                               from_token_id=from_token_id, to_token_id=to_token_id,
                                                               transaction_visibility=transaction_visibility,
                                                               transaction_operation=transaction_operation,
                                                               transaction_hash=transaction_hash,
-                                                              transaction_amount=transaction_amount, status=status,
+                                                              transaction_amount=transaction_amount,
+                                                              confirmation=confirmation, status=status,
                                                               created_by=created_by)
         return create_transaction_response(transaction.to_dict())
 
@@ -289,20 +291,21 @@ class ConversionService:
                                               transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                               transaction_operation=transaction_operation,
                                               transaction_hash=transaction_hash, transaction_amount=transaction_amount,
-                                              status=TransactionStatus.WAITING_FOR_CONFIRMATION.value,
+                                              confirmation=0, status=TransactionStatus.WAITING_FOR_CONFIRMATION.value,
                                               created_by=created_by)
         self.update_conversion_status(conversion_id=conversion_id, status=ConversionStatus.PROCESSING.value)
 
         return transaction
 
-    def update_transaction_by_id(self, tx_id, tx_operation=None, tx_visibility=None, tx_amount=None, tx_status=None,
-                                 created_by=None):
+    def update_transaction_by_id(self, tx_id, tx_operation=None, tx_visibility=None, tx_amount=None, confirmation=None,
+                                 tx_status=None, created_by=None):
         logger.info(
             f"Updating the transaction of tx_id={tx_id}, tx_operation={tx_operation}, tx_visibility={tx_visibility}, "
-            f"tx_amount={tx_amount}, tx_status={tx_status}, created_by={created_by}")
+            f"tx_amount={tx_amount}, confirmation={confirmation}, tx_status={tx_status}, created_by={created_by}")
         self.conversion_repo.update_transaction_by_id(tx_id=tx_id, tx_operation=tx_operation,
-                                                      tx_visibility=tx_visibility,
-                                                      tx_amount=tx_amount, tx_status=tx_status, created_by=created_by)
+                                                      tx_visibility=tx_visibility, tx_amount=tx_amount,
+                                                      confirmation=confirmation, tx_status=tx_status,
+                                                      created_by=created_by)
 
     def get_transaction_by_hash(self, tx_hash):
         logger.info(f"Getting the transaction by tx_hash={tx_hash}")
