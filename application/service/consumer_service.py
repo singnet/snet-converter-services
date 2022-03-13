@@ -222,7 +222,6 @@ class ConsumerService:
                                                    ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
 
         if transaction is None:
-            tx_amount = Decimal(float(tx_amount))
 
             wallet_pair = self.wallet_pair_service.get_wallet_pair_by_deposit_address(deposit_address=deposit_address)
             if wallet_pair is None:
@@ -237,7 +236,7 @@ class ConsumerService:
             validate_conversion_request_amount(amount=tx_amount,
                                                min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                                max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
-
+            tx_amount = Decimal(float(tx_amount))
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
                 fee_amount = calculate_fee_amount(amount=tx_amount, percentage=token_pair.get(
                     TokenPairEntities.CONVERSION_FEE.value).get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))

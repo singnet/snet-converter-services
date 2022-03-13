@@ -16,9 +16,9 @@ from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus, TransactionOperation
 from infrastructure.repositories.conversion_repository import ConversionRepository
-from utils.blockchain import validate_address, get_lowest_unit_amount, \
-    validate_transaction_hash, validate_conversion_claim_request_signature, calculate_fee_amount, \
-    validate_conversion_request_amount
+from utils.blockchain import validate_address, validate_transaction_hash, validate_conversion_claim_request_signature, \
+    calculate_fee_amount, \
+    validate_conversion_request_amount, convert_str_to_decimal
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, paginate_items, \
     is_supported_network_conversion
@@ -160,13 +160,13 @@ class ConversionService:
                     f"signature={signature}")
         contract_signature = None
         fee_amount = Decimal(0)
-        token_pair = self.token_service.get_token_pair_internal(token_pair_id=token_pair_id)
-        allowed_decimal = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
-            TokenEntities.ALLOWED_DECIMAL.value)
 
-        validate_conversion_request_amount(amount=get_lowest_unit_amount(amount, allowed_decimal),
+        token_pair = self.token_service.get_token_pair_internal(token_pair_id=token_pair_id)
+
+        validate_conversion_request_amount(amount=amount,
                                            min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                            max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
+
         ConversionService.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
                                                                from_address=from_address, to_address=to_address,
                                                                block_number=block_number, signature=signature,
@@ -176,16 +176,14 @@ class ConversionService:
                                                                            signature=signature,
                                                                            block_number=block_number,
                                                                            token_pair=token_pair)
-
-        # Always we store in the lowest unit in db
-        lowest_unit_amount = get_lowest_unit_amount(amount, allowed_decimal)
+        amount = convert_str_to_decimal(value=amount)
 
         if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
-            fee_amount = calculate_fee_amount(amount=lowest_unit_amount, percentage=token_pair.get(
+            fee_amount = calculate_fee_amount(amount=amount, percentage=token_pair.get(
                 TokenPairEntities.CONVERSION_FEE.value).get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
 
         conversion = self.process_conversion_request(wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
-                                                     deposit_amount=lowest_unit_amount, fee_amount=fee_amount)
+                                                     deposit_amount=amount, fee_amount=fee_amount)
 
         conversion_id = conversion[ConversionEntities.ID.value]
         deposit_address = wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
@@ -196,7 +194,7 @@ class ConversionService:
             contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
             contract_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_OUT.value,
                                                user_address=user_address, conversion_id=conversion_id,
-                                               amount=Decimal(float(deposit_amount)),
+                                               amount=convert_str_to_decimal(deposit_amount),
                                                contract_address=contract_address,
                                                chain_id=token_pair.get(
                                                    TokenPairEntities.FROM_TOKEN.value).get(
@@ -253,7 +251,8 @@ class ConversionService:
         logger.info(f"Creating the new transaction for the conversion_id={conversion_id} with "
                     f"transaction_hash={transaction_hash}, created_by={created_by}")
         conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
-        validate_transaction_hash(conversion_detail=conversion_detail, transaction_hash=transaction_hash, created_by=created_by)
+        validate_transaction_hash(conversion_detail=conversion_detail, transaction_hash=transaction_hash,
+                                  created_by=created_by)
         transaction = self.proces_transaction_creation(conversion_detail=conversion_detail,
                                                        transaction_hash=transaction_hash, created_by=created_by)
         return create_transaction_for_conversion_response(transaction)

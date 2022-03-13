@@ -88,6 +88,9 @@ class TestConversion(unittest.TestCase):
                                                                     'details': 'Conversion amount must be greater tha zero',
                                                                     'message': 'BAD_REQUEST'},
                                                           'status': 'failed'}
+        bad_request_invalid_conversion_amount = {'status': 'failed', 'data': None,
+                                                 'error': {'code': 'E0065', 'message': 'BAD_REQUEST',
+                                                           'details': 'Invalid conversion amount provided'}}
 
         bad_request_min_value = {'status': 'failed', 'data': None, 'error': {'code': 'E0061', 'message': 'BAD_REQUEST',
                                                                              'details': 'Amount is less than expected min value '}}
@@ -155,11 +158,11 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(body, bad_request_incorrect_signature)
+        self.assertEqual(body, bad_request_invalid_conversion_amount)
 
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
-            "amount": "0.0000000001",
+            "amount": "0",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
             "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
             "block_number": 123456789,
@@ -172,7 +175,7 @@ class TestConversion(unittest.TestCase):
 
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
-            "amount": "0.00001",
+            "amount": "1",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
             "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
             "block_number": 123456789,
@@ -198,7 +201,7 @@ class TestConversion(unittest.TestCase):
 
         body_input = json.dumps({
             "token_pair_id": "32477fd4ea994689a04646cbbaafd133",
-            "amount": "1333.05",
+            "amount": "1333",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
             "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
             "block_number": 12345678,
@@ -209,16 +212,29 @@ class TestConversion(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_token_pair_id_not_exists)
 
+        body_input = json.dumps({
+            "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
+            "amount": "1000",
+            "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "to_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf",
+            "block_number": 12079580,
+            "signature": "0x03ef90b2b121e2c651ad1d4b42f9fe38c7e1503bd9d4854640f8d0d5de843f117d38d0b96427750f917e4aa0f4464b9e60853e3cc10e5018f966033ece2719071c"
+        })
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_incorrect_signature)
+
         mock_validate_cardano_address.side_effect = BadRequestException(
             error_code=ErrorCode.INVALID_CARDANO_ADDRESS.value,
             error_details=ErrorDetails[ErrorCode.INVALID_CARDANO_ADDRESS.value].value)
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
-            "amount": "1333.05",
+            "amount": "100",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-            "block_number": 12345678,
-            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+            "to_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf",
+            "block_number": 12079580,
+            "signature": "0x03ef90b2b121e2c651ad1d4b42f9fe38c7e1503bd9d4854640f8d0d5de843f117d38d0b96427750f917e4aa0f4464b9e60853e3cc10e5018f966033ece2719071c"
         })
         event["body"] = body_input
         response = create_conversion_request(event, {})
@@ -238,11 +254,11 @@ class TestConversion(unittest.TestCase):
         # success request
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
-            "amount": "1333.05",
+            "amount": "100",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-            "block_number": 12345678,
-            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+            "to_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf",
+            "block_number": 12079580,
+            "signature": "0x03ef90b2b121e2c651ad1d4b42f9fe38c7e1503bd9d4854640f8d0d5de843f117d38d0b96427750f917e4aa0f4464b9e60853e3cc10e5018f966033ece2719071c"
         })
         event["body"] = body_input
         response = create_conversion_request(event, {})
@@ -259,11 +275,11 @@ class TestConversion(unittest.TestCase):
 
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
-            "amount": "1333.05",
+            "amount": "100",
             "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-            "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-            "block_number": 12345678,
-            "signature": "0xd4159d88ccc844ced5f0fa19b2975877813ab82f5c260d8cbacc1c11e9d61e8c776db78473a052ee02da961e98c7326f70c5e37e9caa2240dbb17baea2d4c69c1b"
+            "to_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf",
+            "block_number": 12079580,
+            "signature": "0x03ef90b2b121e2c651ad1d4b42f9fe38c7e1503bd9d4854640f8d0d5de843f117d38d0b96427750f917e4aa0f4464b9e60853e3cc10e5018f966033ece2719071c"
         })
         event["body"] = body_input
         response = create_conversion_request(event, {})
@@ -286,12 +302,12 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(len(wallet_pair_count), 1)
 
         body_input = json.dumps({
+            "amount": "1000",
+            "signature": "0x9ac7b1dbd03fcdd3bd832c8b5e34953d3e49c1aece3d730c1ff92627c2f56cbc4bfa789d43cc2f09346d4dab458ebdd542b9268b103c7a51673f1ba08502baa71c",
             "token_pair_id": "fdd6a416d8414154bcdd95f82b6ab239",
-            "amount": "1333.05",
-            "from_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+            "block_number": 123456,
             "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-            "block_number": 12345678,
-            "signature": "0x84cad9a7adbd444f156906a44381135ae2d81140fb4a0a0ea286287706c36eda643268252c6760f18309aa6f8396b53a48d1ffa9784f326b880758b8f11f03d21b"
+            "from_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf"
         })
 
         event["body"] = body_input

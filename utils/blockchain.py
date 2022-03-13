@@ -1,4 +1,3 @@
-import math
 from decimal import Decimal
 from http import HTTPStatus
 
@@ -12,7 +11,7 @@ from constants.entity import BlockchainEntities, TokenEntities, ConversionDetail
     ConversionEntities, CardanoEventType, CardanoAPIEntities, WalletPairEntities, \
     EthereumAllowedEventType, CardanoAllowedEventType
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn, CreatedBy
+from constants.general import BlockchainName, ConversionOn, CreatedBy
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus, \
     ConversionStatus
 from domain.entities.converter_bridge import ConverterBridge
@@ -97,17 +96,6 @@ def validate_address(from_address, to_address, from_blockchain, to_blockchain):
 
 def calculate_fee_amount(amount: Decimal, percentage: str) -> Decimal:
     return amount * Decimal(float(percentage)) / 100
-
-
-def get_lowest_unit_amount(amount, allowed_decimal):
-    if allowed_decimal is None or allowed_decimal <= 0:
-        return Decimal(amount)
-
-    if allowed_decimal > MAX_ALLOWED_DECIMAL:
-        raise InternalServerErrorException(error_code=ErrorCode.ALLOWED_DECIMAL_LIMIT_EXISTS.value,
-                                           error_details=ErrorDetails[
-                                               ErrorCode.ALLOWED_DECIMAL_LIMIT_EXISTS.value].value)
-    return Decimal(int(Decimal(amount) * Decimal(math.pow(10, allowed_decimal))))
 
 
 def get_ethereum_transaction_details(chain_id, transaction_hash):
@@ -392,9 +380,19 @@ def validate_conversion_claim_request_signature(conversion_detail, amount, from_
                                   error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE.value].value)
 
 
-def validate_conversion_request_amount(amount: Decimal, min_value: str, max_value: str) -> None:
+def convert_str_to_decimal(value):
+    return Decimal(float(value))
+
+
+def validate_conversion_request_amount(amount: str, min_value: str, max_value: str) -> None:
     min_value = Decimal(float(min_value))
     max_value = Decimal(float(max_value))
+    amount = convert_str_to_decimal(value=amount)
+
+    if (amount - int(amount)) > Decimal(0):
+        raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value].value)
 
     if not amount:
         raise BadRequestException(error_code=ErrorCode.CONVERSION_AMOUNT_CANT_BE_ZERO.value,
