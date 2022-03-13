@@ -8,7 +8,8 @@ from utils.general import datetime_to_str
 class Transaction:
     def __init__(self, row_id: int, id: str, conversion_transaction_id: int, from_token_id: int, to_token_id: int,
                  transaction_visibility: str, transaction_operation: str, transaction_hash: str,
-                 transaction_amount: Decimal, status: str, created_by: str, created_at: date, updated_at: date):
+                 transaction_amount: Decimal, confirmation: int, status: str, created_by: str, created_at: date,
+                 updated_at: date):
         self.row_id = row_id
         self.id = id
         self.conversion_transaction_id = conversion_transaction_id
@@ -18,6 +19,7 @@ class Transaction:
         self.transaction_operation = transaction_operation
         self.transaction_hash = transaction_hash
         self.transaction_amount = str(transaction_amount.normalize())
+        self.confirmation = confirmation
         self.status = status
         self.created_by = created_by
         self.created_at = datetime_to_str(created_at)
@@ -34,6 +36,7 @@ class Transaction:
             TransactionEntities.TRANSACTION_OPERATION.value: self.transaction_operation,
             TransactionEntities.TRANSACTION_HASH.value: self.transaction_hash,
             TransactionEntities.TRANSACTION_AMOUNT.value: self.transaction_amount,
+            TransactionEntities.CONFIRMATION.value: self.confirmation,
             TransactionEntities.STATUS.value: self.status,
             TransactionEntities.CREATED_BY.value: self.created_by,
             TransactionEntities.CREATED_AT.value: self.created_at,

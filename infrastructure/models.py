@@ -155,6 +155,7 @@ class TransactionDBModel(Base):
     transaction_operation = Column("transaction_operation", VARCHAR(30))
     transaction_hash = Column("transaction_hash", VARCHAR(250))
     transaction_amount = Column("transaction_amount", DECIMAL(50, 20))
+    confirmation = Column("confirmation", INTEGER, nullable=False)
     status = Column("status", VARCHAR(30))
     created_by = Column("created_by", VARCHAR(50), nullable=False)
     created_at = Column("created_at", TIMESTAMP,

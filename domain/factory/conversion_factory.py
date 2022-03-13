@@ -18,12 +18,13 @@ class ConversionFactory:
 
     @staticmethod
     def transaction(row_id, id, conversion_transaction_id, from_token_id, to_token_id, transaction_visibility,
-                    transaction_operation, transaction_hash, transaction_amount, status, created_by, created_at,
-                    updated_at):
+                    transaction_operation, transaction_hash, transaction_amount, confirmation, status, created_by,
+                    created_at, updated_at):
         return Transaction(row_id=row_id, id=id, conversion_transaction_id=conversion_transaction_id,
                            from_token_id=from_token_id, to_token_id=to_token_id,
                            transaction_visibility=transaction_visibility, transaction_operation=transaction_operation,
-                           transaction_hash=transaction_hash, transaction_amount=transaction_amount, status=status,
+                           transaction_hash=transaction_hash, transaction_amount=transaction_amount,
+                           confirmation=confirmation, status=status,
                            created_by=created_by, created_at=created_at, updated_at=updated_at)
 
     @staticmethod
@@ -93,6 +94,7 @@ class ConversionFactory:
                                                           transaction_operation=transaction.transaction_operation,
                                                           transaction_hash=transaction.transaction_hash,
                                                           transaction_amount=transaction.transaction_amount,
+                                                          confirmation=transaction.confirmation,
                                                           status=transaction.status,
                                                           created_by=transaction.created_by,
                                                           created_at=transaction.created_at,

@@ -86,7 +86,8 @@ class ConversionRepository(BaseRepository):
                                                         updated_at=conversion_transaction_item.updated_at)
 
     def create_transaction(self, conversion_transaction_id, from_token_id, to_token_id, transaction_visibility,
-                           transaction_operation, transaction_hash, transaction_amount, status, created_by):
+                           transaction_operation, transaction_hash, transaction_amount, confirmation, status,
+                           created_by):
         if not created_by:
             created_by = CreatedBy.DAPP.value
 
@@ -95,8 +96,7 @@ class ConversionRepository(BaseRepository):
                                               transaction_visibility=transaction_visibility,
                                               transaction_operation=transaction_operation,
                                               transaction_hash=transaction_hash, transaction_amount=transaction_amount,
-                                              status=status,
-                                              created_by=created_by,
+                                              confirmation=confirmation, status=status, created_by=created_by,
                                               created_at=datetime_in_utcnow(),
                                               updated_at=datetime_in_utcnow())
         self.add_item(transaction_item)
@@ -109,6 +109,7 @@ class ConversionRepository(BaseRepository):
                                              transaction_operation=transaction_item.transaction_operation,
                                              transaction_hash=transaction_item.transaction_hash,
                                              transaction_amount=transaction_item.transaction_amount,
+                                             confirmation=transaction_item.confirmation,
                                              status=transaction_item.status,
                                              created_by=transaction_item.created_by,
                                              created_at=transaction_item.created_at,
@@ -229,7 +230,8 @@ class ConversionRepository(BaseRepository):
                 for conversion_detail in conversions_detail]
 
     @update_in_db()
-    def update_transaction_by_id(self, tx_id, tx_operation, tx_visibility, tx_amount, tx_status, created_by):
+    def update_transaction_by_id(self, tx_id, tx_operation, tx_visibility, tx_amount, confirmation, tx_status,
+                                 created_by):
         transaction = self.session.query(TransactionDBModel) \
             .filter(TransactionDBModel.id == tx_id).one()
         if tx_operation:
@@ -238,6 +240,8 @@ class ConversionRepository(BaseRepository):
             transaction.transaction_visibility = tx_visibility
         if tx_amount:
             transaction.transaction_amount = tx_amount
+        if confirmation is not None:
+            transaction.confirmation = confirmation
         if tx_status:
             transaction.status = tx_status
         if created_by:
@@ -262,9 +266,8 @@ class ConversionRepository(BaseRepository):
                                              transaction_operation=transaction.transaction_operation,
                                              transaction_hash=transaction.transaction_hash,
                                              transaction_amount=transaction.transaction_amount,
-                                             status=transaction.status,
-                                             created_by=transaction.created_by,
-                                             created_at=transaction.created_at,
+                                             confirmation=transaction.confirmation, status=transaction.status,
+                                             created_by=transaction.created_by, created_at=transaction.created_at,
                                              updated_at=transaction.updated_at)
 
     @read_from_db()

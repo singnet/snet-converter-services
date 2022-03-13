@@ -1,10 +1,8 @@
 import json
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
-import utils.blockchain
 from application.handler.consumer_handlers import converter_event_consumer, converter_bridge
-from constants.error_details import ErrorCode, ErrorDetails
 from constants.status import ConversionTransactionStatus, TransactionVisibility, TransactionOperation, TransactionStatus
 from infrastructure.models import TransactionDBModel, ConversionTransactionDBModel, ConversionDBModel, \
     WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel
@@ -12,7 +10,7 @@ from infrastructure.repositories.conversion_repository import ConversionReposito
 from testcases.functional_testcases.test_variables import TestVariables, consumer_token_received_event_message, \
     prepare_consumer_cardano_event_format, prepare_converter_bridge_event_format, \
     prepare_consumer_ethereum_event_format, create_conversion_transaction, DAPP_AS_CREATED_BY, create_transaction
-from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException, BadRequestException
+from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException
 
 conversion_repo = ConversionRepository()
 
@@ -43,12 +41,11 @@ class TestConsumer(unittest.TestCase):
     @patch("utils.sqs.SqsService.send_message_to_queue")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_block")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_transaction")
-    @patch("utils.blockchain.check_block_confirmation")
     @patch("application.service.notification_service.NotificationService.send_message_to_queue")
     @patch("utils.blockchain.validate_cardano_address")
     @patch("common.utils.Utils.report_slack")
     def test_converter_event_consumer(self, mock_report_slack, mock_validate_cardano_address,
-                                      mock_send_message_to_queue, mock_check_block_confirmation, mock_get_transaction,
+                                      mock_send_message_to_queue, mock_get_transaction,
                                       mock_get_block, mock_send_message_to_sqs,
                                       mock_validate_cardano_transaction_details_against_conversion,
                                       mock_get_ethereum_transaction_details):
@@ -69,12 +66,6 @@ class TestConsumer(unittest.TestCase):
                           prepare_consumer_cardano_event_format({"hack": "test"}), {})
 
         mock_get_block.return_value = {"confirmations": 0}
-        # Blockchain confirmation not enough error  when block confirmation not meet
-        self.assertRaises(BlockConfirmationNotEnoughException, converter_event_consumer,
-                          prepare_consumer_cardano_event_format(
-                              {"tx_hash": "random hash", "transaction_detail": {"tx_type": "TOKEN_RECEIVED"}}), {})
-
-        mock_get_block.return_value = {"confirmations": 100}
         # Internal Server error  when expected fields is not there
         self.assertRaises(InternalServerErrorException, converter_event_consumer,
                           prepare_consumer_cardano_event_format(
@@ -86,8 +77,34 @@ class TestConsumer(unittest.TestCase):
              "transaction_detail": {"tx_type": "TOKEN_RECEIVED", "tx_amount": "10000"}}), {})
         self.assertEqual(response, None)
 
-        input_event = prepare_consumer_cardano_event_format(consumer_token_received_event_message)
         # valid request
+        # Blockchain confirmation not enough error  when block confirmation not meet
+        self.assertRaises(BlockConfirmationNotEnoughException, converter_event_consumer,
+                          prepare_consumer_cardano_event_format(
+                              {"tx_hash": "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449",
+                               "address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+                               "transaction_detail": {"tx_type": "TOKEN_RECEIVED",
+                                                      "tx_amount": "1E+8"}}), {})
+        transaction = conversion_repo.session.query(TransactionDBModel).filter(
+            TransactionDBModel.transaction_hash == "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449").first()
+        self.assertEqual(transaction.status, TransactionStatus.WAITING_FOR_CONFIRMATION.value)
+        self.assertEqual(transaction.confirmation, 0)
+
+        mock_get_block.return_value = {"confirmations": 20}
+        # Blockchain confirmation not enough error  when block confirmation not meet
+        self.assertRaises(BlockConfirmationNotEnoughException, converter_event_consumer,
+                          prepare_consumer_cardano_event_format(
+                              {"tx_hash": "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449",
+                               "address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+                               "transaction_detail": {"tx_type": "TOKEN_RECEIVED",
+                                                      "tx_amount": "1E+8"}}), {})
+        transaction = conversion_repo.session.query(TransactionDBModel).filter(
+            TransactionDBModel.transaction_hash == "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449").first()
+        self.assertEqual(transaction.status, TransactionStatus.WAITING_FOR_CONFIRMATION.value)
+        self.assertEqual(transaction.confirmation, 20)
+
+        mock_get_block.return_value = {"confirmations": 26}
+        input_event = prepare_consumer_cardano_event_format(consumer_token_received_event_message)
         converter_event_consumer(input_event, {})
         # expected message format to send
         mock_send_message_to_queue.assert_called_with(queue="CONVERTER_BRIDGE",
@@ -161,7 +178,21 @@ class TestConsumer(unittest.TestCase):
                                                                   "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 12345600}"}),
                           {})
 
+        # Invalid address for transaction
+        mock_get_ethereum_transaction_details.return_value = {"from": "some address"}
+        converter_event_consumer(prepare_consumer_ethereum_event_format("ConversionOut",
+                                                                        {
+                                                                            "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
+                                                                            "event": "ConversionOut",
+                                                                            "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 133305000}"}),
+                                 {})
+        conversion_count = conversion_repo.session.query(ConversionDBModel).all()
+        self.assertEqual(3, len(conversion_count))
+        conversion_transaction_count = conversion_repo.session.query(ConversionTransactionDBModel).all()
+        self.assertEqual(0, len(conversion_transaction_count))
+
         # valid event
+        mock_get_ethereum_transaction_details.return_value = {"from": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}
         converter_event_consumer(prepare_consumer_ethereum_event_format("ConversionOut",
                                                                         {
                                                                             "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
@@ -239,7 +270,7 @@ class TestConsumer(unittest.TestCase):
                                 transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                 transaction_operation=TransactionOperation.TOKEN_BURNT.value,
                                 transaction_hash="22477fd4ea994689a04646cbbaafd133",
-                                transaction_amount=1663050000000000000,
+                                transaction_amount=1663050000000000000, confirmation=0,
                                 status=TransactionStatus.SUCCESS.value,
                                 created_by=DAPP_AS_CREATED_BY,
                                 created_at="2022-01-12 04:10:54",

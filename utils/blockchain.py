@@ -1,4 +1,3 @@
-import math
 from decimal import Decimal
 from http import HTTPStatus
 
@@ -9,14 +8,15 @@ from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
-    ConversionEntities, CardanoEventType, EthereumEventType, CardanoAPIEntities, WalletPairEntities
+    ConversionEntities, CardanoEventType, CardanoAPIEntities, WalletPairEntities, \
+    EthereumAllowedEventType, CardanoAllowedEventType
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, MAX_ALLOWED_DECIMAL, ConversionOn
+from constants.general import BlockchainName, ConversionOn, CreatedBy
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus, \
     ConversionStatus
 from domain.entities.converter_bridge import ConverterBridge
 from utils.cardano_blockchain import CardanoBlockchainUtil
-from utils.exceptions import InternalServerErrorException, BadRequestException, BlockConfirmationNotEnoughException
+from utils.exceptions import InternalServerErrorException, BadRequestException
 from utils.general import get_ethereum_network_url, validate_conversion_with_blockchain, \
     get_cardano_network_url_and_project_id, check_existing_transaction_succeed, get_transactions_operation, \
     is_supported_network_conversion
@@ -98,17 +98,6 @@ def calculate_fee_amount(amount: Decimal, percentage: str) -> Decimal:
     return amount * Decimal(float(percentage)) / 100
 
 
-def get_lowest_unit_amount(amount, allowed_decimal):
-    if allowed_decimal is None or allowed_decimal <= 0:
-        return Decimal(amount)
-
-    if allowed_decimal > MAX_ALLOWED_DECIMAL:
-        raise InternalServerErrorException(error_code=ErrorCode.ALLOWED_DECIMAL_LIMIT_EXISTS.value,
-                                           error_details=ErrorDetails[
-                                               ErrorCode.ALLOWED_DECIMAL_LIMIT_EXISTS.value].value)
-    return Decimal(amount) * Decimal(math.pow(10, allowed_decimal))
-
-
 def get_ethereum_transaction_details(chain_id, transaction_hash):
     network_url = get_ethereum_network_url(chain_id=chain_id)
     ethereum_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
@@ -124,6 +113,7 @@ def get_ethereum_transaction_details(chain_id, transaction_hash):
                                   error_details=ErrorDetails[
                                       ErrorCode.RANDOM_TRANSACTION_HASH.value].value)
     except Exception as e:
+        logger.exception(e)
         raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS.value,
                                            error_details=ErrorDetails[
                                                ErrorCode.UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS.value].value)
@@ -136,7 +126,8 @@ def validate_ethereum_transaction_details_against_conversion(chain_id, transacti
 
     if not validate_conversion_with_blockchain(conversion_on=conversion_on,
                                                address=blockchain_transaction.get("from"),
-                                               amount=None, conversion_detail=conversion_detail):
+                                               amount=None, conversion_detail=conversion_detail,
+                                               blockchain_name=BlockchainName.ETHEREUM.value):
         raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value,
                                   error_details=ErrorDetails[
                                       ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value].value)
@@ -160,7 +151,8 @@ def validate_cardano_transaction_details_against_conversion(chain_id, transactio
     blockchain_transaction = get_cardano_transaction_details(chain_id=chain_id, transaction_hash=transaction_hash)
     if not validate_conversion_with_blockchain(conversion_on=conversion_on,
                                                address=blockchain_transaction.inputs[0].address,
-                                               amount=None, conversion_detail=conversion_detail):
+                                               amount=None, conversion_detail=conversion_detail,
+                                               blockchain_name=BlockchainName.CARDANO.value):
         raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value,
                                   error_details=ErrorDetails[
                                       ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value].value)
@@ -180,7 +172,7 @@ def check_existing_transaction_state(transactions, conversion_on):
                                           ErrorCode.TRANSACTION_ALREADY_CREATED.value].value)
 
 
-def validate_transaction_hash(conversion_detail, transaction_hash):
+def validate_transaction_hash(conversion_detail, transaction_hash, created_by):
     transactions = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
 
     from_blockchain = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
@@ -204,6 +196,11 @@ def validate_transaction_hash(conversion_detail, transaction_hash):
 
     blockchain_name = blockchain.get(BlockchainEntities.NAME.value).lower()
     chain_id = blockchain.get(BlockchainEntities.CHAIN_ID.value)
+
+    if created_by == CreatedBy.DAPP.value and blockchain_name == BlockchainName.CARDANO.value:
+        raise BadRequestException(error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
 
     check_existing_transaction_state(transactions=transactions, conversion_on=conversion_on)
 
@@ -292,38 +289,33 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
     return activity_event
 
 
+def validate_consumer_event_type(blockchain_name, event_type):
+    logger.info(f"Validating the consumer event type for blockchain_name={blockchain_name}, event_type={event_type}")
+    if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower() and event_type not in EthereumAllowedEventType:
+        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
+                                           error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+    elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower() and event_type not in CardanoAllowedEventType:
+        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
+                                           error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+
+
 def validate_consumer_event_against_transaction(event_type, transaction, blockchain_name):
-    logger.info("Validating the consumer event")
+    logger.info(
+        f"Validating the consumer event against transaction for event_type={event_type}, blockchain_name={blockchain_name}")
+
+    if transaction and transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
+        raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
+                                  error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
+
     if blockchain_name.lower() == BlockchainName.CARDANO.name.lower():
-        if event_type == CardanoEventType.TOKEN_RECEIVED.value and transaction:
-            logger.info("transaction already updated")
-            raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
-                                      error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
-        elif event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNT.value:
+        if event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNT.value:
             if transaction is None:
                 logger.info("Transaction is not available")
                 raise BadRequestException(error_code=ErrorCode.TRANSACTION_NOT_FOUND.value,
-                                          error_details=ErrorDetails[
-                                              ErrorCode.TRANSACTION_NOT_FOUND.value].value)
-
-            if transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
-                logger.info("Transaction already confirmed")
-                raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
-                                          error_details=ErrorDetails[
-                                              ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
-    elif blockchain_name.lower() == BlockchainName.ETHEREUM.name.lower():
-        if event_type != EthereumEventType.TOKEN_BURNT.value and event_type != EthereumEventType.TOKEN_MINTED.value:
-            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
-                                               error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
-
-        if (event_type == EthereumEventType.TOKEN_BURNT.value or event_type == EthereumEventType.TOKEN_MINTED.value) and \
-                transaction and transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
-            logger.info("Transaction already confirmed")
-            raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
-                                      error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
+                                          error_details=ErrorDetails[ErrorCode.TRANSACTION_NOT_FOUND.value].value)
 
 
-def check_block_confirmation(tx_hash, blockchain_network_id, required_block_confirmation):
+def get_block_confirmation(tx_hash, blockchain_network_id):
     url, project_id = get_cardano_network_url_and_project_id(chain_id=blockchain_network_id)
     cardano_blockchain = CardanoBlockchainUtil(project_id=project_id, base_url=url)
     try:
@@ -337,11 +329,7 @@ def check_block_confirmation(tx_hash, blockchain_network_id, required_block_conf
         raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_BLOCK_CONFIRMATION.value,
                                            error_details=ErrorDetails[
                                                ErrorCode.UNEXPECTED_ERROR_ON_BLOCK_CONFIRMATION.value].value)
-
-    if bc_block_confirmations < required_block_confirmation:
-        raise BlockConfirmationNotEnoughException(error_code=ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value,
-                                                  error_details=ErrorDetails[
-                                                      ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
+    return bc_block_confirmations
 
 
 def generate_deposit_address_details_for_cardano_operation(wallet_pair):
@@ -392,9 +380,23 @@ def validate_conversion_claim_request_signature(conversion_detail, amount, from_
                                   error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE.value].value)
 
 
-def validate_conversion_request_amount(amount: Decimal, min_value: str, max_value: str) -> None:
+def convert_str_to_decimal(value):
+    return Decimal(float(value))
+
+
+def validate_conversion_request_amount(amount: str, min_value: str, max_value: str) -> None:
     min_value = Decimal(float(min_value))
     max_value = Decimal(float(max_value))
+    amount = convert_str_to_decimal(value=amount)
+
+    if (amount - int(amount)) > Decimal(0):
+        raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value,
+                                  error_details=ErrorDetails[
+                                      ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value].value)
+
+    if not amount:
+        raise BadRequestException(error_code=ErrorCode.CONVERSION_AMOUNT_CANT_BE_ZERO.value,
+                                  error_details=ErrorDetails[ErrorCode.CONVERSION_AMOUNT_CANT_BE_ZERO.value].value)
 
     if amount < min_value:
         raise BadRequestException(error_code=ErrorCode.AMOUNT_LESS_THAN_MIN_VALUE.value,
