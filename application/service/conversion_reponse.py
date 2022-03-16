@@ -1,5 +1,5 @@
 from constants.entity import ConversionEntities, WalletPairEntities, ConversionDetailEntities, TokenEntities, \
-    BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities
+    BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities, TokenPairEntities
 
 
 def conversion_response(conversion):
@@ -27,19 +27,21 @@ def update_conversion_response(conversion):
     return conversion_response(conversion)
 
 
-def create_conversion_request_response(conversion_id, deposit_address, signature, deposit_amount):
+def create_conversion_request_response(conversion_id, deposit_address, signature, deposit_amount, contract_address):
     return {
         ConversionEntities.ID.value: conversion_id,
         ConversionEntities.DEPOSIT_AMOUNT.value: deposit_amount,
         WalletPairEntities.DEPOSIT_ADDRESS.value: deposit_address,
-        SignatureMetadataEntities.SIGNATURE.value: signature
+        SignatureMetadataEntities.SIGNATURE.value: signature,
+        TokenPairEntities.CONTRACT_ADDRESS.value: contract_address
     }
 
 
-def claim_conversion_response(signature, claim_amount):
+def claim_conversion_response(signature, claim_amount, contract_address):
     return {
         ConversionEntities.CLAIM_AMOUNT.value: claim_amount,
-        SignatureMetadataEntities.SIGNATURE.value: signature
+        SignatureMetadataEntities.SIGNATURE.value: signature,
+        TokenPairEntities.CONTRACT_ADDRESS.value: contract_address
     }
 
 
@@ -75,6 +77,7 @@ def get_token_response(token):
     return {
         TokenEntities.NAME.value: token[TokenEntities.NAME.value],
         TokenEntities.SYMBOL.value: token[TokenEntities.SYMBOL.value],
+        TokenEntities.ALLOWED_DECIMAL.value: token[TokenEntities.ALLOWED_DECIMAL.value],
         TokenEntities.BLOCKCHAIN.value: get_blockchain_response(
             token[TokenEntities.BLOCKCHAIN.value])
     }

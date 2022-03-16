@@ -263,9 +263,10 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 4)
+        self.assertEqual(len(body["data"]), 5)
         self.assertIsNotNone(body["data"]["id"])
         self.assertIsNotNone(body["data"]["deposit_amount"])
+        self.assertIsNotNone(body["data"]["contract_address"])
         self.assertIsNone(body["data"]["deposit_address"])
         previous_request_id = body["data"]["id"]
 
@@ -284,9 +285,10 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 4)
+        self.assertEqual(len(body["data"]), 5)
         self.assertIsNotNone(body["data"]["id"])
         self.assertIsNotNone(body["data"]["deposit_amount"])
+        self.assertIsNotNone(body["data"]["contract_address"])
         self.assertIsNone(body["data"]["deposit_address"])
         self.assertIsNotNone(body["data"]["signature"])
         self.assertEqual(body["data"]["id"], previous_request_id)
@@ -313,10 +315,11 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_conversion_request(event, {})
         body = json.loads(response["body"])
-        self.assertEqual(len(body["data"]), 4)
+        self.assertEqual(len(body["data"]), 5)
         self.assertIsNotNone(body["data"]["id"])
         self.assertIsNotNone(body["data"]["deposit_amount"])
         self.assertIsNotNone(body["data"]["deposit_address"])
+        self.assertIsNone(body["data"]["contract_address"])
         self.assertNotEqual(body["data"]["id"], previous_request_id)
 
         # Length of wallet pair table should be two because , the request is from different from and to address
@@ -337,9 +340,10 @@ class TestConversion(unittest.TestCase):
             'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
             'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
             'deposit_address': None}, 'from_token': {'name': 'Singularity Ethereum', 'symbol': 'AGIX',
+                                                     'allowed_decimal': 5,
                                                      'blockchain': {'name': 'Ethereum', 'symbol': 'ETH',
                                                                     'chain_id': 42}}, 'to_token': {
-            'name': 'Singularity Cardano', 'symbol': 'AGIX',
+            'name': 'Singularity Cardano', 'symbol': 'AGIX', 'allowed_decimal': 10,
             'blockchain': {'name': 'Cardano', 'symbol': 'ADA', 'chain_id': 2}}, 'transactions': []}, {'conversion': {
             'id': '5086b5245cd046a68363d9ca8ed0027e', 'deposit_amount': '1.33305E+18', 'claim_amount': '1.33305E+18',
             'fee_amount': '0', 'status': 'USER_INITIATED', 'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
@@ -349,6 +353,7 @@ class TestConversion(unittest.TestCase):
             'from_token': {
                 'name': 'Singularity Cardano',
                 'symbol': 'AGIX',
+                'allowed_decimal': 10,
                 'blockchain': {
                     'name': 'Cardano',
                     'symbol': 'ADA',
@@ -356,6 +361,7 @@ class TestConversion(unittest.TestCase):
             'to_token': {
                 'name': 'Singularity Ethereum',
                 'symbol': 'AGIX',
+                'allowed_decimal': 5,
                 'blockchain': {
                     'name': 'Ethereum',
                     'symbol': 'ETH',
@@ -375,12 +381,14 @@ class TestConversion(unittest.TestCase):
                 'from_token': {
                     'name': 'Singularity Ethereum',
                     'symbol': 'AGIX',
+                    'allowed_decimal': 5,
                     'blockchain': {'name': 'Ethereum',
                                    'symbol': 'ETH',
                                    'chain_id': 42}},
                 'to_token': {
                     'name': 'Singularity Cardano',
                     'symbol': 'AGIX',
+                    'allowed_decimal': 10,
                     'blockchain': {'name': 'Cardano',
                                    'symbol': 'ADA',
                                    'chain_id': 2}},
@@ -451,10 +459,10 @@ class TestConversion(unittest.TestCase):
                            'updated_at': '2022-01-12 04:10:54'},
             'wallet_pair': {'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
                             'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
-                            'deposit_address': None}, 'from_token': {'name': 'Singularity Ethereum', 'symbol': 'AGIX',
-                                                                     'blockchain': {'name': 'Ethereum', 'symbol': 'ETH',
-                                                                                    'chain_id': 42}},
-            'to_token': {'name': 'Singularity Cardano', 'symbol': 'AGIX',
+                            'deposit_address': None},
+            'from_token': {'name': 'Singularity Ethereum', 'symbol': 'AGIX', 'allowed_decimal': 5,
+                           'blockchain': {'name': 'Ethereum', 'symbol': 'ETH', 'chain_id': 42}},
+            'to_token': {'name': 'Singularity Cardano', 'symbol': 'AGIX', 'allowed_decimal': 10,
                          'blockchain': {'name': 'Cardano', 'symbol': 'ADA', 'chain_id': 2}}, 'transactions': [
                 {'id': '391be6385abf4b608bdd20a44acd6abc', 'transaction_operation': 'TOKEN_RECEIVED',
                  'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
@@ -620,7 +628,8 @@ class TestConversion(unittest.TestCase):
         bad_request_invalid_signature = {'status': 'failed', 'data': None,
                                          'error': {'code': 'E0006', 'message': 'BAD_REQUEST',
                                                    'details': 'Incorrect signature provided'}}
-        success_response = {'status': 'success', 'data': {'claim_amount': '1E+3', 'signature': 'some signature'},
+        success_response = {'status': 'success', 'data': {'claim_amount': '1E+3', 'signature': 'some signature',
+                                                          'contract_address': '0xacontractaddress'},
                             'error': {'code': None, 'message': None, 'details': None}}
 
         response = claim_conversion(event, {})
