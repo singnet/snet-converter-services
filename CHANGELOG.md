@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-03-16 12:00:00 
+
+### Added
+- Added contract address for both claim and conversion request api
+- Added allowed_decimal for transaction_history and conversion api
+
 ## 2022-03-13 12:00:00 
 
 ### Added

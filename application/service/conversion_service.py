@@ -160,6 +160,7 @@ class ConversionService:
                     f"signature={signature}")
         contract_signature = None
         fee_amount = Decimal(0)
+        contract_address = None
 
         token_pair = self.token_service.get_token_pair_internal(token_pair_id=token_pair_id)
 
@@ -201,7 +202,8 @@ class ConversionService:
                                                    TokenEntities.BLOCKCHAIN.value).get(
                                                    BlockchainEntities.CHAIN_ID.value))
         return create_conversion_request_response(conversion_id=conversion_id, deposit_address=deposit_address,
-                                                  signature=contract_signature, deposit_amount=deposit_amount)
+                                                  signature=contract_signature, deposit_amount=deposit_amount,
+                                                  contract_address=contract_address)
 
     def process_conversion_request(self, wallet_pair_id: str, deposit_amount: Decimal, fee_amount: Decimal,
                                    created_by: str = CreatedBy.DAPP.value):
@@ -339,4 +341,5 @@ class ConversionService:
         self.update_conversion(conversion_id=conversion_id, status=ConversionStatus.CLAIM_INITIATED.value,
                                claim_signature=claim_signature)
 
-        return claim_conversion_response(signature=claim_signature, claim_amount=claim_amount)
+        return claim_conversion_response(signature=claim_signature, claim_amount=claim_amount,
+                                         contract_address=contract_address)

@@ -55,6 +55,9 @@
           },
           "signature": {
             "type": "string"
+          },
+          "contract_address": {
+            "type": "string"
           }
         },
         "required": [
@@ -198,6 +201,9 @@
                     "symbol": {
                       "type": "string"
                     },
+                    "allowed_decimal": {
+                      "type": "integer"
+                    },
                     "blockchain": {
                       "type": "object",
                       "properties": {
@@ -221,6 +227,7 @@
                   "required": [
                     "name",
                     "symbol",
+                    "allowed_decimal",
                     "blockchain"
                   ]
                 },
@@ -233,6 +240,9 @@
                     "symbol": {
                       "type": "string"
                     },
+                    "allowed_decimal": {
+                      "type": "integer"
+                    },
                     "blockchain": {
                       "type": "object",
                       "properties": {
@@ -256,6 +266,7 @@
                   "required": [
                     "name",
                     "symbol",
+                    "allowed_decimal",
                     "blockchain"
                   ]
                 },
@@ -465,11 +476,15 @@
       },
       "signature": {
         "type": "string"
+      },
+      "contract_address": {
+        "type": "string"
       }
     },
     "required": [
       "claim_amount",
-      "signature"
+      "signature",
+      "contract_address"
     ]
   },
   "GetConversionRequestOutput": {
@@ -551,6 +566,9 @@
               "symbol": {
                 "type": "string"
               },
+              "allowed_decimal": {
+                "type": "integer"
+              },
               "blockchain": {
                 "type": "object",
                 "properties": {
@@ -574,6 +592,7 @@
             "required": [
               "name",
               "symbol",
+              "allowed_decimal",
               "blockchain"
             ]
           },
@@ -586,6 +605,9 @@
               "symbol": {
                 "type": "string"
               },
+              "allowed_decimal": {
+                "type": "integer"
+              },
               "blockchain": {
                 "type": "object",
                 "properties": {
@@ -609,6 +631,7 @@
             "required": [
               "name",
               "symbol",
+              "allowed_decimal",
               "blockchain"
             ]
           },

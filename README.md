@@ -213,6 +213,7 @@ Converter Service│
     "amount": "1.33305E+8",
     "deposit_address": null,
     "signature": "0x0faa47c8744ec7c8dfbccb95010e1b8a4aeeaad43f0d3452cccdf78b8798200264598f3540cb0fea150e4d748d102a3799c77555d658bb641a7c087a02fdaefa1b",
+    "contract_address": "some contract address"
   },
   "error": {
     "code": null,
@@ -291,6 +292,7 @@ Converter Service│
                 "from_token": {
                     "name": "Singularity Ethereum",
                     "symbol": "AGIX",
+                    "allowed_decimal":8,
                     "blockchain": {
                         "name": "Ethereum",
                         "symbol": "ETH",
@@ -300,6 +302,7 @@ Converter Service│
                 "to_token": {
                     "name": "Singularity Cardano",
                     "symbol": "AGIX",
+                    "allowed_decimal":8,
                     "blockchain": {
                         "name": "Cardano",
                         "symbol": "ADA",
@@ -325,6 +328,7 @@ Converter Service│
                 "from_token": {
                     "name": "Singularity Cardano",
                     "symbol": "AGIX",
+                    "allowed_decimal":8,
                     "blockchain": {
                         "name": "Cardano",
                         "symbol": "ADA",
@@ -334,6 +338,7 @@ Converter Service│
                 "to_token": {
                     "name": "Singularity Ethereum",
                     "symbol": "AGIX",
+                    "allowed_decimal":8,
                     "blockchain": {
                         "name": "Ethereum",
                         "symbol": "ETH",
@@ -359,6 +364,7 @@ Converter Service│
                 "from_token": {
                     "name": "Singularity Ethereum",
                     "symbol": "AGIX",
+                    "allowed_decimal":8,
                     "blockchain": {
                         "name": "Ethereum",
                         "symbol": "ETH",
@@ -368,6 +374,7 @@ Converter Service│
                 "to_token": {
                     "name": "Singularity Cardano",
                     "symbol": "AGIX",
+                    "allowed_decimal":8,
                     "blockchain": {
                         "name": "Cardano",
                         "symbol": "ADA",
@@ -434,7 +441,8 @@ Converter Service│
 ```json5
 {
   "claim_amount": "1000",
-  "signature": "0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b"
+  "signature": "0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b0x3b8421d9795dc5a9fd3f46ca109b603367033d7bab882c67c09d60e6b3dd4eec6b3e7a19bd1ce92f9fcba23f33d263fff3e850ac5bbeb24b029fbca9ae6786731b",
+  "contract_address": "some contract address"
 }
 ```
 
@@ -467,6 +475,7 @@ Converter Service│
         "from_token": {
             "name": "Singularity AGIX Ethereum",
             "symbol": "AGIX",
+            "allowed_decimal":8,
             "blockchain": {
                 "name": "Ethereum",
                 "symbol": "ETH",
@@ -476,6 +485,7 @@ Converter Service│
         "to_token": {
             "name": "Singularity AGIX Cardano",
             "symbol": "TMAT",
+            "allowed_decimal":8,
             "blockchain": {
                 "name": "Cardano",
                 "symbol": "ADA",
