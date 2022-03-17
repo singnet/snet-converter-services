@@ -356,7 +356,13 @@ class ConsumerService:
                                                  tx_amount=tx_amount,
                                                  tx_details=tx_details, address=address,
                                                  deposit_address_details=deposit_address_details)
-            tx_id = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
+            data = response.get(CardanoAPIEntities.DATA.value)
+            if not data:
+                raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
+                                                   error_details=ErrorDetails[
+                                                       ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
+
+            tx_id = data.get(CardanoAPIEntities.TRANSACTION_ID.value)
             if not tx_id or not tx_id.strip():
                 raise InternalServerErrorException(
                     error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
@@ -374,7 +380,13 @@ class ConsumerService:
             response = CardanoService.mint_token(token=target_token.get(TokenEntities.SYMBOL.value),
                                                  tx_amount=tx_amount, tx_details=tx_details, address=address,
                                                  source_address=source_address)
-            tx_id = response.get(CardanoAPIEntities.TRANSACTION_ID.value)
+            data = response.get(CardanoAPIEntities.DATA.value)
+            if not data:
+                raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
+                                                   error_details=ErrorDetails[
+                                                       ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
+
+            tx_id = data.get(CardanoAPIEntities.TRANSACTION_ID.value)
             if not tx_id or not tx_id.strip():
                 raise InternalServerErrorException(
                     error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,

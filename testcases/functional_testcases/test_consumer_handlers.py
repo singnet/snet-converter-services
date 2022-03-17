@@ -229,7 +229,7 @@ class TestConsumer(unittest.TestCase):
     @patch("application.service.cardano_service.CardanoService.mint_token")
     @patch("common.utils.Utils.report_slack")
     def test_converter_bridge(self, mock_report_slack, mock_mint_token):
-        mock_mint_token.return_value = {"transaction_id": "some hash"}
+        mock_mint_token.return_value = {"data": {"transaction_id": "some hash"}, "status": "success"}
 
         # Internal server error because of missing required fields
         self.assertRaises(InternalServerErrorException, converter_bridge,
