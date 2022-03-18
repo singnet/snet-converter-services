@@ -362,11 +362,6 @@ def validate_conversion_claim_request_signature(conversion_detail, amount, from_
                                   error_details=ErrorDetails[
                                       ErrorCode.INVALID_CLAIM_OPERATION_ON_BLOCKCHAIN.value].value)
 
-    if claim_signature:
-        raise BadRequestException(error_code=ErrorCode.CONVERSION_ALREADY_CLAIMED.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.CONVERSION_ALREADY_CLAIMED.value].value)
-
     if conversion_status != ConversionStatus.WAITING_FOR_CLAIM.value:
         raise BadRequestException(error_code=ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value,
                                   error_details=ErrorDetails[

@@ -106,6 +106,7 @@ def get_transaction_internal_response(transactions):
         TransactionEntities.TRANSACTION_HASH.value: transaction[TransactionEntities.TRANSACTION_HASH.value],
         TransactionEntities.TRANSACTION_AMOUNT.value: transaction[TransactionEntities.TRANSACTION_AMOUNT.value],
         TransactionEntities.STATUS.value: transaction[TransactionEntities.STATUS.value],
+        TransactionEntities.CREATED_AT.value: transaction[TransactionEntities.CREATED_AT.value],
         TransactionEntities.UPDATED_AT.value: transaction[TransactionEntities.UPDATED_AT.value]
     } for transaction in transactions]
 
@@ -132,7 +133,8 @@ def get_conversion_history_for_conversion_response(conversion):
         ConversionEntities.CLAIM_AMOUNT.value: conversion[ConversionEntities.CLAIM_AMOUNT.value],
         ConversionEntities.FEE_AMOUNT.value: conversion[ConversionEntities.FEE_AMOUNT.value],
         ConversionEntities.STATUS.value: conversion[ConversionEntities.STATUS.value],
-        ConversionEntities.UPDATED_AT.value: conversion[ConversionEntities.UPDATED_AT.value]
+        ConversionEntities.CREATED_AT.value: conversion[ConversionEntities.CREATED_AT.value],
+        ConversionEntities.UPDATED_AT.value: conversion[ConversionEntities.UPDATED_AT.value],
     }
 
 
@@ -187,6 +189,7 @@ def get_transaction(transaction):
         TransactionEntities.TRANSACTION_AMOUNT.value: transaction[TransactionEntities.TRANSACTION_AMOUNT.value],
         TransactionEntities.CONFIRMATION.value: transaction[TransactionEntities.CONFIRMATION.value],
         TransactionEntities.STATUS.value: transaction[TransactionEntities.STATUS.value],
+        TransactionEntities.CREATED_AT.value: transaction[TransactionEntities.CREATED_AT.value],
         TransactionEntities.UPDATED_AT.value: transaction[TransactionEntities.UPDATED_AT.value]
     }
 
