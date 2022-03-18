@@ -67,6 +67,7 @@ class ErrorCode(Enum):
     CONVERSION_AMOUNT_CANT_BE_ZERO = "E0063"
     DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE = "E0064"
     INVALID_CONVERSION_AMOUNT_PROVIDED = "E0065"
+    MISMATCH_TOKEN_HOLDER = "E0066"
 
 
 class ErrorDetails(Enum):
@@ -135,3 +136,4 @@ class ErrorDetails(Enum):
     E0063 = "Conversion amount must be greater tha zero"
     E0064 = "Not authorized to update the cardano transaction hash"
     E0065 = "Invalid conversion amount provided"
+    E0066 = "Token holder address is mismatched from blockchain and conversion request"

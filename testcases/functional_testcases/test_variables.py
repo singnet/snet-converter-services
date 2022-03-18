@@ -210,7 +210,7 @@ class TestVariables:
         ]
         self.conversion = [create_conversion(row_id=self.conversion_id_1, id="7298bce110974411b260cac758b37ee0",
                                              wallet_pair_id=self.wallet_pair_id_1, deposit_amount=133305000,
-                                             claim_amount=131305425, fee_amount=1999575,
+                                             claim_amount=(133305000-1999575), fee_amount=1999575,
                                              status=ConversionStatus.USER_INITIATED.value,
                                              claim_signature=None, created_by=DAPP_AS_CREATED_BY,
                                              created_at=created_at,

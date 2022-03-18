@@ -19,7 +19,7 @@ from constants.status import TransactionStatus, TransactionVisibility, Transacti
     ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS, ConversionStatus, ConversionTransactionStatus
 from utils.blockchain import get_next_activity_event_on_conversion, validate_consumer_event_against_transaction, \
     generate_deposit_address_details_for_cardano_operation, calculate_fee_amount, \
-    validate_conversion_request_amount, validate_consumer_event_type, get_block_confirmation
+    validate_conversion_request_amount, validate_consumer_event_type, get_block_confirmation, convert_str_to_decimal
 from utils.exceptions import BadRequestException, InternalServerErrorException, BlockConfirmationNotEnoughException
 
 logger = get_logger(__name__)
@@ -158,9 +158,13 @@ class ConsumerService:
                                                error_details=ErrorDetails[
                                                    ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
         try:
-            conversion_detail = self.conversion_service.get_conversion_detail(conversion_id=conversion_id)
+            conversion_detail = self.conversion_service.get_conversion_complete_detail(conversion_id=conversion_id)
         except Exception as e:
             logger.info(e)
+            raise InternalServerErrorException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
+                                               error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
+
+        if conversion_detail is None:
             raise InternalServerErrorException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
                                                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
 
@@ -170,18 +174,31 @@ class ConsumerService:
         deposit_amount = conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
 
-        if event_type == EthereumEventType.TOKEN_BURNT.value and (
-                Decimal(float(deposit_amount)) != Decimal(tx_amount) or
-                wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value) != token_holder):
-            logger.info("Mismatch on address and amount from request and contract for lock event")
-            raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
-                                               error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
+        if event_type == EthereumEventType.TOKEN_BURNT.value and wallet_pair.get(
+                WalletPairEntities.FROM_ADDRESS.value) != token_holder:
+            logger.info(f"Mismatch on address  from request and contract for {event_type} event")
+            raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
+                                               error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
         elif event_type == EthereumEventType.TOKEN_MINTED.value and (
                 Decimal(float(claim_amount)) != Decimal(tx_amount) or
                 wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder):
-            logger.info("Mismatch on address and amount from request and contract for unlock event")
+            logger.info(f"Mismatch on address and amount from request and contract for {event_type} event")
             raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
                                                error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
+
+        if event_type == EthereumEventType.TOKEN_BURNT.value and Decimal(float(deposit_amount)) != Decimal(tx_amount):
+            token_pair_row_id = wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value)
+            token_pair = self.token_service.get_token_pair_internal(token_pair_id=None,
+                                                                    token_pair_row_id=token_pair_row_id)
+            fee_amount = Decimal(0)
+            if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
+                fee_amount = calculate_fee_amount(amount=convert_str_to_decimal(value=tx_amount),
+                                                  percentage=token_pair.get(
+                                                      TokenPairEntities.CONVERSION_FEE.value).get(
+                                                      ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
+            self.conversion_service.update_conversion(conversion_id=conversion_id, deposit_amount=tx_amount,
+                                                      fee_amount=fee_amount,
+                                                      claim_amount=convert_str_to_decimal(deposit_amount) - fee_amount)
 
         if not transaction:
             transaction = self.conversion_service.create_transaction_for_conversion(conversion_id=conversion_id,

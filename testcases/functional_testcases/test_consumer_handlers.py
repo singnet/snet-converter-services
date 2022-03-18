@@ -170,12 +170,12 @@ class TestConsumer(unittest.TestCase):
                                                                   "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'd78aeaf865d94ec8a8792d2847ef7323', 'amount': 12345600}"}),
                           {})
 
-        # Internal Server error  when amount/token holder doesn't match
+        # Internal Server error  when token holder doesn't match
         self.assertRaises(InternalServerErrorException, converter_event_consumer,
                           prepare_consumer_ethereum_event_format("ConversionOut",
                                                                  {"transactionHash": "some hash",
                                                                   "event": "ConversionOut",
-                                                                  "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 12345600}"}),
+                                                                  "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa2', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 12345600}"}),
                           {})
 
         # Invalid address for transaction
