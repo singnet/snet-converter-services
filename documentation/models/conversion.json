@@ -161,6 +161,9 @@
                         "SUCCESS"
                       ]
                     },
+                    "created_at": {
+                      "type": "string"
+                    },
                     "updated_at": {
                       "type": "string"
                     }
@@ -171,7 +174,8 @@
                     "claim_amount",
                     "fee_amount",
                     "status",
-                    "updated_at"
+                    "updated_at",
+                    "created_at"
                   ]
                 },
                 "wallet_pair": {
@@ -300,6 +304,9 @@
                       },
                       "updated_at": {
                         "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
                       }
                     },
                     "required": [
@@ -308,6 +315,7 @@
                       "transaction_hash",
                       "transaction_amount",
                       "status",
+                      "created_at",
                       "updated_at"
                     ]
                   }
@@ -527,6 +535,9 @@
               },
               "updated_at": {
                 "type": "string"
+              },
+              "created_at": {
+                "type": "string"
               }
             },
             "required": [
@@ -535,7 +546,8 @@
               "claim_amount",
               "fee_amount",
               "status",
-              "updated_at"
+              "updated_at",
+              "created_at"
             ]
           },
           "wallet_pair": {
@@ -665,6 +677,9 @@
                 },
                 "updated_at": {
                   "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
                 }
               },
               "required": [
@@ -673,7 +688,8 @@
                 "transaction_hash",
                 "transaction_amount",
                 "status",
-                "updated_at"
+                "updated_at",
+                "created_at"
               ]
             }
           }

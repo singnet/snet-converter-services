@@ -338,8 +338,7 @@ class ConversionService:
                                         amount=Decimal(float(claim_amount)),
                                         contract_address=contract_address, chain_id=chain_id)
         # Update the signature and status
-        self.update_conversion(conversion_id=conversion_id, status=ConversionStatus.CLAIM_INITIATED.value,
-                               claim_signature=claim_signature)
+        self.update_conversion(conversion_id=conversion_id, claim_signature=claim_signature)
 
         return claim_conversion_response(signature=claim_signature, claim_amount=claim_amount,
                                          contract_address=contract_address)

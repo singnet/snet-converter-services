@@ -282,6 +282,7 @@ Converter Service│
                     "claim_amount": null,
                     "fee_amount": null,
                     "status": "USER_INITIATED",
+                    "created_at": "2022-01-12 04:10:54",
                     "updated_at": "2022-01-12 04:10:54"
                 },
                 "wallet_pair": {
@@ -318,6 +319,7 @@ Converter Service│
                     "claim_amount": null,
                     "fee_amount": null,
                     "status": "USER_INITIATED",
+                    "created_at": "2022-01-12 04:10:54",
                     "updated_at": "2022-01-12 04:10:54"
                 },
                 "wallet_pair": {
@@ -354,6 +356,7 @@ Converter Service│
                     "claim_amount": null,
                     "fee_amount": null,
                     "status": "PROCESSING",
+                    "created_at": "2022-01-12 04:10:54",
                     "updated_at": "2022-01-12 04:10:54"
                 },
                 "wallet_pair": {
@@ -389,6 +392,7 @@ Converter Service│
                         "transaction_amount": "1.66305E+18",
                         "confirmation": 10,
                         "status": "SUCCESS",
+                        "created_at": "2022-01-12 04:10:54",
                         "updated_at": "2022-01-12 04:10:54"
                     },
                     {
@@ -398,6 +402,7 @@ Converter Service│
                         "transaction_amount": "1.66305E+18",
                         "confirmation": 10,
                         "status": "WAITING_FOR_CONFIRMATION",
+                        "created_at": "2022-01-12 04:10:54",
                         "updated_at": "2022-01-12 04:10:54"
                     }
                 ]
@@ -464,7 +469,8 @@ Converter Service│
             "deposit_amount": "7E+7",
             "claim_amount": null,
             "fee_amount": null,
-            "status": "SUCCESS",
+            "status": "SUCCESS", 
+            "created_at": "2022-01-12 04:10:54",
             "updated_at": "2022-03-01 15:03:06"
         },
         "wallet_pair": {
@@ -499,7 +505,8 @@ Converter Service│
                 "transaction_hash": "0xdf7585ce324f5c0951f67ffa80ed1ad07c88589135d3d7c0eaedc5e04ada6f77",
                 "transaction_amount": "7E+7",
                 "confirmation": 10,
-                "status": "SUCCESS",
+                "status": "SUCCESS", 
+                "created_at": "2022-01-12 04:10:54",
                 "updated_at": "2022-03-01 14:59:11"
             },
             {
@@ -508,7 +515,8 @@ Converter Service│
                 "transaction_hash": "c7faf2333715818868c58dea289446af88779497f9400e7b8f8d010c1b386700",
                 "transaction_amount": "7E+7",
                 "confirmation": 10,
-                "status": "SUCCESS",
+                "status": "SUCCESS", 
+                "created_at": "2022-01-12 04:10:54",
                 "updated_at": "2022-03-01 15:03:06"
             }
         ]

@@ -336,7 +336,8 @@ class TestConversion(unittest.TestCase):
                                                       'details': 'Property value is empty'}}
         success_response_with_history = {'status': 'success', 'data': {'items': [{'conversion': {
             'id': '7298bce110974411b260cac758b37ee0', 'deposit_amount': '1.33305E+8', 'claim_amount': '131305425',
-            'fee_amount': '1999575', 'status': 'USER_INITIATED', 'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
+            'fee_amount': '1999575', 'status': 'USER_INITIATED', 'created_at': '2022-01-12 04:10:54',
+            'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
             'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
             'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
             'deposit_address': None}, 'from_token': {'name': 'Singularity Ethereum', 'symbol': 'AGIX',
@@ -346,70 +347,74 @@ class TestConversion(unittest.TestCase):
             'name': 'Singularity Cardano', 'symbol': 'AGIX', 'allowed_decimal': 10,
             'blockchain': {'name': 'Cardano', 'symbol': 'ADA', 'chain_id': 2}}, 'transactions': []}, {'conversion': {
             'id': '5086b5245cd046a68363d9ca8ed0027e', 'deposit_amount': '1.33305E+18', 'claim_amount': '1.33305E+18',
-            'fee_amount': '0', 'status': 'USER_INITIATED', 'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
+            'fee_amount': '0', 'status': 'USER_INITIATED', 'created_at': '2022-01-11 04:10:54',
+            'updated_at': '2022-01-12 04:10:54'}, 'wallet_pair': {
             'from_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
             'to_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
             'deposit_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8'},
-            'from_token': {
-                'name': 'Singularity Cardano',
-                'symbol': 'AGIX',
-                'allowed_decimal': 10,
-                'blockchain': {
-                    'name': 'Cardano',
-                    'symbol': 'ADA',
-                    'chain_id': 2}},
-            'to_token': {
-                'name': 'Singularity Ethereum',
-                'symbol': 'AGIX',
-                'allowed_decimal': 5,
-                'blockchain': {
-                    'name': 'Ethereum',
-                    'symbol': 'ETH',
-                    'chain_id': 42}},
-            'transactions': []},
-            {'conversion': {
-                'id': '51769f201e46446fb61a9c197cb0706b',
-                'deposit_amount': '1.66305E+18',
-                'claim_amount': '1.638104E+18',
-                'fee_amount': '2.4946E+16',
-                'status': 'PROCESSING',
-                'updated_at': '2022-01-12 04:10:54'},
-                'wallet_pair': {
-                    'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
-                    'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
-                    'deposit_address': None},
-                'from_token': {
-                    'name': 'Singularity Ethereum',
-                    'symbol': 'AGIX',
-                    'allowed_decimal': 5,
-                    'blockchain': {'name': 'Ethereum',
-                                   'symbol': 'ETH',
-                                   'chain_id': 42}},
-                'to_token': {
-                    'name': 'Singularity Cardano',
-                    'symbol': 'AGIX',
-                    'allowed_decimal': 10,
-                    'blockchain': {'name': 'Cardano',
-                                   'symbol': 'ADA',
-                                   'chain_id': 2}},
-                'transactions': [{
-                    'id': '391be6385abf4b608bdd20a44acd6abc',
-                    'transaction_operation': 'TOKEN_RECEIVED',
-                    'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
-                    'transaction_amount': '1.66305E+18',
-                    'confirmation': 10,
-                    'status': 'SUCCESS',
-                    'updated_at': '2022-01-12 04:10:54'},
-                    {
-                        'id': '1df60a2369f34247a5dc3ed29a8eef67',
-                        'transaction_operation': 'TOKEN_RECEIVED',
-                        'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
-                        'transaction_amount': '1.66305E+18',
-                        'confirmation': 10,
-                        'status': 'WAITING_FOR_CONFIRMATION',
-                        'updated_at': '2022-01-12 04:10:54'}]}],
-            'meta': {'total_records': 3, 'page_count': 1,
-                     'page_number': 1, 'page_size': 15}},
+                                                                                                      'from_token': {
+                                                                                                          'name': 'Singularity Cardano',
+                                                                                                          'symbol': 'AGIX',
+                                                                                                          'allowed_decimal': 10,
+                                                                                                          'blockchain': {
+                                                                                                              'name': 'Cardano',
+                                                                                                              'symbol': 'ADA',
+                                                                                                              'chain_id': 2}},
+                                                                                                      'to_token': {
+                                                                                                          'name': 'Singularity Ethereum',
+                                                                                                          'symbol': 'AGIX',
+                                                                                                          'allowed_decimal': 5,
+                                                                                                          'blockchain': {
+                                                                                                              'name': 'Ethereum',
+                                                                                                              'symbol': 'ETH',
+                                                                                                              'chain_id': 42}},
+                                                                                                      'transactions': []},
+                                                                                 {'conversion': {
+                                                                                     'id': '51769f201e46446fb61a9c197cb0706b',
+                                                                                     'deposit_amount': '1.66305E+18',
+                                                                                     'claim_amount': '1.638104E+18',
+                                                                                     'fee_amount': '2.4946E+16',
+                                                                                     'status': 'PROCESSING',
+                                                                                     'created_at': '2022-01-10 04:10:54',
+                                                                                     'updated_at': '2022-01-12 04:10:54'},
+                                                                                  'wallet_pair': {
+                                                                                      'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
+                                                                                      'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
+                                                                                      'deposit_address': None},
+                                                                                  'from_token': {
+                                                                                      'name': 'Singularity Ethereum',
+                                                                                      'symbol': 'AGIX',
+                                                                                      'allowed_decimal': 5,
+                                                                                      'blockchain': {'name': 'Ethereum',
+                                                                                                     'symbol': 'ETH',
+                                                                                                     'chain_id': 42}},
+                                                                                  'to_token': {
+                                                                                      'name': 'Singularity Cardano',
+                                                                                      'symbol': 'AGIX',
+                                                                                      'allowed_decimal': 10,
+                                                                                      'blockchain': {'name': 'Cardano',
+                                                                                                     'symbol': 'ADA',
+                                                                                                     'chain_id': 2}},
+                                                                                  'transactions': [{
+                                                                                                       'id': '391be6385abf4b608bdd20a44acd6abc',
+                                                                                                       'transaction_operation': 'TOKEN_RECEIVED',
+                                                                                                       'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
+                                                                                                       'transaction_amount': '1.66305E+18',
+                                                                                                       'confirmation': 10,
+                                                                                                       'status': 'SUCCESS',
+                                                                                                       'created_at': '2022-01-12 04:10:54',
+                                                                                                       'updated_at': '2022-01-12 04:10:54'},
+                                                                                                   {
+                                                                                                       'id': '1df60a2369f34247a5dc3ed29a8eef67',
+                                                                                                       'transaction_operation': 'TOKEN_RECEIVED',
+                                                                                                       'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
+                                                                                                       'transaction_amount': '1.66305E+18',
+                                                                                                       'confirmation': 10,
+                                                                                                       'status': 'WAITING_FOR_CONFIRMATION',
+                                                                                                       'created_at': '2022-01-12 04:10:54',
+                                                                                                       'updated_at': '2022-01-12 04:10:54'}]}],
+                                                                       'meta': {'total_records': 3, 'page_count': 1,
+                                                                                'page_number': 1, 'page_size': 15}},
                                          'error': {'code': None, 'message': None, 'details': None}}
         success_response_with_no_history = {'status': 'success', 'data': {'items': [],
                                                                           'meta': {'total_records': 0, 'page_count': 0,
@@ -456,7 +461,7 @@ class TestConversion(unittest.TestCase):
         success_response = {'status': 'success', 'data': {
             'conversion': {'id': '51769f201e46446fb61a9c197cb0706b', 'deposit_amount': '1.66305E+18',
                            'claim_amount': '1.638104E+18', 'fee_amount': '2.4946E+16', 'status': 'PROCESSING',
-                           'updated_at': '2022-01-12 04:10:54'},
+                           'created_at': '2022-01-10 04:10:54', 'updated_at': '2022-01-12 04:10:54'},
             'wallet_pair': {'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
                             'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
                             'deposit_address': None},
@@ -466,11 +471,12 @@ class TestConversion(unittest.TestCase):
                          'blockchain': {'name': 'Cardano', 'symbol': 'ADA', 'chain_id': 2}}, 'transactions': [
                 {'id': '391be6385abf4b608bdd20a44acd6abc', 'transaction_operation': 'TOKEN_RECEIVED',
                  'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
-                 'confirmation': 10, 'status': 'SUCCESS', 'updated_at': '2022-01-12 04:10:54'},
+                 'confirmation': 10, 'status': 'SUCCESS', 'created_at': '2022-01-12 04:10:54',
+                 'updated_at': '2022-01-12 04:10:54'},
                 {'id': '1df60a2369f34247a5dc3ed29a8eef67', 'transaction_operation': 'TOKEN_RECEIVED',
                  'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
-                 'confirmation': 10, 'status': 'WAITING_FOR_CONFIRMATION', 'updated_at': '2022-01-12 04:10:54'}]},
-                            'error': {'code': None, 'message': None, 'details': None}}
+                 'confirmation': 10, 'status': 'WAITING_FOR_CONFIRMATION', 'created_at': '2022-01-12 04:10:54',
+                 'updated_at': '2022-01-12 04:10:54'}]}, 'error': {'code': None, 'message': None, 'details': None}}
 
         response = get_conversion(event, {})
         body = json.loads(response["body"])
