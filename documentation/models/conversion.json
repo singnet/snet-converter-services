@@ -1,0 +1,731 @@
+{
+  "CreateConversionRequestInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "token_pair_id": {
+        "type": "string"
+      },
+      "amount": {
+        "type": "string"
+      },
+      "from_address": {
+        "type": "string"
+      },
+      "to_address": {
+        "type": "string"
+      },
+      "block_number": {
+        "type": "integer"
+      },
+      "signature": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "token_pair_id",
+      "amount",
+      "from_address",
+      "to_address",
+      "block_number",
+      "signature"
+    ]
+  },
+  "CreateConversionRequestOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success"
+        ]
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "deposit_amount": {
+            "type": "string"
+          },
+          "deposit_address": {
+            "type": "string"
+          },
+          "signature": {
+            "type": "string"
+          },
+          "contract_address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "deposit_address",
+          "signature"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  },
+  "GetConversionHistoryInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "queryStringParameters": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "page_number": {
+            "type": "string"
+          },
+          "page_size": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "address"
+        ]
+      }
+    },
+    "required": [
+      "queryStringParameters"
+    ]
+  },
+  "GetConversionHistoryOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success"
+        ]
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "conversion": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "deposit_amount": {
+                      "type": "string"
+                    },
+                    "claim_amount": {
+                      "type": "null"
+                    },
+                    "fee_amount": {
+                      "type": "null"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "USER_INITIATED",
+                        "PROCESSING",
+                        "WAITING_FOR_CLAIM",
+                        "CLAIM_INITIATED",
+                        "SUCCESS"
+                      ]
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "deposit_amount",
+                    "claim_amount",
+                    "fee_amount",
+                    "status",
+                    "updated_at",
+                    "created_at"
+                  ]
+                },
+                "wallet_pair": {
+                  "type": "object",
+                  "properties": {
+                    "from_address": {
+                      "type": "string"
+                    },
+                    "to_address": {
+                      "type": "string"
+                    },
+                    "deposit_address": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "from_address",
+                    "to_address"
+                  ]
+                },
+                "from_token": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "allowed_decimal": {
+                      "type": "integer"
+                    },
+                    "blockchain": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "symbol": {
+                          "type": "string"
+                        },
+                        "chain_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "symbol",
+                        "chain_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "symbol",
+                    "allowed_decimal",
+                    "blockchain"
+                  ]
+                },
+                "to_token": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "allowed_decimal": {
+                      "type": "integer"
+                    },
+                    "blockchain": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "symbol": {
+                          "type": "string"
+                        },
+                        "chain_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "symbol",
+                        "chain_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "symbol",
+                    "allowed_decimal",
+                    "blockchain"
+                  ]
+                },
+                "transactions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "transaction_operation": {
+                        "type": "string"
+                      },
+                      "transaction_hash": {
+                        "type": "string"
+                      },
+                      "transaction_amount": {
+                        "type": "string"
+                      },
+                      "confirmation": {
+                        "type": "integer"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "TOKEN_RECEIVED",
+                          "TOKEN_BURNT",
+                          "TOKEN_MINTED"
+                        ]
+                      },
+                      "updated_at": {
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "transaction_operation",
+                      "transaction_hash",
+                      "transaction_amount",
+                      "status",
+                      "created_at",
+                      "updated_at"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "conversion",
+                "wallet_pair",
+                "from_token",
+                "to_token",
+                "transactions"
+              ]
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total_records": {
+                "type": "integer"
+              },
+              "page_count": {
+                "type": "integer"
+              },
+              "page_number": {
+                "type": "integer"
+              },
+              "page_size": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "total_records",
+              "page_count",
+              "page_number",
+              "page_size"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  },
+  "CreateTransactionForConversionInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "conversion_id": {
+        "type": "string"
+      },
+      "transaction_hash": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "conversion_id",
+      "transaction_hash"
+    ]
+  },
+  "CreateTransactionForConversionOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success"
+        ]
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  },
+  "ClaimConversionRequestInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "amount": {
+        "type": "string"
+      },
+      "from_address": {
+        "type": "string"
+      },
+      "to_address": {
+        "type": "string"
+      },
+      "signature": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "amount",
+      "from_address",
+      "to_address",
+      "signature"
+    ]
+  },
+  "ClaimConversionRequestOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "claim_amount": {
+        "type": "string",
+        "enum": [
+          "success"
+        ]
+      },
+      "signature": {
+        "type": "string"
+      },
+      "contract_address": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "claim_amount",
+      "signature",
+      "contract_address"
+    ]
+  },
+  "GetConversionRequestOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success"
+        ]
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "conversion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "deposit_amount": {
+                "type": "string"
+              },
+              "claim_amount": {
+                "type": "null"
+              },
+              "fee_amount": {
+                "type": "null"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "USER_INITIATED",
+                  "PROCESSING",
+                  "WAITING_FOR_CLAIM",
+                  "CLAIM_INITIATED",
+                  "SUCCESS"
+                ]
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "deposit_amount",
+              "claim_amount",
+              "fee_amount",
+              "status",
+              "updated_at",
+              "created_at"
+            ]
+          },
+          "wallet_pair": {
+            "type": "object",
+            "properties": {
+              "from_address": {
+                "type": "string"
+              },
+              "to_address": {
+                "type": "string"
+              },
+              "deposit_address": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from_address",
+              "to_address",
+              "deposit_address"
+            ]
+          },
+          "from_token": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "symbol": {
+                "type": "string"
+              },
+              "allowed_decimal": {
+                "type": "integer"
+              },
+              "blockchain": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "symbol": {
+                    "type": "string"
+                  },
+                  "chain_id": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "name",
+                  "symbol",
+                  "chain_id"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "symbol",
+              "allowed_decimal",
+              "blockchain"
+            ]
+          },
+          "to_token": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "symbol": {
+                "type": "string"
+              },
+              "allowed_decimal": {
+                "type": "integer"
+              },
+              "blockchain": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "symbol": {
+                    "type": "string"
+                  },
+                  "chain_id": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "name",
+                  "symbol",
+                  "chain_id"
+                ]
+              }
+            },
+            "required": [
+              "name",
+              "symbol",
+              "allowed_decimal",
+              "blockchain"
+            ]
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "transaction_operation": {
+                  "type": "string"
+                },
+                "transaction_hash": {
+                  "type": "string"
+                },
+                "transaction_amount": {
+                  "type": "string"
+                },
+                "confirmation": {
+                  "type": "integer"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "TOKEN_RECEIVED",
+                    "TOKEN_BURNT",
+                    "TOKEN_MINTED"
+                  ]
+                },
+                "updated_at": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "transaction_operation",
+                "transaction_hash",
+                "transaction_amount",
+                "status",
+                "updated_at",
+                "created_at"
+              ]
+            }
+          }
+        },
+        "required": [
+          "conversion",
+          "wallet_pair",
+          "from_token",
+          "to_token",
+          "transactions"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  }
+}

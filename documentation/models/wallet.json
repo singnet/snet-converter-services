@@ -1,0 +1,49 @@
+{
+  "WalletsAddressRequestOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success"
+        ]
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "cardano_address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cardano_address"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  }
+}
