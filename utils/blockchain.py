@@ -119,6 +119,15 @@ def get_ethereum_transaction_details(web_object, transaction_hash):
     return blockchain_transaction
 
 
+def get_event_logs(contract_instance, receipt, conversion_on):
+    if conversion_on == ConversionOn.FROM.value:
+        logs = contract_instance.events.ConversionOut().processReceipt(receipt)
+    else:
+        logs = contract_instance.events.ConversionIn().processReceipt(receipt)
+
+    return logs
+
+
 def validate_ethereum_transaction_details_against_conversion(chain_id, transaction_hash, conversion_on,
                                                              contract_address, conversion_detail):
     network_url = get_ethereum_network_url(chain_id=chain_id)
@@ -135,11 +144,8 @@ def validate_ethereum_transaction_details_against_conversion(chain_id, transacti
 
     contract = ethereum_web3_object.load_contract(path=contract_abi_path)
     contract_instance = ethereum_web3_object.contract_instance(contract_abi=contract, address=contract_address)
-
-    if conversion_on == ConversionOn.FROM.value:
-        logs = contract_instance.events.ConversionOut().processReceipt(blockchain_transaction)
-    else:
-        logs = contract_instance.events.ConversionIn().processReceipt(blockchain_transaction)
+    logs = get_event_logs(contract_instance=contract_instance, receipt=blockchain_transaction,
+                          conversion_on=conversion_on)
 
     if not len(logs) or not logs[0].get(EthereumEventConsumerEntities.ARGS.value):
         raise BadRequestException(error_code=ErrorCode.UNABLE_TO_FIND_EVENTS_FOR_HASH.value,

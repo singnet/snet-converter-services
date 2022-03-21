@@ -322,12 +322,12 @@ class ConversionService:
         conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
         next_activity = self.validate_transaction_hash(conversion_detail=conversion_detail,
                                                        transaction_hash=transaction_hash, created_by=created_by)
-        transaction = self.proces_transaction_creation(conversion_detail=conversion_detail,
-                                                       transaction_hash=transaction_hash, next_activity=next_activity,
-                                                       created_by=created_by)
+        transaction = self.process_transaction_creation(conversion_detail=conversion_detail,
+                                                        transaction_hash=transaction_hash, next_activity=next_activity,
+                                                        created_by=created_by)
         return create_transaction_for_conversion_response(transaction)
 
-    def proces_transaction_creation(self, conversion_detail, transaction_hash, next_activity, created_by):
+    def process_transaction_creation(self, conversion_detail, transaction_hash, next_activity, created_by):
         transaction = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
         conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
             ConversionEntities.ROW_ID.value)
