@@ -11,9 +11,9 @@ from config import BLOCKCHAIN_DETAILS
 from constants.blockchain import EthereumSupportedNetwork, CardanoSupportedNetwork, EthereumNetwork, CardanoNetwork, \
     EthereumEnvironment, CardanoEnvironment
 from constants.entity import TokenPairEntities, TokenEntities, BlockchainEntities, PaginationEntity, \
-    ConversionDetailEntities, WalletPairEntities, TransactionEntities
+    TransactionEntities
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, ConversionOn
+from constants.general import BlockchainName
 from constants.lambdas import PaginationDefaults
 from constants.status import TransactionStatus
 from utils.exceptions import InternalServerErrorException, BadRequestException
@@ -179,31 +179,6 @@ def get_cardano_network_url_and_project_id(chain_id):
         raise "Url not found from config"
 
     return url, project_id
-
-
-def validate_conversion_with_blockchain(conversion_on, address, amount, conversion_detail, blockchain_name):
-    logger.info(
-        f"Validating the conversion with blockchain details conversion_on={conversion_on}, address={address}, "
-        f"amount={amount}, blockchain_name={blockchain_name}")
-    is_valid = True
-    if conversion_on == ConversionOn.FROM.value:
-        if blockchain_name != BlockchainName.CARDANO.value and address != conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
-                WalletPairEntities.FROM_ADDRESS.value):
-            is_valid = False
-
-        # if amount != conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-        #         ConversionEntities.DEPOSIT_AMOUNT.value):
-        #     is_valid = False
-
-    elif conversion_on == ConversionOn.TO.value:
-        if address != conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
-                WalletPairEntities.TO_ADDRESS.value):
-            is_valid = False
-        # if amount != conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-        #         ConversionEntities.CLAIM_AMOUNT.value):
-        #     is_valid = False
-
-    return is_valid
 
 
 def string_to_bytes_to_hex(message):

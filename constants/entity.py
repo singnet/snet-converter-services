@@ -191,6 +191,7 @@ class EthereumEventConsumerEntities(Enum):
     DATA = "data"
     TOKEN_HOLDER = "tokenHolder"
     AMOUNT = "amount"
+    ARGS = "args"
 
 
 class EthereumEventType(Enum):
