@@ -36,8 +36,12 @@ class TestConsumer(unittest.TestCase):
         conversion_repo.session.add_all(TestVariables().conversion)
         conversion_repo.session.commit()
 
+    @patch("utils.blockchain.get_cardano_transaction_details")
+    @patch("utils.blockchain.get_event_logs")
+    @patch("common.blockchain_util.BlockChainUtil.contract_instance")
+    @patch("common.blockchain_util.BlockChainUtil.load_contract")
+    @patch("utils.blockchain.get_token_contract_path")
     @patch("utils.blockchain.get_ethereum_transaction_details")
-    @patch("utils.blockchain.validate_cardano_transaction_details_against_conversion")
     @patch("utils.sqs.SqsService.send_message_to_queue")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_block")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_transaction")
@@ -47,8 +51,14 @@ class TestConsumer(unittest.TestCase):
     def test_converter_event_consumer(self, mock_report_slack, mock_validate_cardano_address,
                                       mock_send_message_to_queue, mock_get_transaction,
                                       mock_get_block, mock_send_message_to_sqs,
-                                      mock_validate_cardano_transaction_details_against_conversion,
-                                      mock_get_ethereum_transaction_details):
+                                      mock_get_ethereum_transaction_details, mock_get_token_contract_path,
+                                      mock_load_contract, mock_contract_instance, mock_get_event_logs,
+                                      mock_get_cardano_transaction_details):
+        mock_get_token_contract_path.return_value = "token.json"
+        mock_load_contract.return_value = {"file": "data"}
+        mock_contract_instance.return_value = {""}
+        mock_get_event_logs.return_value = []
+
         TestConsumer.delete_all_tables()
 
         # Internal server error when passing empty consumer event
@@ -89,19 +99,6 @@ class TestConsumer(unittest.TestCase):
             TransactionDBModel.transaction_hash == "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449").first()
         self.assertEqual(transaction.status, TransactionStatus.WAITING_FOR_CONFIRMATION.value)
         self.assertEqual(transaction.confirmation, 0)
-
-        mock_get_block.return_value = {"confirmations": 20}
-        # Blockchain confirmation not enough error  when block confirmation not meet
-        self.assertRaises(BlockConfirmationNotEnoughException, converter_event_consumer,
-                          prepare_consumer_cardano_event_format(
-                              {"tx_hash": "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449",
-                               "address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-                               "transaction_detail": {"tx_type": "TOKEN_RECEIVED",
-                                                      "tx_amount": "1E+8"}}), {})
-        transaction = conversion_repo.session.query(TransactionDBModel).filter(
-            TransactionDBModel.transaction_hash == "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449").first()
-        self.assertEqual(transaction.status, TransactionStatus.WAITING_FOR_CONFIRMATION.value)
-        self.assertEqual(transaction.confirmation, 20)
 
         mock_get_block.return_value = {"confirmations": 26}
         input_event = prepare_consumer_cardano_event_format(consumer_token_received_event_message)
@@ -193,6 +190,11 @@ class TestConsumer(unittest.TestCase):
 
         # valid event
         mock_get_ethereum_transaction_details.return_value = {"from": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}
+        mock_get_event_logs.return_value = [{"args": {
+            "tokenHolder": '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
+            "amount": 133305000,
+            "conversionId": b'7298bce110974411b260cac758b37ee0'
+        }}]
         converter_event_consumer(prepare_consumer_ethereum_event_format("ConversionOut",
                                                                         {
                                                                             "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",

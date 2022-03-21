@@ -41,6 +41,7 @@ custom:
     - ${file(./config.${self:provider.stage}.json):MplaceCommonCode_Layer}
     - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
     - ${file(./config.${self:provider.stage}.json):MplacePythonWeb3AndGrpc_Layer}
+    - ${file(./config.${self:provider.stage}.json):SnetContract}
   defaultVpc:
     securityGroupIds:
       - ${file(./config.${self:provider.stage}.json):SG1}

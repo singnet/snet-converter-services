@@ -258,9 +258,12 @@ class ConsumerService:
                 fee_amount = calculate_fee_amount(amount=tx_amount, percentage=token_pair.get(
                     TokenPairEntities.CONVERSION_FEE.value).get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
 
+            from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value).get(
+                TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.NAME.value)
+
             conversion = self.conversion_service.process_conversion_request(
                 wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value), deposit_amount=tx_amount,
-                fee_amount=fee_amount, created_by=created_by)
+                fee_amount=fee_amount, from_blockchain_name=from_blockchain_name, created_by=created_by)
             try:
                 transaction = self.conversion_service.create_transaction_for_conversion(
                     conversion_id=conversion.get(ConversionEntities.ID.value),

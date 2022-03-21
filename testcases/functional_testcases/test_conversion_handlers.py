@@ -5,6 +5,8 @@ from unittest.mock import patch, Mock
 
 from sqlalchemy import distinct
 
+import common.blockchain_util
+import utils.blockchain
 from application.handler.conversion_handlers import create_conversion_request, get_conversion_history, \
     create_transaction_for_conversion, claim_conversion, get_conversion
 from constants.error_details import ErrorCode, ErrorDetails
@@ -291,7 +293,7 @@ class TestConversion(unittest.TestCase):
         self.assertIsNotNone(body["data"]["contract_address"])
         self.assertIsNone(body["data"]["deposit_address"])
         self.assertIsNotNone(body["data"]["signature"])
-        self.assertEqual(body["data"]["id"], previous_request_id)
+        self.assertNotEqual(body["data"]["id"], previous_request_id)
 
         conversion = conversion_repo.session.query(ConversionDBModel).filter(
             ConversionDBModel.id == previous_request_id).first()
@@ -352,69 +354,69 @@ class TestConversion(unittest.TestCase):
             'from_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
             'to_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
             'deposit_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8'},
-                                                                                                      'from_token': {
-                                                                                                          'name': 'Singularity Cardano',
-                                                                                                          'symbol': 'AGIX',
-                                                                                                          'allowed_decimal': 10,
-                                                                                                          'blockchain': {
-                                                                                                              'name': 'Cardano',
-                                                                                                              'symbol': 'ADA',
-                                                                                                              'chain_id': 2}},
-                                                                                                      'to_token': {
-                                                                                                          'name': 'Singularity Ethereum',
-                                                                                                          'symbol': 'AGIX',
-                                                                                                          'allowed_decimal': 5,
-                                                                                                          'blockchain': {
-                                                                                                              'name': 'Ethereum',
-                                                                                                              'symbol': 'ETH',
-                                                                                                              'chain_id': 42}},
-                                                                                                      'transactions': []},
-                                                                                 {'conversion': {
-                                                                                     'id': '51769f201e46446fb61a9c197cb0706b',
-                                                                                     'deposit_amount': '1.66305E+18',
-                                                                                     'claim_amount': '1.638104E+18',
-                                                                                     'fee_amount': '2.4946E+16',
-                                                                                     'status': 'PROCESSING',
-                                                                                     'created_at': '2022-01-10 04:10:54',
-                                                                                     'updated_at': '2022-01-12 04:10:54'},
-                                                                                  'wallet_pair': {
-                                                                                      'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
-                                                                                      'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
-                                                                                      'deposit_address': None},
-                                                                                  'from_token': {
-                                                                                      'name': 'Singularity Ethereum',
-                                                                                      'symbol': 'AGIX',
-                                                                                      'allowed_decimal': 5,
-                                                                                      'blockchain': {'name': 'Ethereum',
-                                                                                                     'symbol': 'ETH',
-                                                                                                     'chain_id': 42}},
-                                                                                  'to_token': {
-                                                                                      'name': 'Singularity Cardano',
-                                                                                      'symbol': 'AGIX',
-                                                                                      'allowed_decimal': 10,
-                                                                                      'blockchain': {'name': 'Cardano',
-                                                                                                     'symbol': 'ADA',
-                                                                                                     'chain_id': 2}},
-                                                                                  'transactions': [{
-                                                                                                       'id': '391be6385abf4b608bdd20a44acd6abc',
-                                                                                                       'transaction_operation': 'TOKEN_RECEIVED',
-                                                                                                       'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
-                                                                                                       'transaction_amount': '1.66305E+18',
-                                                                                                       'confirmation': 10,
-                                                                                                       'status': 'SUCCESS',
-                                                                                                       'created_at': '2022-01-12 04:10:54',
-                                                                                                       'updated_at': '2022-01-12 04:10:54'},
-                                                                                                   {
-                                                                                                       'id': '1df60a2369f34247a5dc3ed29a8eef67',
-                                                                                                       'transaction_operation': 'TOKEN_RECEIVED',
-                                                                                                       'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
-                                                                                                       'transaction_amount': '1.66305E+18',
-                                                                                                       'confirmation': 10,
-                                                                                                       'status': 'WAITING_FOR_CONFIRMATION',
-                                                                                                       'created_at': '2022-01-12 04:10:54',
-                                                                                                       'updated_at': '2022-01-12 04:10:54'}]}],
-                                                                       'meta': {'total_records': 3, 'page_count': 1,
-                                                                                'page_number': 1, 'page_size': 15}},
+            'from_token': {
+                'name': 'Singularity Cardano',
+                'symbol': 'AGIX',
+                'allowed_decimal': 10,
+                'blockchain': {
+                    'name': 'Cardano',
+                    'symbol': 'ADA',
+                    'chain_id': 2}},
+            'to_token': {
+                'name': 'Singularity Ethereum',
+                'symbol': 'AGIX',
+                'allowed_decimal': 5,
+                'blockchain': {
+                    'name': 'Ethereum',
+                    'symbol': 'ETH',
+                    'chain_id': 42}},
+            'transactions': []},
+            {'conversion': {
+                'id': '51769f201e46446fb61a9c197cb0706b',
+                'deposit_amount': '1.66305E+18',
+                'claim_amount': '1.638104E+18',
+                'fee_amount': '2.4946E+16',
+                'status': 'PROCESSING',
+                'created_at': '2022-01-10 04:10:54',
+                'updated_at': '2022-01-12 04:10:54'},
+                'wallet_pair': {
+                    'from_address': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
+                    'to_address': 'addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8',
+                    'deposit_address': None},
+                'from_token': {
+                    'name': 'Singularity Ethereum',
+                    'symbol': 'AGIX',
+                    'allowed_decimal': 5,
+                    'blockchain': {'name': 'Ethereum',
+                                   'symbol': 'ETH',
+                                   'chain_id': 42}},
+                'to_token': {
+                    'name': 'Singularity Cardano',
+                    'symbol': 'AGIX',
+                    'allowed_decimal': 10,
+                    'blockchain': {'name': 'Cardano',
+                                   'symbol': 'ADA',
+                                   'chain_id': 2}},
+                'transactions': [{
+                    'id': '391be6385abf4b608bdd20a44acd6abc',
+                    'transaction_operation': 'TOKEN_RECEIVED',
+                    'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
+                    'transaction_amount': '1.66305E+18',
+                    'confirmation': 10,
+                    'status': 'SUCCESS',
+                    'created_at': '2022-01-12 04:10:54',
+                    'updated_at': '2022-01-12 04:10:54'},
+                    {
+                        'id': '1df60a2369f34247a5dc3ed29a8eef67',
+                        'transaction_operation': 'TOKEN_RECEIVED',
+                        'transaction_hash': '22477fd4ea994689a04646cbbaafd133',
+                        'transaction_amount': '1.66305E+18',
+                        'confirmation': 10,
+                        'status': 'WAITING_FOR_CONFIRMATION',
+                        'created_at': '2022-01-12 04:10:54',
+                        'updated_at': '2022-01-12 04:10:54'}]}],
+            'meta': {'total_records': 3, 'page_count': 1,
+                     'page_number': 1, 'page_size': 15}},
                                          'error': {'code': None, 'message': None, 'details': None}}
         success_response_with_no_history = {'status': 'success', 'data': {'items': [],
                                                                           'meta': {'total_records': 0, 'page_count': 0,
@@ -494,11 +496,21 @@ class TestConversion(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body, success_response)
 
+    @patch("utils.blockchain.get_event_logs")
+    @patch("common.blockchain_util.BlockChainUtil.contract_instance")
+    @patch("common.blockchain_util.BlockChainUtil.load_contract")
+    @patch("utils.blockchain.get_token_contract_path")
     @patch("utils.blockchain.get_cardano_transaction_details")
     @patch("utils.blockchain.get_ethereum_transaction_details")
     @patch("common.utils.Utils.report_slack")
     def test_create_transaction_for_conversion(self, mock_report_slack, mock_get_ethereum_transaction_details,
-                                               mock_get_cardano_transaction_details):
+                                               mock_get_cardano_transaction_details, mock_get_token_contract_path,
+                                               mock_load_contract, mock_contract_instance, mock_get_event_logs):
+        mock_get_token_contract_path.return_value = "token.json"
+        mock_load_contract.return_value = {"file": "data"}
+        mock_contract_instance.return_value = {""}
+        mock_get_event_logs.return_value = []
+
         conversion_repo.session.query(TransactionDBModel).delete()
         conversion_repo.session.commit()
         conversion_repo.session.query(ConversionTransactionDBModel).delete()
@@ -516,9 +528,9 @@ class TestConversion(unittest.TestCase):
         bad_request_invalid_conversion_id = {'status': 'failed', 'data': None,
                                              'error': {'code': 'E0008', 'message': 'BAD_REQUEST',
                                                        'details': 'Invalid conversion id provided'}}
-        failed_response_existing_transaction_not_succeed_yet = {'status': 'failed', 'data': None,
-                                                                'error': {'code': 'E0009', 'message': 'BAD_REQUEST',
-                                                                          'details': "You can't submit a transaction until the existing transaction get succeed"}}
+        bad_request_transaction_already_created = {'status': 'failed', 'data': None,
+                                                   'error': {'code': 'E0014', 'message': 'BAD_REQUEST',
+                                                             'details': 'Transaction has been created already'}}
         bad_request_transaction_format_incorrect = {'status': 'failed', 'data': None,
                                                     'error': {'code': 'E0013', 'message': 'BAD_REQUEST',
                                                               'details': 'Transaction hash should be hex string with proper format'}}
@@ -529,6 +541,9 @@ class TestConversion(unittest.TestCase):
         unexpected_error_ethereum_transaction_details = {'status': 'failed', 'data': None,
                                                          'error': {'code': 'E0018', 'message': 'INTERNAL_SERVER_ERROR',
                                                                    'details': 'Unexpected error occurred while getting ethereum transaction details'}}
+        bad_request_no_events_on_hash = {'status': 'failed', 'data': None,
+                                         'error': {'code': 'E0067', 'message': 'BAD_REQUEST',
+                                                   'details': 'Unable to find any events for the given hash'}}
 
         # Bad Request
         event = dict()
@@ -587,23 +602,23 @@ class TestConversion(unittest.TestCase):
         event["body"] = body_input
         response = create_transaction_for_conversion(event, {})
         body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_no_events_on_hash)
+
+        mock_get_event_logs.return_value = [{"args": {
+            "tokenHolder": '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
+            "amount": 133305000,
+            "conversionId": b'7298bce110974411b260cac758b37ee0'
+        }}]
+        event["body"] = body_input
+        response = create_transaction_for_conversion(event, {})
+        body = json.loads(response["body"])
         self.assertEqual(body["status"], LambdaResponseStatus.SUCCESS.value)
         self.assertIsNotNone(body["data"]["id"])
 
         response = create_transaction_for_conversion(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body["status"], LambdaResponseStatus.FAILED.value)
-        self.assertEqual(body, failed_response_existing_transaction_not_succeed_yet)
-
-        # mock_get_cardano_transaction_details.return_value = {
-        #     "from": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8"}
-        # body_input = json.dumps({"conversion_id": "5086b5245cd046a68363d9ca8ed0027e",
-        #                          "transaction_hash": "0xe5bd9472b9d9931ca41bc3598f2ec15665b77ef32c088da5f2f8f3d2f72782a9"})
-        # event["body"] = body_input
-        # response = create_transaction_for_conversion(event, {})
-        # body = json.loads(response["body"])
-        # self.assertEqual(body["status"], LambdaResponseStatus.SUCCESS.value)
-        # self.assertIsNotNone(body["data"]["id"])
+        self.assertEqual(body, bad_request_transaction_already_created)
 
     @patch("application.service.conversion_service.get_signature")
     @patch("common.utils.Utils.report_slack")
