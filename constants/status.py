@@ -7,6 +7,7 @@ class ConversionStatus(Enum):
     WAITING_FOR_CLAIM = "WAITING_FOR_CLAIM"
     SUCCESS = "SUCCESS"
     CLAIM_INITIATED = "CLAIM_INITIATED"
+    EXPIRED = "EXPIRED"
 
 
 class ConversionTransactionStatus(Enum):

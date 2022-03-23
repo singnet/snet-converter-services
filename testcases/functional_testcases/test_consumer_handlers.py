@@ -103,17 +103,21 @@ class TestConsumer(unittest.TestCase):
         mock_get_block.return_value = {"confirmations": 26}
         input_event = prepare_consumer_cardano_event_format(consumer_token_received_event_message)
         converter_event_consumer(input_event, {})
+        conversion = conversion_repo.session.query(ConversionDBModel).order_by(
+            ConversionDBModel.created_at.desc()).first()
+        conversion_id = conversion.id
+
         # expected message format to send
         mock_send_message_to_queue.assert_called_with(queue="CONVERTER_BRIDGE",
                                                       message=json.dumps({'blockchain_name': 'Cardano',
                                                                           'blockchain_event': {
-                                                                              'conversion_id': '5086b5245cd046a68363d9ca8ed0027e',
+                                                                              'conversion_id': conversion_id,
                                                                               'tx_amount': '1E+8',
                                                                               'tx_operation': 'TOKEN_BURNT'},
                                                                           'blockchain_network_id': 2}))
 
         conversion_count = conversion_repo.session.query(ConversionDBModel).all()
-        self.assertEqual(3, len(conversion_count))
+        self.assertEqual(4, len(conversion_count))
         conversion_transaction_count = conversion_repo.session.query(ConversionTransactionDBModel).all()
         self.assertEqual(1, len(conversion_transaction_count))
 
@@ -121,11 +125,11 @@ class TestConsumer(unittest.TestCase):
         converter_event_consumer(input_event, {})
 
         conversion_count = conversion_repo.session.query(ConversionDBModel).all()
-        self.assertEqual(3, len(conversion_count))
+        self.assertEqual(4, len(conversion_count))
         conversion_transaction_count = conversion_repo.session.query(ConversionTransactionDBModel).all()
         self.assertEqual(1, len(conversion_transaction_count))
         conversion = conversion_repo.session.query(ConversionDBModel).filter(
-            ConversionDBModel.id == '5086b5245cd046a68363d9ca8ed0027e').first()
+            ConversionDBModel.id == conversion_id).first()
         self.assertEqual("PROCESSING", conversion.status)
 
         TestConsumer.delete_all_tables()
