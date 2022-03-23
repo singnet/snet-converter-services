@@ -278,9 +278,9 @@ class ConversionService:
         if from_blockchain_name != BlockchainName.ETHEREUM.value:
             conversion = self.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id)
 
-        if conversion and (
-                Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value))) != deposit_amount
-                or Decimal(float(conversion.get(ConversionEntities.FEE_AMOUNT.value))) != fee_amount):
+        if conversion and (created_by == CreatedBy.DAPP.value or
+                           Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value))) != deposit_amount
+                           or Decimal(float(conversion.get(ConversionEntities.FEE_AMOUNT.value))) != fee_amount):
             self.update_conversion(conversion_id=conversion[ConversionEntities.ID.value],
                                    status=ConversionStatus.EXPIRED.value)
             conversion = None

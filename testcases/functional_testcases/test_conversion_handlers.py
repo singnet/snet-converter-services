@@ -394,7 +394,7 @@ class TestConversion(unittest.TestCase):
         self.assertIsNotNone(body["data"]["deposit_amount"])
         self.assertIsNotNone(body["data"]["deposit_address"])
         self.assertIsNone(body["data"]["contract_address"])
-        self.assertEqual(body["data"]["id"], previous_request_id)
+        self.assertNotEqual(body["data"]["id"], previous_request_id)
 
         # Length of wallet pair table should be two because , the request is from different from and to address
         wallet_pair_count = conversion_repo.session.query(distinct(WalletPairDBModel.id)).all()
