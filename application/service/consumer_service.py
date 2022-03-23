@@ -302,8 +302,12 @@ class ConsumerService:
                 logger.info("Block confirmation is not enough to consider, so checking the block confirmation again")
                 i = 1
                 while True:
-                    current_block_confirmation = get_block_confirmation(tx_hash=tx_hash,
-                                                                        blockchain_network_id=network_id)
+                    try:
+                        current_block_confirmation = get_block_confirmation(tx_hash=tx_hash,
+                                                                            blockchain_network_id=network_id)
+                    except Exception as e:
+                        logger.info(f"Transaction mayn't be available={e}")
+
                     if not current_block_confirmation:
                         time.sleep(BLOCK_CONFIRMATION_SLEEP_TIME)
                         logger.info(f"Waiting to get at least 1 block confirmation for the last "
