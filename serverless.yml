@@ -587,6 +587,7 @@ functions:
     role: ${file(./config.${self:provider.stage}.json):ROLE}
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
+    timeout: 600
     events:
       - sqs:
           arn:

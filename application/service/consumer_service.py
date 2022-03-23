@@ -10,7 +10,7 @@ from application.service.notification_service import NotificationService
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
-from config import BLOCK_CONFIRMATION_SLEEP_TIME
+from config import BLOCK_CONFIRMATION_SLEEP_TIME, MAX_RETRY_BLOCK_CONFIRMATION
 from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventConsumer, EventConsumerEntity, \
     WalletPairEntities, ConversionEntities, ConverterBridgeEntities, EthereumEventConsumerEntities, EthereumEventType, \
     TransactionEntities, TokenEntities, ConversionDetailEntities, CardanoAPIEntities, TokenPairEntities, \
@@ -298,6 +298,7 @@ class ConsumerService:
             current_block_confirmation = 0
 
         if blockchain_name == BlockchainName.CARDANO.value.lower():
+            self.conversion_service.update_transaction_by_id(tx_id=tx_id, confirmation=current_block_confirmation)
             if required_block_confirmation > current_block_confirmation:
                 logger.info("Block confirmation is not enough to consider, so checking the block confirmation again")
                 i = 1
@@ -307,6 +308,9 @@ class ConsumerService:
                                                                             blockchain_network_id=network_id)
                     except Exception as e:
                         logger.info(f"Transaction mayn't be available={e}")
+
+                    if i > MAX_RETRY_BLOCK_CONFIRMATION:
+                        break
 
                     if not current_block_confirmation:
                         time.sleep(BLOCK_CONFIRMATION_SLEEP_TIME)
