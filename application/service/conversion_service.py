@@ -278,13 +278,14 @@ class ConversionService:
         if from_blockchain_name != BlockchainName.ETHEREUM.value:
             conversion = self.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id)
 
-        if conversion:
-            if Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value))) != deposit_amount or \
-                    Decimal(float(conversion.get(ConversionEntities.FEE_AMOUNT.value))) != fee_amount:
-                conversion = self.update_conversion(conversion_id=conversion[ConversionEntities.ID.value],
-                                                    deposit_amount=deposit_amount, fee_amount=fee_amount,
-                                                    claim_amount=deposit_amount - fee_amount)
-        else:
+        if conversion and (
+                Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value))) != deposit_amount
+                or Decimal(float(conversion.get(ConversionEntities.FEE_AMOUNT.value))) != fee_amount):
+            self.update_conversion(conversion_id=conversion[ConversionEntities.ID.value],
+                                   status=ConversionStatus.EXPIRED.value)
+            conversion = None
+
+        if not conversion:
             conversion = self.create_conversion(wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,
                                                 fee_amount=fee_amount, claim_amount=deposit_amount - fee_amount,
                                                 created_by=created_by)

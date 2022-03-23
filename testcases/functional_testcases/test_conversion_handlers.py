@@ -298,12 +298,12 @@ class TestConversion(unittest.TestCase):
         conversion = conversion_repo.session.query(ConversionDBModel).filter(
             ConversionDBModel.id == previous_request_id).first()
         current_last_updated_dt = conversion.updated_at
-
         self.assertEqual(last_updated_dt, current_last_updated_dt)
 
         # Length of wallet pair table should be one because , the request is from same from and to address
         wallet_pair_count = conversion_repo.session.query(distinct(WalletPairDBModel.id)).all()
         self.assertEqual(len(wallet_pair_count), 1)
+        previous_request_id = body["data"]["id"]
 
         body_input = json.dumps({
             "amount": "1000",
@@ -323,6 +323,78 @@ class TestConversion(unittest.TestCase):
         self.assertIsNotNone(body["data"]["deposit_address"])
         self.assertIsNone(body["data"]["contract_address"])
         self.assertNotEqual(body["data"]["id"], previous_request_id)
+
+        conversion = conversion_repo.session.query(ConversionDBModel).filter(
+            ConversionDBModel.id == previous_request_id).first()
+        self.assertNotEqual(conversion.status, ConversionStatus.EXPIRED.value)
+        previous_request_id = body["data"]["id"]
+
+        body_input = json.dumps({
+            "amount": "200000000",
+            "signature": "0x14585fcc0de1157cbdd998c4c67fb04d5d4cd2ccac18e641e9dd140fe5ca193b71e1f8e1869b3d5d9b96d28fb239a2f5fae05216083b2aca9fa188479d927dca1b",
+            "token_pair_id": "fdd6a416d8414154bcdd95f82b6ab239",
+            "block_number": 12120255,
+            "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "from_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf"
+        })
+
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(len(body["data"]), 5)
+        self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNotNone(body["data"]["deposit_amount"])
+        self.assertIsNotNone(body["data"]["deposit_address"])
+        self.assertIsNone(body["data"]["contract_address"])
+        self.assertNotEqual(body["data"]["id"], previous_request_id)
+
+        conversion = conversion_repo.session.query(ConversionDBModel).filter(
+            ConversionDBModel.id == previous_request_id).first()
+        self.assertEqual(conversion.status, ConversionStatus.EXPIRED.value)
+        previous_request_id = body["data"]["id"]
+
+        body_input = json.dumps({
+            "amount": "1000",
+            "signature": "0x9ac7b1dbd03fcdd3bd832c8b5e34953d3e49c1aece3d730c1ff92627c2f56cbc4bfa789d43cc2f09346d4dab458ebdd542b9268b103c7a51673f1ba08502baa71c",
+            "token_pair_id": "fdd6a416d8414154bcdd95f82b6ab239",
+            "block_number": 123456,
+            "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "from_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf"
+        })
+
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(len(body["data"]), 5)
+        self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNotNone(body["data"]["deposit_amount"])
+        self.assertIsNotNone(body["data"]["deposit_address"])
+        self.assertIsNone(body["data"]["contract_address"])
+        self.assertNotEqual(body["data"]["id"], previous_request_id)
+
+        conversion = conversion_repo.session.query(ConversionDBModel).filter(
+            ConversionDBModel.id == previous_request_id).first()
+        self.assertEqual(conversion.status, ConversionStatus.EXPIRED.value)
+        previous_request_id = body["data"]["id"]
+
+        body_input = json.dumps({
+            "amount": "1000",
+            "signature": "0x9ac7b1dbd03fcdd3bd832c8b5e34953d3e49c1aece3d730c1ff92627c2f56cbc4bfa789d43cc2f09346d4dab458ebdd542b9268b103c7a51673f1ba08502baa71c",
+            "token_pair_id": "fdd6a416d8414154bcdd95f82b6ab239",
+            "block_number": 123456,
+            "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "from_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf"
+        })
+
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(len(body["data"]), 5)
+        self.assertIsNotNone(body["data"]["id"])
+        self.assertIsNotNone(body["data"]["deposit_amount"])
+        self.assertIsNotNone(body["data"]["deposit_address"])
+        self.assertIsNone(body["data"]["contract_address"])
+        self.assertEqual(body["data"]["id"], previous_request_id)
 
         # Length of wallet pair table should be two because , the request is from different from and to address
         wallet_pair_count = conversion_repo.session.query(distinct(WalletPairDBModel.id)).all()

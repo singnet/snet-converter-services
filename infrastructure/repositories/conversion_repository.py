@@ -1,4 +1,4 @@
-from sqlalchemy import or_
+from sqlalchemy import or_, case
 from sqlalchemy.orm import aliased
 
 from constants.general import CreatedBy
@@ -207,7 +207,30 @@ class ConversionRepository(BaseRepository):
             .join(to_token, to_token.row_id == TokenPairDBModel.to_token_id) \
             .join(from_blockchain, from_blockchain.row_id == from_token.blockchain_id) \
             .join(to_blockchain, to_blockchain.row_id == to_token.blockchain_id) \
-            .order_by(ConversionDBModel.created_at.desc())
+            .order_by(case(
+            [
+                (
+                    ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value,
+                    1
+                ),
+                (
+                    ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2
+                ),
+                (
+                    ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3
+                ),
+                (
+                    ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4
+                ),
+                (
+                    ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5
+                ),
+                (
+                    ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6
+                )
+            ],
+            else_=7
+        ).asc(), ConversionDBModel.created_at.desc())
 
         if address:
             conversions_detail_query = conversions_detail_query.filter(
