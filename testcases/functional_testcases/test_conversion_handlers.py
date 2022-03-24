@@ -46,12 +46,14 @@ class TestConversion(unittest.TestCase):
         conversion_repo.session.add_all(TestVariables().transaction)
         conversion_repo.session.commit()
 
+    @patch("common.blockchain_util.BlockChainUtil.get_current_block_no")
     @patch("application.service.cardano_service.CardanoService.get_deposit_address",
            Mock(return_value={"data": {"derived_address": "some derived address", "index": 1, "role": 0}}))
     @patch("application.service.conversion_service.get_signature")
     @patch("utils.blockchain.validate_cardano_address")
     @patch("common.utils.Utils.report_slack")
-    def test_create_conversion_request(self, mock_report_slack, mock_validate_cardano_address, mock_signature):
+    def test_create_conversion_request(self, mock_report_slack, mock_validate_cardano_address, mock_signature,
+                                       mock_get_current_block_no):
         mock_signature.return_value = "some signature"
 
         conversion_repo.session.query(TransactionDBModel).delete()
@@ -72,8 +74,8 @@ class TestConversion(unittest.TestCase):
                                             'error': {'code': 'E0005', 'message': 'BAD_REQUEST',
                                                       'details': 'Property value is empty'}}
         bad_request_token_pair_id_not_exists = {'status': 'failed', 'data': None,
-                                                'error': {'code': 1, 'message': 'BAD_REQUEST',
-                                                          'details': 'Given toke pair id not exists'}}
+                                                'error': {'code': 'E0071', 'message': 'BAD_REQUEST',
+                                                          'details': 'Token pair not exists'}}
         bad_request_incorrect_signature = {'status': 'failed', 'data': None,
                                            'error': {'code': 'E0006', 'message': 'BAD_REQUEST',
                                                      'details': 'Incorrect signature provided'}}
@@ -98,6 +100,9 @@ class TestConversion(unittest.TestCase):
                                                                              'details': 'Amount is less than expected min value '}}
         bad_request_max_value = {'status': 'failed', 'data': None, 'error': {'code': 'E0062', 'message': 'BAD_REQUEST',
                                                                              'details': 'Amount is greater than expected max value'}}
+        bad_request_signature_expired = {'status': 'failed', 'data': None,
+                                         'error': {'code': 'E0070', 'message': 'BAD_REQUEST',
+                                                   'details': 'Signature expired for the given request'}}
 
         # Bad Request
         event = dict()
@@ -214,6 +219,21 @@ class TestConversion(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_token_pair_id_not_exists)
 
+        mock_get_current_block_no.return_value = 1207979
+        body_input = json.dumps({
+            "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
+            "amount": "1000",
+            "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
+            "to_address": "addr_test1qpclwzmqsux25kyleun8ujw3x693w6edrxnw0y3et88ehuv0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qgesgnf",
+            "block_number": 12079580,
+            "signature": "0x03ef90b2b121e2c651ad1d4b42f9fe38c7e1503bd9d4854640f8d0d5de843f117d38d0b96427750f917e4aa0f4464b9e60853e3cc10e5018f966033ece2719071c"
+        })
+        event["body"] = body_input
+        response = create_conversion_request(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_signature_expired)
+
+        mock_get_current_block_no.return_value = 12079580
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
             "amount": "1000",
@@ -276,6 +296,7 @@ class TestConversion(unittest.TestCase):
             ConversionDBModel.id == previous_request_id).first()
         last_updated_dt = conversion.updated_at
 
+
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
             "amount": "100",
@@ -305,6 +326,7 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(len(wallet_pair_count), 1)
         previous_request_id = body["data"]["id"]
 
+        mock_get_current_block_no.return_value = 123456
         body_input = json.dumps({
             "amount": "1000",
             "signature": "0x9ac7b1dbd03fcdd3bd832c8b5e34953d3e49c1aece3d730c1ff92627c2f56cbc4bfa789d43cc2f09346d4dab458ebdd542b9268b103c7a51673f1ba08502baa71c",
@@ -329,6 +351,7 @@ class TestConversion(unittest.TestCase):
         self.assertNotEqual(conversion.status, ConversionStatus.EXPIRED.value)
         previous_request_id = body["data"]["id"]
 
+        mock_get_current_block_no.return_value = 12120255
         body_input = json.dumps({
             "amount": "200000000",
             "signature": "0x14585fcc0de1157cbdd998c4c67fb04d5d4cd2ccac18e641e9dd140fe5ca193b71e1f8e1869b3d5d9b96d28fb239a2f5fae05216083b2aca9fa188479d927dca1b",
@@ -353,6 +376,7 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(conversion.status, ConversionStatus.EXPIRED.value)
         previous_request_id = body["data"]["id"]
 
+        mock_get_current_block_no.return_value = 123456
         body_input = json.dumps({
             "amount": "1000",
             "signature": "0x9ac7b1dbd03fcdd3bd832c8b5e34953d3e49c1aece3d730c1ff92627c2f56cbc4bfa789d43cc2f09346d4dab458ebdd542b9268b103c7a51673f1ba08502baa71c",
@@ -377,6 +401,7 @@ class TestConversion(unittest.TestCase):
         self.assertEqual(conversion.status, ConversionStatus.EXPIRED.value)
         previous_request_id = body["data"]["id"]
 
+        mock_get_current_block_no.return_value = 123456
         body_input = json.dumps({
             "amount": "1000",
             "signature": "0x9ac7b1dbd03fcdd3bd832c8b5e34953d3e49c1aece3d730c1ff92627c2f56cbc4bfa789d43cc2f09346d4dab458ebdd542b9268b103c7a51673f1ba08502baa71c",

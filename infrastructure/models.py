@@ -43,7 +43,7 @@ class TokenDBModel(Base):
     updated_at = Column("updated_at", TIMESTAMP,
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
-    blockchain_detail = relationship(BlockChainDBModel, uselist=False, lazy="select")
+    blockchain_detail = relationship(BlockChainDBModel, uselist=False, lazy="joined")
     __table_args__ = (UniqueConstraint(name, symbol, blockchain_id), {})
 
 
@@ -60,7 +60,7 @@ class ConversionFeeDBModel(Base):
     updated_at = Column("updated_at", TIMESTAMP,
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
-    token = relationship(TokenDBModel, foreign_keys=[token_id])
+    token = relationship(TokenDBModel, foreign_keys=[token_id], uselist=False, lazy="select")
 
 
 class TokenPairDBModel(Base):
@@ -81,8 +81,8 @@ class TokenPairDBModel(Base):
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
     conversion_fee = relationship(ConversionFeeDBModel, foreign_keys=[conversion_fee_id])
-    from_token = relationship(TokenDBModel, foreign_keys=[from_token_id])
-    to_token = relationship(TokenDBModel, foreign_keys=[to_token_id])
+    from_token = relationship(TokenDBModel, foreign_keys=[from_token_id], uselist=False, lazy="select")
+    to_token = relationship(TokenDBModel, foreign_keys=[to_token_id], uselist=False, lazy="select")
     __table_args__ = (UniqueConstraint(from_token_id, to_token_id), {})
 
 

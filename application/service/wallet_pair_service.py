@@ -1,6 +1,7 @@
-from application.service.wallet_pair_response import get_wallet_pair_by_addresses_response, create_wallet_pair_response, \
-    get_wallet_pair_detail_by_deposit_address_response, get_wallet_pair_by_conversion_id_response, \
-    get_all_deposit_address_response, get_wallets_address_by_ethereum_address_response
+from application.service.wallet_pair_response import get_wallet_pair_by_addresses_response, \
+    create_wallet_pair_response, get_wallet_pair_detail_by_deposit_address_response, \
+    get_wallet_pair_by_conversion_id_response, get_all_deposit_address_response, \
+    get_wallets_address_by_ethereum_address_response
 from common.logger import get_logger
 from constants.entity import TokenPairEntities, BlockchainEntities, TokenEntities, WalletPairEntities, \
     CardanoAPIEntities
@@ -31,6 +32,7 @@ class WalletPairService:
         return get_wallet_pair_by_addresses_response(wallet_pair.to_dict()) if wallet_pair else None
 
     def persist_wallet_pair_details(self, from_address, to_address, amount, signature, block_number, token_pair):
+        logger.info("Persisting the wallet pair details")
         token_pair_row_id = token_pair.get(TokenPairEntities.ROW_ID.value, None)
         token_pair_id = token_pair.get(TokenPairEntities.ID.value, None)
 
@@ -46,7 +48,8 @@ class WalletPairService:
             signature_metadata = create_signature_metadata(token_pair_id=token_pair_id, amount=amount,
                                                            from_address=from_address, to_address=to_address,
                                                            block_number=block_number)
-            deposit_address_details = get_deposit_address_details(blockchain_name=from_blockchain_name, token_name=token_name)
+            deposit_address_details = get_deposit_address_details(blockchain_name=from_blockchain_name,
+                                                                  token_name=token_name)
             wallet_pair = self.create_wallet_pair(from_address=from_address, to_address=to_address,
                                                   token_pair_id=token_pair_row_id,
                                                   signature=signature, signature_expiry=None,
@@ -69,7 +72,9 @@ class WalletPairService:
     def get_all_deposit_address(self):
         logger.info("Getting all the deposit address")
         addresses = self.wallet_pair_repo.get_all_deposit_address()
-        return get_all_deposit_address_response(get_response_from_entities(addresses))
+        address_data = get_response_from_entities(addresses)
+        logger.info(f"Total addresses we are going to listen={len(address_data)}")
+        return get_all_deposit_address_response(address_data)
 
     def get_wallets_address_by_ethereum_address(self, ethereum_address):
         logger.info(f"Get wallets address by ethereum address={ethereum_address}")

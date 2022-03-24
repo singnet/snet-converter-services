@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-03-24 12:00:00 
+
+### Fixed
+- Signature expiry check on conversion request using block number
+- Block confirmation logic has been optimized and add the call to converter bridge
+- Optimized the token pair api db calls 
+
 ## 2022-03-16 12:00:00 
 
 ### Added

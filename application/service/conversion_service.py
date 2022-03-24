@@ -8,7 +8,9 @@ from application.service.conversion_reponse import get_latest_user_pending_conve
     get_conversion_response, update_conversion_response
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
+from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
+from config import SIGNATURE_EXPIRY_BLOCK_NUMBER
 from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity
@@ -23,7 +25,7 @@ from utils.blockchain import validate_address, validate_conversion_claim_request
     validate_cardano_transaction_details_against_conversion
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, paginate_items, \
-    is_supported_network_conversion
+    is_supported_network_conversion, get_ethereum_network_url
 from utils.signature import validate_conversion_signature, get_signature
 
 logger = get_logger(__name__)
@@ -124,7 +126,7 @@ class ConversionService:
     @staticmethod
     def create_conversion_request_validation(token_pair_id, amount, from_address, to_address, block_number,
                                              signature, token_pair):
-        logger.info("Validation the conversion request")
+        logger.info("Validating  the conversion request")
         is_signer_as_from_address = False
         from_blockchain = get_blockchain_from_token_pair_details(token_pair=token_pair,
                                                                  blockchain_conversion_type=TokenPairEntities.FROM_TOKEN.value)
@@ -145,6 +147,13 @@ class ConversionService:
             chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
         else:
             chain_id = to_blockchain.get(BlockchainEntities.CHAIN_ID.value)
+
+        network_url = get_ethereum_network_url(chain_id=chain_id)
+        ethereum_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
+        current_block_no = ethereum_web3_object.get_current_block_no()
+        if not block_number <= current_block_no or block_number < (current_block_no - SIGNATURE_EXPIRY_BLOCK_NUMBER):
+            raise BadRequestException(error_code=ErrorCode.SIGNATURE_EXPIRED.value,
+                                      error_details=ErrorDetails[ErrorCode.SIGNATURE_EXPIRED.value].value)
 
         result = validate_conversion_signature(token_pair_id=token_pair_id, amount=amount, from_address=from_address,
                                                to_address=to_address, block_number=block_number, signature=signature,
