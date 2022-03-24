@@ -9,6 +9,7 @@ from application.service.notification_service import NotificationService
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
+from config import MESSAGE_GROUP_ID
 from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventConsumer, EventConsumerEntity, \
     WalletPairEntities, ConversionEntities, ConverterBridgeEntities, EthereumEventConsumerEntities, EthereumEventType, \
     TransactionEntities, TokenEntities, ConversionDetailEntities, CardanoAPIEntities, TokenPairEntities, \
@@ -129,8 +130,8 @@ class ConsumerService:
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
                                                error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
 
-        conversion_complete_detail = self.conversion_service.get_conversion_complete_detail(
-            conversion_id=conversion.get(ConversionEntities.ID.value))
+        conversion_id = conversion.get(ConversionEntities.ID.value)
+        conversion_complete_detail = self.conversion_service.get_conversion_complete_detail(conversion_id=conversion_id)
 
         if not conversion_complete_detail:
             logger.info("Invalid conversion id provided")
@@ -141,7 +142,9 @@ class ConsumerService:
 
         if activity_event:
             NotificationService.send_message_to_queue(queue=QueueName.CONVERTER_BRIDGE.value,
-                                                      message=json.dumps(activity_event))
+                                                      message=json.dumps(activity_event),
+                                                      message_group_id=MESSAGE_GROUP_ID,
+                                                      message_deduplication_id=conversion_id)
         else:
             conversion_transaction_id = conversion_complete_detail.get(ConversionDetailEntities.TRANSACTIONS.value,
                                                                        {})[0].get(
