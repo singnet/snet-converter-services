@@ -1,3 +1,6 @@
+from sqlalchemy.orm import joinedload
+
+from constants.error_details import ErrorCode, ErrorDetails
 from domain.factory.token_factory import TokenFactory
 from infrastructure.models import TokenPairDBModel
 from infrastructure.repositories.base_repository import BaseRepository
@@ -9,7 +12,9 @@ class TokenRepository(BaseRepository):
 
     @read_from_db()
     def get_all_token_pair(self):
-        token_pairs = self.session.query(TokenPairDBModel).filter(TokenPairDBModel.is_enabled == True).all()
+        token_pairs = self.session.query(TokenPairDBModel).filter(TokenPairDBModel.is_enabled.is_(True)) \
+            .options(joinedload(TokenPairDBModel.from_token)).options(joinedload(TokenPairDBModel.to_token)) \
+            .options(joinedload(TokenPairDBModel.conversion_fee)).all()
         return [TokenFactory.token_pair(row_id=token_pair.row_id, id=token_pair.id, min_value=token_pair.min_value,
                                         max_value=token_pair.max_value, contract_address=token_pair.contract_address,
                                         created_by=token_pair.created_by, created_at=token_pair.created_at,
@@ -20,7 +25,9 @@ class TokenRepository(BaseRepository):
 
     @read_from_db()
     def get_token_pair(self, token_pair_id, token_pair_row_id=None):
-        token_pair_query = self.session.query(TokenPairDBModel).filter(TokenPairDBModel.is_enabled == True)
+        token_pair_query = self.session.query(TokenPairDBModel).filter(TokenPairDBModel.is_enabled.is_(True)) \
+            .options(joinedload(TokenPairDBModel.from_token)).options(joinedload(TokenPairDBModel.to_token)) \
+            .options(joinedload(TokenPairDBModel.conversion_fee))
 
         if token_pair_id:
             token_pair_query = token_pair_query.filter(TokenPairDBModel.id == token_pair_id)
@@ -30,7 +37,8 @@ class TokenRepository(BaseRepository):
         token_pair = token_pair_query.first()
 
         if token_pair is None:
-            raise TokenPairIdNotExitsException(error_code=1, error_details="Given toke pair id not exists")
+            raise TokenPairIdNotExitsException(error_code=ErrorCode.TOKEN_PAIR_NOT_EXISTS.value,
+                                               error_details=ErrorDetails[ErrorCode.TOKEN_PAIR_NOT_EXISTS.value].value)
 
         return TokenFactory.token_pair(row_id=token_pair.row_id, id=token_pair.id, min_value=token_pair.min_value,
                                        max_value=token_pair.max_value, contract_address=token_pair.contract_address,

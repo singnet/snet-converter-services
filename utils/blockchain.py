@@ -1,4 +1,5 @@
 import os
+import time
 from decimal import Decimal
 from http import HTTPStatus
 
@@ -7,7 +8,7 @@ from web3.exceptions import TransactionNotFound
 from application.service.cardano_service import CardanoService
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
-from config import TOKEN_CONTRACT_PATH
+from config import TOKEN_CONTRACT_PATH, MAX_RETRY_BLOCK_CONFIRMATION, BLOCK_CONFIRMATION_SLEEP_TIME
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
     ConversionEntities, CardanoEventType, CardanoAPIEntities, WalletPairEntities, \
@@ -27,6 +28,7 @@ logger = get_logger(__name__)
 
 
 def get_deposit_address_details(blockchain_name, token_name):
+    logger.info(f"Getting the deposit address details for blockchain name={blockchain_name}, token_name={token_name}")
     deposit_address_details = {}
     if blockchain_name == BlockchainName.CARDANO.value:
         deposit_response = CardanoService.get_deposit_address(token_name=token_name)
@@ -375,6 +377,8 @@ def convert_int_to_decimal(value):
 
 
 def validate_conversion_request_amount(amount: str, min_value: str, max_value: str) -> None:
+    logger.info(f"Validating the conversion request amount limits where amount={amount}, min_value={min_value}, "
+                f"max_value={max_value}")
     min_value = Decimal(float(min_value))
     max_value = Decimal(float(max_value))
     amount = convert_str_to_decimal(value=amount)
@@ -426,3 +430,28 @@ def validate_conversion_with_blockchain(conversion_on, address, amount, conversi
         is_valid = False
 
     return is_valid
+
+
+def get_current_block_confirmation(tx_hash, network_id):
+    current_block_confirmation = 0
+    logger.info("Getting the current block confirmation")
+    i = 1
+    while True:
+        try:
+            current_block_confirmation = get_block_confirmation(tx_hash=tx_hash,
+                                                                blockchain_network_id=network_id)
+        except Exception as e:
+            logger.info(f"Transaction mayn't be available={e}, we will retry it ")
+
+        if i > MAX_RETRY_BLOCK_CONFIRMATION:
+            break
+
+        if not current_block_confirmation:
+            time.sleep(BLOCK_CONFIRMATION_SLEEP_TIME)
+            logger.info(f"Waiting to get at least 1 block confirmation for the last "
+                        f"{i * BLOCK_CONFIRMATION_SLEEP_TIME} seconds")
+        else:
+            break
+
+        i += 1
+    return current_block_confirmation

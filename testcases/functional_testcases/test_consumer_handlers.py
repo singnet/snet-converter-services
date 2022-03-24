@@ -232,9 +232,11 @@ class TestConsumer(unittest.TestCase):
                                             {})
         self.assertEqual(response, None)
 
+    @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_block")
+    @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_transaction")
     @patch("application.service.cardano_service.CardanoService.mint_token")
     @patch("common.utils.Utils.report_slack")
-    def test_converter_bridge(self, mock_report_slack, mock_mint_token):
+    def test_converter_bridge(self, mock_report_slack, mock_mint_token, mock_get_transaction, mock_get_block):
         mock_mint_token.return_value = {"data": {"transaction_id": "some hash"}, "status": "success"}
 
         # Internal server error because of missing required fields
@@ -292,6 +294,7 @@ class TestConsumer(unittest.TestCase):
                                                                  'blockchain_network_id': 2}), {})
 
         # valid request
+        mock_get_block.return_value = {"confirmations": 0}
         converter_bridge(prepare_converter_bridge_event_format({'blockchain_name': 'Cardano',
                                                                 'blockchain_event': {
                                                                     'conversion_id': '7298bce110974411b260cac758b37ee0',

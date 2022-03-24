@@ -71,6 +71,8 @@ class ErrorCode(Enum):
     UNABLE_TO_FIND_EVENTS_FOR_HASH = "E0067"
     CONVERSION_ALREADY_DONE = "E0068"
     TOKEN_CONTRACT_ADDRESS_EMPTY = "E0069"
+    SIGNATURE_EXPIRED = "E0070"
+    TOKEN_PAIR_NOT_EXISTS = "E0071"
 
 
 class ErrorDetails(Enum):
@@ -143,3 +145,5 @@ class ErrorDetails(Enum):
     E0067 = "Unable to find any events for the given hash"
     E0068 = "Conversion has already been completed"
     E0069 = "Token contract address is empty"
+    E0070 = "Signature expired for the given request"
+    E0071 = "Token pair not exists"

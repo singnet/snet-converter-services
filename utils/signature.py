@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 def validate_conversion_signature(token_pair_id, amount, from_address, to_address, block_number, signature,
                                   is_signer_as_from_address, chain_id):
-    logger.info("Validating the signature")
+    logger.info("Validating the conversion request signature")
     if is_signer_as_from_address:
         target_address = from_address
     else:
