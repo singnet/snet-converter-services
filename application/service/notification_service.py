@@ -12,5 +12,6 @@ class NotificationService:
         SnsService.publish_message(topic=topic, message=message)
 
     @staticmethod
-    def send_message_to_queue(queue, message):
-        SqsService.send_message_to_queue(queue=queue, message=message)
+    def send_message_to_queue(queue, message, message_group_id, message_deduplication_id):
+        SqsService.send_message_to_queue(queue=queue, message=message, message_group_id=message_group_id,
+                                         message_deduplication_id=message_deduplication_id)

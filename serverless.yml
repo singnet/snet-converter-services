@@ -237,7 +237,9 @@ resources:
     converterBridgeQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge
+        FifoTopic: true
+        ContentBasedDeduplication: false
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge.fifo
         VisibilityTimeout: 100
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 7200
@@ -264,7 +266,9 @@ resources:
     converterBridgeDLQQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge-dlq
+        FifoTopic: true
+        ContentBasedDeduplication: false
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge-dlq.fifo
         VisibilityTimeout: 60
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 604800

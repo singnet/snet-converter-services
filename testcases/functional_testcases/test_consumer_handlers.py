@@ -114,7 +114,8 @@ class TestConsumer(unittest.TestCase):
                                                                               'conversion_id': conversion_id,
                                                                               'tx_amount': '1E+8',
                                                                               'tx_operation': 'TOKEN_BURNT'},
-                                                                          'blockchain_network_id': 2}))
+                                                                          'blockchain_network_id': 2}),
+                                                      message_group_id="", message_deduplication_id=conversion_id)
 
         conversion_count = conversion_repo.session.query(ConversionDBModel).all()
         self.assertEqual(4, len(conversion_count))
@@ -211,7 +212,8 @@ class TestConsumer(unittest.TestCase):
                                                                               'conversion_id': '7298bce110974411b260cac758b37ee0',
                                                                               'tx_amount': '131305425',
                                                                               'tx_operation': 'TOKEN_MINTED'},
-                                                                          'blockchain_network_id': 2}))
+                                                                          'blockchain_network_id': 2}),
+                                                      message_group_id="", message_deduplication_id='7298bce110974411b260cac758b37ee0')
         conversion_count = conversion_repo.session.query(ConversionDBModel).all()
         self.assertEqual(3, len(conversion_count))
         conversion_transaction_count = conversion_repo.session.query(ConversionTransactionDBModel).all()
