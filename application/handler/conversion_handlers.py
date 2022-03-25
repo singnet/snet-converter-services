@@ -4,6 +4,8 @@ import sys
 
 sys.path.append('/opt')
 
+from constants.general import MAX_PAGE_SIZE
+
 from config import SLACK_HOOK
 from constants.error_details import ErrorCode, ErrorDetails
 from utils.exception_handler import exception_handler
@@ -101,6 +103,10 @@ def get_conversion_history(event, context):
 
     page_size = int(query_param.get(ApiParameters.PAGE_SIZE.value, PaginationDefaults.PAGE_SIZE.value))
     page_number = int(query_param.get(ApiParameters.PAGE_NUMBER.value, PaginationDefaults.PAGE_NUMBER.value))
+
+    if page_size > MAX_PAGE_SIZE:
+        raise BadRequestException(error_code=ErrorCode.PAGE_SIZE_EXCEEDS_LIMIT.value,
+                                  error_details=ErrorDetails[ErrorCode.PAGE_SIZE_EXCEEDS_LIMIT.value].value)
 
     response = conversion_service.get_conversion_history(address=address, page_size=page_size, page_number=page_number)
 

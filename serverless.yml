@@ -238,7 +238,7 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         FifoQueue: true
-        ContentBasedDeduplication: false
+        ContentBasedDeduplication: true
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge.fifo
         VisibilityTimeout: 400
         ReceiveMessageWaitTimeSeconds: 20
@@ -361,6 +361,7 @@ functions:
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
     environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH}
       CONVERTER_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_SIGNER_PRIVATE_KEY_PATH}
     events:
       - http:
@@ -586,11 +587,64 @@ functions:
               - converterEventConsumerQueue
               - Arn
 
-  converter_bridge:
+  converter_bridge1:
     handler: application/handler/consumer_handlers.converter_bridge
     role: ${file(./config.${self:provider.stage}.json):ROLE}
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_1}
+    timeout: 300
+    maximumRetryAttempts: 1
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - converterBridgeQueue
+              - Arn
+          batchSize: 1
+
+  converter_bridge2:
+    handler: application/handler/consumer_handlers.converter_bridge
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_2}
+    timeout: 300
+    maximumRetryAttempts: 1
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - converterBridgeQueue
+              - Arn
+          batchSize: 1
+
+  converter_bridge3:
+    handler: application/handler/consumer_handlers.converter_bridge
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_3}
+    timeout: 300
+    maximumRetryAttempts: 1
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - converterBridgeQueue
+              - Arn
+          batchSize: 1
+
+  converter_bridge4:
+    handler: application/handler/consumer_handlers.converter_bridge
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_4}
     timeout: 300
     maximumRetryAttempts: 1
     events:

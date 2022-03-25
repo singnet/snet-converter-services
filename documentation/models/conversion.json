@@ -158,7 +158,8 @@
                         "PROCESSING",
                         "WAITING_FOR_CLAIM",
                         "CLAIM_INITIATED",
-                        "SUCCESS"
+                        "SUCCESS",
+                         "EXPIRED"
                       ]
                     },
                     "created_at": {
@@ -302,11 +303,50 @@
                           "TOKEN_MINTED"
                         ]
                       },
+                      "created_at": {
+                        "type": "string"
+                      },
                       "updated_at": {
                         "type": "string"
                       },
-                      "created_at": {
-                        "type": "string"
+                      "token": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "symbol": {
+                            "type": "string"
+                          },
+                          "allowed_decimal": {
+                            "type": "integer"
+                          },
+                          "blockchain": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "symbol": {
+                                "type": "string"
+                              },
+                              "chain_id": {
+                                "type": "integer"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "symbol",
+                              "chain_id"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "symbol",
+                          "allowed_decimal",
+                          "blockchain"
+                        ]
                       }
                     },
                     "required": [
@@ -314,9 +354,11 @@
                       "transaction_operation",
                       "transaction_hash",
                       "transaction_amount",
+                      "confirmation",
                       "status",
                       "created_at",
-                      "updated_at"
+                      "updated_at",
+                      "token"
                     ]
                   }
                 }
@@ -518,10 +560,10 @@
                 "type": "string"
               },
               "claim_amount": {
-                "type": "null"
+                "type": "string"
               },
               "fee_amount": {
-                "type": "null"
+                "type": "string"
               },
               "status": {
                 "type": "string",
@@ -530,13 +572,14 @@
                   "PROCESSING",
                   "WAITING_FOR_CLAIM",
                   "CLAIM_INITIATED",
-                  "SUCCESS"
+                  "SUCCESS",
+                  "EXPIRED"
                 ]
               },
-              "updated_at": {
+              "created_at": {
                 "type": "string"
               },
-              "created_at": {
+              "updated_at": {
                 "type": "string"
               }
             },
@@ -546,8 +589,8 @@
               "claim_amount",
               "fee_amount",
               "status",
-              "updated_at",
-              "created_at"
+              "created_at",
+              "updated_at"
             ]
           },
           "wallet_pair": {
@@ -675,11 +718,50 @@
                     "TOKEN_MINTED"
                   ]
                 },
+                "created_at": {
+                  "type": "string"
+                },
                 "updated_at": {
                   "type": "string"
                 },
-                "created_at": {
-                  "type": "string"
+                "token": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "allowed_decimal": {
+                      "type": "integer"
+                    },
+                    "blockchain": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "symbol": {
+                          "type": "string"
+                        },
+                        "chain_id": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "symbol",
+                        "chain_id"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "symbol",
+                    "allowed_decimal",
+                    "blockchain"
+                  ]
                 }
               },
               "required": [
@@ -687,9 +769,11 @@
                 "transaction_operation",
                 "transaction_hash",
                 "transaction_amount",
+                "confirmation",
                 "status",
+                "created_at",
                 "updated_at",
-                "created_at"
+                "token"
               ]
             }
           }

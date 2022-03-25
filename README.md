@@ -272,154 +272,137 @@ Converter Service│
   Response: 
 ```json5
 {
-    "status": "success",
-    "data": {
-        "items": [
-            {
-                "conversion": {
-                    "id": "7298bce110974411b260cac758b37ee0",
-                    "deposit_amount": "1.33305E+8",
-                    "claim_amount": null,
-                    "fee_amount": null,
-                    "status": "USER_INITIATED",
-                    "created_at": "2022-01-12 04:10:54",
-                    "updated_at": "2022-01-12 04:10:54"
-                },
-                "wallet_pair": {
-                    "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-                    "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-                   "deposit_address": null
-                },
-                "from_token": {
-                    "name": "Singularity Ethereum",
-                    "symbol": "AGIX",
-                    "allowed_decimal":8,
-                    "blockchain": {
-                        "name": "Ethereum",
-                        "symbol": "ETH",
-                        "chain_id": 42
-                    }
-                },
-                "to_token": {
-                    "name": "Singularity Cardano",
-                    "symbol": "AGIX",
-                    "allowed_decimal":8,
-                    "blockchain": {
-                        "name": "Cardano",
-                        "symbol": "ADA",
-                        "chain_id": 2
-                    }
-                },
-                "transactions": []
-            },
-            {
-                "conversion": {
-                    "id": "5086b5245cd046a68363d9ca8ed0027e",
-                    "deposit_amount": "1.33305E+18",
-                    "claim_amount": null,
-                    "fee_amount": null,
-                    "status": "USER_INITIATED",
-                    "created_at": "2022-01-12 04:10:54",
-                    "updated_at": "2022-01-12 04:10:54"
-                },
-                "wallet_pair": {
-                    "from_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-                    "to_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-                   "deposit_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3"
-                },
-                "from_token": {
-                    "name": "Singularity Cardano",
-                    "symbol": "AGIX",
-                    "allowed_decimal":8,
-                    "blockchain": {
-                        "name": "Cardano",
-                        "symbol": "ADA",
-                        "chain_id": 2
-                    }
-                },
-                "to_token": {
-                    "name": "Singularity Ethereum",
-                    "symbol": "AGIX",
-                    "allowed_decimal":8,
-                    "blockchain": {
-                        "name": "Ethereum",
-                        "symbol": "ETH",
-                        "chain_id": 42
-                    }
-                },
-                "transactions": []
-            },
-            {
-                "conversion": {
-                    "id": "51769f201e46446fb61a9c197cb0706b",
-                    "deposit_amount": "1.66305E+18",
-                    "claim_amount": null,
-                    "fee_amount": null,
-                    "status": "PROCESSING",
-                    "created_at": "2022-01-12 04:10:54",
-                    "updated_at": "2022-01-12 04:10:54"
-                },
-                "wallet_pair": {
-                    "from_address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1",
-                    "to_address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
-                    "deposit_address": null, 
-                },
-                "from_token": {
-                    "name": "Singularity Ethereum",
-                    "symbol": "AGIX",
-                    "allowed_decimal":8,
-                    "blockchain": {
-                        "name": "Ethereum",
-                        "symbol": "ETH",
-                        "chain_id": 42
-                    }
-                },
-                "to_token": {
-                    "name": "Singularity Cardano",
-                    "symbol": "AGIX",
-                    "allowed_decimal":8,
-                    "blockchain": {
-                        "name": "Cardano",
-                        "symbol": "ADA",
-                        "chain_id": 2
-                    }
-                },
-                "transactions": [
-                    {
-                        "id": "391be6385abf4b608bdd20a44acd6abc",
-                        "transaction_operation": "TOKEN_RECEIVED",
-                        "transaction_hash": "22477fd4ea994689a04646cbbaafd133",
-                        "transaction_amount": "1.66305E+18",
-                        "confirmation": 10,
-                        "status": "SUCCESS",
-                        "created_at": "2022-01-12 04:10:54",
-                        "updated_at": "2022-01-12 04:10:54"
+        "status": "success",
+        "data": {
+            "items": [
+                {
+                    "conversion": {
+                        "id": "1ad29ed5cd8d49eeb08d571bc63acfaf",
+                        "deposit_amount": "1E+6",
+                        "claim_amount": "1E+6",
+                        "fee_amount": "0",
+                        "status": "WAITING_FOR_CLAIM",
+                        "created_at": "2022-03-23 16:36:34",
+                        "updated_at": "2022-03-23 16:43:35"
                     },
-                    {
-                        "id": "1df60a2369f34247a5dc3ed29a8eef67",
-                        "transaction_operation": "TOKEN_RECEIVED",
-                        "transaction_hash": "22477fd4ea994689a04646cbbaafd133",
-                        "transaction_amount": "1.66305E+18",
-                        "confirmation": 10,
-                        "status": "WAITING_FOR_CONFIRMATION",
-                        "created_at": "2022-01-12 04:10:54",
-                        "updated_at": "2022-01-12 04:10:54"
-                    }
-                ]
+                    "wallet_pair": {
+                        "from_address": "addr_test1qquj76vq3q4wut49m43dgxa8839uc0llepyyuyn3kjy7fn3kyuuqxnr3wlf2dgts9djqkju4ycn06vjmyj035eyfufxsmq9mn5",
+                        "to_address": "0x176133a958449C28930970989dB5fFFbEdd9F447",
+                        "deposit_address": "addr_test1vr35awvktjyv7mfq7advku5p8wmjcrn05tqar7p5fzpp7gq8w70e3"
+                    },
+                    "from_token": {
+                        "name": "Singularity NTX Cardano",
+                        "symbol": "NTX",
+                        "allowed_decimal": 6,
+                        "blockchain": {
+                            "name": "Cardano",
+                            "symbol": "ADA",
+                            "chain_id": 2
+                        }
+                    },
+                    "to_token": {
+                        "name": "Singularity NTX Ethereum",
+                        "symbol": "NTX",
+                        "allowed_decimal": 6,
+                        "blockchain": {
+                            "name": "Ethereum",
+                            "symbol": "ETH",
+                            "chain_id": 3
+                        }
+                    },
+                    "transactions": [
+                        {
+                            "id": "344d1f4e88c0415c8a8d2ec464cde36c",
+                            "transaction_operation": "TOKEN_RECEIVED",
+                            "transaction_hash": "93087d747871642b883b6343f74c5e32678daf1611df7f70bcd0ba59fe9c4c1d",
+                            "transaction_amount": "1E+6",
+                            "confirmation": 3,
+                            "status": "SUCCESS",
+                            "created_at": "2022-03-23 16:41:30",
+                            "updated_at": "2022-03-23 16:41:30",
+                            "token": {
+                                "name": "Singularity NTX Cardano",
+                                "symbol": "NTX",
+                                "allowed_decimal": 6,
+                                "blockchain": {
+                                    "name": "Cardano",
+                                    "symbol": "ADA",
+                                    "chain_id": 2
+                                }
+                            }
+                        },
+                        {
+                            "id": "3c4c0ab5d7e44b83a6215b52fa685571",
+                            "transaction_operation": "TOKEN_BURNT",
+                            "transaction_hash": "98c8b3451f30dc5009e711fa4113cfadc6462f8f0a302079a664b891d57e37d8",
+                            "transaction_amount": "1E+6",
+                            "confirmation": 3,
+                            "status": "SUCCESS",
+                            "created_at": "2022-03-23 16:41:36",
+                            "updated_at": "2022-03-23 16:43:30",
+                            "token": {
+                                "name": "Singularity NTX Cardano",
+                                "symbol": "NTX",
+                                "allowed_decimal": 6,
+                                "blockchain": {
+                                    "name": "Cardano",
+                                    "symbol": "ADA",
+                                    "chain_id": 2
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "conversion": {
+                        "id": "4ed138cd461041ea8554885f0ac9f9c0",
+                        "deposit_amount": "1E+8",
+                        "claim_amount": "1E+8",
+                        "fee_amount": "0",
+                        "status": "USER_INITIATED",
+                        "created_at": "2022-03-23 20:45:37",
+                        "updated_at": "2022-03-23 20:45:37"
+                    },
+                    "wallet_pair": {
+                        "from_address": "0x176133a958449C28930970989dB5fFFbEdd9F447",
+                        "to_address": "addr_test1qquj76vq3q4wut49m43dgxa8839uc0llepyyuyn3kjy7fn3kyuuqxnr3wlf2dgts9djqkju4ycn06vjmyj035eyfufxsmq9mn5",
+                        "deposit_address": null
+                    },
+                    "from_token": {
+                        "name": "Singularity AGIX Ethereum",
+                        "symbol": "AGIX",
+                        "allowed_decimal": 8,
+                        "blockchain": {
+                            "name": "Ethereum",
+                            "symbol": "ETH",
+                            "chain_id": 3
+                        }
+                    },
+                    "to_token": {
+                        "name": "Singularity AGIX Cardano",
+                        "symbol": "AGIX",
+                        "allowed_decimal": 8,
+                        "blockchain": {
+                            "name": "Cardano",
+                            "symbol": "ADA",
+                            "chain_id": 2
+                        }
+                    },
+                    "transactions": []
+                }
+            ],
+            "meta": {
+                "total_records": 83,
+                "page_count": 42,
+                "page_number": 1,
+                "page_size": 2
             }
-        ],
-        "meta": {
-            "total_records": 3,
-            "page_count": 1,
-            "page_number": 1,
-            "page_size": 15
+        },
+        "error": {
+            "code": null,
+            "message": null,
+            "details": null
         }
-    },
-    "error": {
-        "code": null,
-        "message": null,
-        "details": null
-    }
 }
 ```
 
@@ -465,59 +448,79 @@ Converter Service│
     "status": "success",
     "data": {
         "conversion": {
-            "id": "9deef40cfd59404c91dc7f5454c3cc6e",
-            "deposit_amount": "7E+7",
-            "claim_amount": null,
-            "fee_amount": null,
-            "status": "SUCCESS", 
-            "created_at": "2022-01-12 04:10:54",
-            "updated_at": "2022-03-01 15:03:06"
+            "id": "1ad29ed5cd8d49eeb08d571bc63acfaf",
+            "deposit_amount": "1E+6",
+            "claim_amount": "1E+6",
+            "fee_amount": "0",
+            "status": "WAITING_FOR_CLAIM",
+            "created_at": "2022-03-23 16:36:34",
+            "updated_at": "2022-03-23 16:43:35"
         },
         "wallet_pair": {
-            "from_address": "0xCc3cD60FF9936B7C9272a649b24f290ADa562469",
-            "to_address": "addr_test1qquj76vq3q4wut49m43dgxa8839uc0llepyyuyn3kjy7fn3kyuuqxnr3wlf2dgts9djqkju4ycn06vjmyj035eyfufxsmq9mn5",
-            "deposit_address": null
+            "from_address": "addr_test1qquj76vq3q4wut49m43dgxa8839uc0llepyyuyn3kjy7fn3kyuuqxnr3wlf2dgts9djqkju4ycn06vjmyj035eyfufxsmq9mn5",
+            "to_address": "0x176133a958449C28930970989dB5fFFbEdd9F447",
+            "deposit_address": "addr_test1vr35awvktjyv7mfq7advku5p8wmjcrn05tqar7p5fzpp7gq8w70e3"
         },
         "from_token": {
-            "name": "Singularity AGIX Ethereum",
-            "symbol": "AGIX",
-            "allowed_decimal":8,
-            "blockchain": {
-                "name": "Ethereum",
-                "symbol": "ETH",
-                "chain_id": 3
-            }
-        },
-        "to_token": {
-            "name": "Singularity AGIX Cardano",
-            "symbol": "TMAT",
-            "allowed_decimal":8,
+            "name": "Singularity NTX Cardano",
+            "symbol": "NTX",
+            "allowed_decimal": 6,
             "blockchain": {
                 "name": "Cardano",
                 "symbol": "ADA",
                 "chain_id": 2
             }
         },
+        "to_token": {
+            "name": "Singularity NTX Ethereum",
+            "symbol": "NTX",
+            "allowed_decimal": 6,
+            "blockchain": {
+                "name": "Ethereum",
+                "symbol": "ETH",
+                "chain_id": 3
+            }
+        },
         "transactions": [
             {
-                "id": "8a3dce9f6640452bbc68dd9dcc87d323",
-                "transaction_operation": "TOKEN_BURNT",
-                "transaction_hash": "0xdf7585ce324f5c0951f67ffa80ed1ad07c88589135d3d7c0eaedc5e04ada6f77",
-                "transaction_amount": "7E+7",
-                "confirmation": 10,
-                "status": "SUCCESS", 
-                "created_at": "2022-01-12 04:10:54",
-                "updated_at": "2022-03-01 14:59:11"
+                "id": "344d1f4e88c0415c8a8d2ec464cde36c",
+                "transaction_operation": "TOKEN_RECEIVED",
+                "transaction_hash": "93087d747871642b883b6343f74c5e32678daf1611df7f70bcd0ba59fe9c4c1d",
+                "transaction_amount": "1E+6",
+                "confirmation": 3,
+                "status": "SUCCESS",
+                "created_at": "2022-03-23 16:41:30",
+                "updated_at": "2022-03-23 16:41:30",
+                "token": {
+                    "name": "Singularity NTX Cardano",
+                    "symbol": "NTX",
+                    "allowed_decimal": 6,
+                    "blockchain": {
+                        "name": "Cardano",
+                        "symbol": "ADA",
+                        "chain_id": 2
+                    }
+                }
             },
             {
-                "id": "df3c55f163a741e2a54ae4da6b218a7c",
-                "transaction_operation": "TOKEN_MINTED",
-                "transaction_hash": "c7faf2333715818868c58dea289446af88779497f9400e7b8f8d010c1b386700",
-                "transaction_amount": "7E+7",
-                "confirmation": 10,
-                "status": "SUCCESS", 
-                "created_at": "2022-01-12 04:10:54",
-                "updated_at": "2022-03-01 15:03:06"
+                "id": "3c4c0ab5d7e44b83a6215b52fa685571",
+                "transaction_operation": "TOKEN_BURNT",
+                "transaction_hash": "98c8b3451f30dc5009e711fa4113cfadc6462f8f0a302079a664b891d57e37d8",
+                "transaction_amount": "1E+6",
+                "confirmation": 3,
+                "status": "SUCCESS",
+                "created_at": "2022-03-23 16:41:36",
+                "updated_at": "2022-03-23 16:43:30",
+                "token": {
+                    "name": "Singularity NTX Cardano",
+                    "symbol": "NTX",
+                    "allowed_decimal": 6,
+                    "blockchain": {
+                        "name": "Cardano",
+                        "symbol": "ADA",
+                        "chain_id": 2
+                    }
+                }
             }
         ]
     },

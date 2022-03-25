@@ -5,7 +5,8 @@ from unittest.mock import patch
 from sqlalchemy.orm import make_transient
 
 from application.handler.token_handlers import get_all_token_pair
-from infrastructure.models import BlockChainDBModel, TokenDBModel, TokenPairDBModel, ConversionFeeDBModel
+from infrastructure.models import BlockChainDBModel, TokenDBModel, TokenPairDBModel, ConversionFeeDBModel, \
+    MessageGroupPoolDBModel
 from infrastructure.repositories.token_repository import TokenRepository
 from testcases.functional_testcases.test_variables import TestVariables
 
@@ -111,4 +112,6 @@ class TestToken(unittest.TestCase):
         token_repo.session.query(TokenDBModel).delete()
         token_repo.session.commit()
         token_repo.session.query(BlockChainDBModel).delete()
+        token_repo.session.commit()
+        token_repo.session.query(MessageGroupPoolDBModel).delete()
         token_repo.session.commit()

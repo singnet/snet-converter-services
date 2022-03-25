@@ -1,9 +1,11 @@
 import json
-import requests
+import os
 from decimal import Decimal
 from http import HTTPStatus
+
+import requests
+
 from common.logger import get_logger
-from config import CARDANO_SERVICE_API
 from constants.entity import CardanoAPIEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from utils.exceptions import InternalServerErrorException
@@ -16,7 +18,7 @@ class CardanoService:
     @staticmethod
     def get_deposit_address(token_name):
         logger.info(f"Getting the deposit address for the token={token_name}")
-        base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+        base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
                                                error_details=ErrorDetails[
@@ -45,7 +47,7 @@ class CardanoService:
             f"Calling the burn token service on cardano with inputs as address={address}, {token}, tx_amount={tx_amount}, "
             f"tx_details={tx_details}, deposit_address_details={deposit_address_details}")
 
-        base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+        base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value,
                                                error_details=ErrorDetails[
@@ -77,7 +79,7 @@ class CardanoService:
         logger.info(
             f"Calling the mint token service on cardano with inputs as address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, source_address={source_address}")
 
-        base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+        base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
                                                error_details=ErrorDetails[

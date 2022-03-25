@@ -182,6 +182,7 @@ def create_transaction_response(transaction):
 
 
 def get_transaction(transaction):
+    token = get_token_response(transaction.get(TransactionEntities.TOKEN.value)) if transaction.get(TransactionEntities.TOKEN.value) else None
     return {
         TransactionEntities.ID.value: transaction[TransactionEntities.ID.value],
         TransactionEntities.TRANSACTION_OPERATION.value: transaction[TransactionEntities.TRANSACTION_OPERATION.value],
@@ -190,7 +191,8 @@ def get_transaction(transaction):
         TransactionEntities.CONFIRMATION.value: transaction[TransactionEntities.CONFIRMATION.value],
         TransactionEntities.STATUS.value: transaction[TransactionEntities.STATUS.value],
         TransactionEntities.CREATED_AT.value: transaction[TransactionEntities.CREATED_AT.value],
-        TransactionEntities.UPDATED_AT.value: transaction[TransactionEntities.UPDATED_AT.value]
+        TransactionEntities.UPDATED_AT.value: transaction[TransactionEntities.UPDATED_AT.value],
+        TransactionEntities.TOKEN.value: token
     }
 
 
