@@ -8,13 +8,13 @@ from web3.exceptions import TransactionNotFound
 from application.service.cardano_service import CardanoService
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
-from config import TOKEN_CONTRACT_PATH, MAX_RETRY_BLOCK_CONFIRMATION, BLOCK_CONFIRMATION_SLEEP_TIME
+from config import TOKEN_CONTRACT_PATH, MAX_RETRY, SLEEP_TIME
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
     ConversionEntities, CardanoEventType, CardanoAPIEntities, WalletPairEntities, \
     EthereumAllowedEventType, CardanoAllowedEventType, EthereumEventConsumerEntities
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, ConversionOn
+from constants.general import BlockchainName, ConversionOn, MaxRetryEntities, SleepTimeEntities
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus, \
     ConversionStatus
 from domain.entities.converter_bridge import ConverterBridge
@@ -436,6 +436,9 @@ def get_current_block_confirmation(tx_hash, network_id):
     current_block_confirmation = 0
     logger.info("Getting the current block confirmation")
     i = 1
+    BLOCK_CONFIRMATION_SLEEP_TIME = SLEEP_TIME.get(SleepTimeEntities.BLOCK_CONFIRMATION.value, 0)
+    MAX_RETRY_BLOCK_CONFIRMATION = MAX_RETRY.get(MaxRetryEntities.BLOCK_CONFIRMATION.value, 0)
+
     while True:
         try:
             current_block_confirmation = get_block_confirmation(tx_hash=tx_hash,
@@ -455,3 +458,32 @@ def get_current_block_confirmation(tx_hash, network_id):
 
         i += 1
     return current_block_confirmation
+
+
+def wait_until_transaction_hash_exists_in_blockchain(tx_hash, network_id):
+    logger.info("Waiting until the transaction hash exists in the blockchain exists ")
+    i = 1
+    SLEEP_TIME_TRANSACTION_HASH_PRESENCE = SLEEP_TIME.get(SleepTimeEntities.TRANSACTION_HASH_PRESENCE.value, 0)
+    MAX_RETRY_TRANSACTION_HASH_PRESENCE = MAX_RETRY.get(MaxRetryEntities.TRANSACTION_HASH_PRESENCE.value, 0)
+
+    url, project_id = get_cardano_network_url_and_project_id(chain_id=network_id)
+    cardano_blockchain = CardanoBlockchainUtil(project_id=project_id, base_url=url)
+
+    while True:
+        transaction = None
+        try:
+            transaction = cardano_blockchain.get_transaction(hash=tx_hash)
+        except Exception as e:
+            logger.info(f"Transaction  hash mayn't be available={e}, we will retry it ")
+
+        if i > MAX_RETRY_TRANSACTION_HASH_PRESENCE:
+            break
+
+        if not transaction:
+            time.sleep(SLEEP_TIME_TRANSACTION_HASH_PRESENCE)
+            logger.info(f"Waiting for transaction hash presence continues for last "
+                        f"{i * SLEEP_TIME_TRANSACTION_HASH_PRESENCE} seconds")
+        else:
+            break
+
+        i += 1

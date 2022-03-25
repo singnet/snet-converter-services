@@ -5,15 +5,13 @@ from unittest.mock import patch, Mock
 
 from sqlalchemy import distinct
 
-import common.blockchain_util
-import utils.blockchain
 from application.handler.conversion_handlers import create_conversion_request, get_conversion_history, \
     create_transaction_for_conversion, claim_conversion, get_conversion
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.lambdas import LambdaResponseStatus
 from constants.status import ConversionStatus
 from infrastructure.models import TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel, \
-    WalletPairDBModel, ConversionDBModel, TransactionDBModel, ConversionTransactionDBModel
+    WalletPairDBModel, ConversionDBModel, TransactionDBModel, ConversionTransactionDBModel, MessageGroupPoolDBModel
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from testcases.functional_testcases.test_variables import TestVariables
 from utils.exceptions import BadRequestException, InternalServerErrorException
@@ -296,7 +294,6 @@ class TestConversion(unittest.TestCase):
             ConversionDBModel.id == previous_request_id).first()
         last_updated_dt = conversion.updated_at
 
-
         body_input = json.dumps({
             "token_pair_id": "22477fd4ea994689a04646cbbaafd133",
             "amount": "100",
@@ -433,6 +430,9 @@ class TestConversion(unittest.TestCase):
         bad_request_property_value_empty = {'status': 'failed', 'data': None,
                                             'error': {'code': 'E0005', 'message': 'BAD_REQUEST',
                                                       'details': 'Property value is empty'}}
+        bad_request_page_size_exceeds_limit = {'status': 'failed', 'data': None,
+                                               'error': {'code': 'E0072', 'message': 'BAD_REQUEST',
+                                                         'details': 'Page size exceeds the max limit'}}
         success_response_with_history = {'status': 'success', 'data': {'items': [{'conversion': {
             'id': '7298bce110974411b260cac758b37ee0', 'deposit_amount': '1.33305E+8', 'claim_amount': '131305425',
             'fee_amount': '1999575', 'status': 'USER_INITIATED', 'created_at': '2022-01-12 04:10:54',
@@ -502,7 +502,15 @@ class TestConversion(unittest.TestCase):
                     'confirmation': 10,
                     'status': 'SUCCESS',
                     'created_at': '2022-01-12 04:10:54',
-                    'updated_at': '2022-01-12 04:10:54'},
+                    'updated_at': '2022-01-12 04:10:54',
+                    'token': {
+                        'name': 'Singularity Ethereum',
+                        'symbol': 'AGIX',
+                        'allowed_decimal': 5,
+                        'blockchain': {
+                            'name': 'Ethereum',
+                            'symbol': 'ETH',
+                            'chain_id': 42}}},
                     {
                         'id': '1df60a2369f34247a5dc3ed29a8eef67',
                         'transaction_operation': 'TOKEN_RECEIVED',
@@ -511,7 +519,15 @@ class TestConversion(unittest.TestCase):
                         'confirmation': 10,
                         'status': 'WAITING_FOR_CONFIRMATION',
                         'created_at': '2022-01-12 04:10:54',
-                        'updated_at': '2022-01-12 04:10:54'}]}],
+                        'updated_at': '2022-01-12 04:10:54',
+                        'token': {
+                            'name': 'Singularity Cardano',
+                            'symbol': 'AGIX',
+                            'allowed_decimal': 10,
+                            'blockchain': {
+                                'name': 'Cardano',
+                                'symbol': 'ADA',
+                                'chain_id': 2}}}]}],
             'meta': {'total_records': 3, 'page_count': 1,
                      'page_number': 1, 'page_size': 15}},
                                          'error': {'code': None, 'message': None, 'details': None}}
@@ -535,6 +551,11 @@ class TestConversion(unittest.TestCase):
         response = get_conversion_history(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_property_value_empty)
+
+        event = {"queryStringParameters": {"address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1", "page_size": "100"}}
+        response = get_conversion_history(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_page_size_exceeds_limit)
 
         # valid request
         event = {"queryStringParameters": {"address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}}
@@ -571,11 +592,16 @@ class TestConversion(unittest.TestCase):
                 {'id': '391be6385abf4b608bdd20a44acd6abc', 'transaction_operation': 'TOKEN_RECEIVED',
                  'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
                  'confirmation': 10, 'status': 'SUCCESS', 'created_at': '2022-01-12 04:10:54',
-                 'updated_at': '2022-01-12 04:10:54'},
+                 'updated_at': '2022-01-12 04:10:54',
+                 'token': {'name': 'Singularity Ethereum', 'symbol': 'AGIX', 'allowed_decimal': 5,
+                           'blockchain': {'name': 'Ethereum', 'symbol': 'ETH', 'chain_id': 42}}},
                 {'id': '1df60a2369f34247a5dc3ed29a8eef67', 'transaction_operation': 'TOKEN_RECEIVED',
                  'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
                  'confirmation': 10, 'status': 'WAITING_FOR_CONFIRMATION', 'created_at': '2022-01-12 04:10:54',
-                 'updated_at': '2022-01-12 04:10:54'}]}, 'error': {'code': None, 'message': None, 'details': None}}
+                 'updated_at': '2022-01-12 04:10:54',
+                 'token': {'name': 'Singularity Cardano', 'symbol': 'AGIX', 'allowed_decimal': 10,
+                           'blockchain': {'name': 'Cardano', 'symbol': 'ADA', 'chain_id': 2}}}]},
+                            'error': {'code': None, 'message': None, 'details': None}}
 
         response = get_conversion(event, {})
         body = json.loads(response["body"])
@@ -856,4 +882,6 @@ class TestConversion(unittest.TestCase):
         conversion_repo.session.query(TokenDBModel).delete()
         conversion_repo.session.commit()
         conversion_repo.session.query(BlockChainDBModel).delete()
+        conversion_repo.session.commit()
+        conversion_repo.session.query(MessageGroupPoolDBModel).delete()
         conversion_repo.session.commit()

@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class SqsService:
 
     @staticmethod
-    def send_message_to_queue(queue: str, message: str, message_group_id: str, message_deduplication_id: str):
+    def send_message_to_queue(queue: str, message: str, message_group_id: str):
         queue_url = QUEUE_DETAILS.get(queue)
         if not queue_url:
             raise InternalServerErrorException(error_code=ErrorCode.QUEUE_DETAILS_NOT_FOUND.value,
@@ -21,15 +21,13 @@ class SqsService:
                                                    ErrorCode.QUEUE_DETAILS_NOT_FOUND.value].value)
 
         logger.info(f"Started publishing the message to the queue_url={queue_url} with message={message}, "
-                    f"message group id={message_group_id}, message_deduplication_id={message_deduplication_id}")
+                    f"message group id={message_group_id}")
         try:
             sqs_client = boto3.client('sqs')
             response = sqs_client.send_message(
                 QueueUrl=queue_url,
                 MessageBody=message,
-                MessageGroupId=message_group_id,
-                MessageDeduplicationId=message_deduplication_id
-
+                MessageGroupId=message_group_id
             )
             logger.info(response)
         except Exception as e:

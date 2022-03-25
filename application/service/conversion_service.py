@@ -24,8 +24,8 @@ from utils.blockchain import validate_address, validate_conversion_claim_request
     check_existing_transaction_state, validate_ethereum_transaction_details_against_conversion, \
     validate_cardano_transaction_details_against_conversion
 from utils.exceptions import BadRequestException, InternalServerErrorException
-from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, paginate_items, \
-    is_supported_network_conversion, get_ethereum_network_url
+from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
+    is_supported_network_conversion, get_ethereum_network_url, get_offset, paginate_items_response_format
 from utils.signature import validate_conversion_signature, get_signature
 
 logger = get_logger(__name__)
@@ -53,16 +53,16 @@ class ConversionService:
                                                                                     created_by=created_by)
         return create_conversion_transaction_response(conversion_transaction.to_dict())
 
-    def create_transaction(self, conversion_transaction_id, from_token_id, to_token_id, transaction_visibility,
+    def create_transaction(self, conversion_transaction_id, token_id, transaction_visibility,
                            transaction_operation, transaction_hash, transaction_amount, confirmation, status,
                            created_by):
         logger.info(f"Creating the transaction with the details conversion_transaction_id={conversion_transaction_id},"
-                    f" from_token_id={from_token_id}, to_token_id={to_token_id}, transaction_visibility="
+                    f" token_id={token_id}, transaction_visibility="
                     f"{transaction_visibility}, transaction_operation={transaction_operation}, "
                     f"transaction_hash={transaction_hash}, transaction_amount={transaction_amount}, "
                     f" confirmation={confirmation}, status={status}, created_by={created_by}")
         transaction = self.conversion_repo.create_transaction(conversion_transaction_id=conversion_transaction_id,
-                                                              from_token_id=from_token_id, to_token_id=to_token_id,
+                                                              token_id=token_id,
                                                               transaction_visibility=transaction_visibility,
                                                               transaction_operation=transaction_operation,
                                                               transaction_hash=transaction_hash,
@@ -86,15 +86,32 @@ class ConversionService:
         conversion = self.conversion_repo.get_conversion_detail_by_tx_id(tx_id)
         return conversion.to_dict()
 
+    def __get_conversion_detail(self, conversion_id):
+        logger.info(f"Get the conversion detail for the conversion_id={conversion_id}")
+        conversion_detail = self.conversion_repo.get_conversion_detail(conversion_id=conversion_id)
+        if conversion_detail:
+            conversion_detail = conversion_detail.to_dict()
+            conversion_row_ids = ConversionService.get_conversion_row_ids(conversion_details=[conversion_detail])
+            transaction_details = dict()
+            if conversion_row_ids:
+                transaction_details = self.get_transactions_for_conversion_row_ids(
+                    conversion_row_ids=conversion_row_ids)
+            transaction_details = self.format_transactions_with_conversion(transaction_details=transaction_details)
+            conversion_details = self.add_transaction_detail_to_conversion_detail(
+                conversion_details=[conversion_detail],
+                transaction_details=transaction_details)
+            conversion_detail = conversion_details[0]
+        return conversion_detail
+
     def get_conversion_detail(self, conversion_id):
         logger.info(f"Get the conversion for the ID={conversion_id}")
-        conversion_detail = self.conversion_repo.get_conversion_detail(conversion_id=conversion_id)
+        conversion_detail = self.__get_conversion_detail(conversion_id=conversion_id)
 
         if conversion_detail is None:
             raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
                                       error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
 
-        return get_conversion_detail_response(conversion_detail.to_dict())
+        return get_conversion_detail_response(conversion_detail)
 
     def get_latest_user_pending_conversion_request(self, wallet_pair_id):
         conversion = self.conversion_repo.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id,
@@ -307,17 +324,68 @@ class ConversionService:
     def get_conversion_history(self, address, page_size, page_number):
         logger.info(f"Getting the conversion history for the given address={address}, page_size={page_size}, "
                     f"page_number={page_number}")
-        conversion_detail_history = self.conversion_repo.get_conversion_history(address=address, conversion_id=None)
-        conversion_detail_history_response = get_conversion_history_response(
-            get_response_from_entities(conversion_detail_history))
-        return paginate_items(items=conversion_detail_history_response, page_number=page_number, page_size=page_size)
+        total_conversion_history = self.conversion_repo.get_conversion_history_count(address=address)
+        offset = get_offset(page_number=page_number, page_size=page_size)
+
+        if total_conversion_history and total_conversion_history > offset:
+            conversion_history_obj = self.conversion_repo.get_conversion_history(address=address, conversion_id=None,
+                                                                                 offset=offset, limit=page_size)
+            conversion_history = get_response_from_entities(conversion_history_obj)
+
+            conversion_row_ids = ConversionService.get_conversion_row_ids(conversion_details=conversion_history)
+            transaction_details = dict()
+            if conversion_row_ids:
+                transaction_details = self.get_transactions_for_conversion_row_ids(
+                    conversion_row_ids=conversion_row_ids)
+            transaction_details = self.format_transactions_with_conversion(transaction_details=transaction_details)
+            conversion_history = self.add_transaction_detail_to_conversion_detail(conversion_details=conversion_history,
+                                                                                  transaction_details=transaction_details)
+            conversion_detail_history_response = get_conversion_history_response(conversion_history)
+
+        else:
+            conversion_detail_history_response = []
+
+        return paginate_items_response_format(items=conversion_detail_history_response,
+                                              total_records=total_conversion_history,
+                                              page_number=page_number, page_size=page_size)
+
+    @staticmethod
+    def get_conversion_row_ids(conversion_details):
+        return [conversion_detail.get(ConversionDetailEntities.CONVERSION.value).get(ConversionEntities.ROW_ID.value)
+                for conversion_detail in conversion_details]
+
+    @staticmethod
+    def format_transactions_with_conversion(transaction_details):
+        formatted_transaction_details = {}
+        for transaction_detail in transaction_details:
+            conversion_row_id = transaction_detail.get(TransactionEntities.CONVERSION_TRANSACTION.value, {}).get(
+                TransactionConversionEntities.CONVERSION_ID.value)
+            formatted_transaction_details[conversion_row_id] = formatted_transaction_details.get(conversion_row_id, {})
+            formatted_transaction_details[conversion_row_id][ConversionDetailEntities.TRANSACTIONS.value] = \
+                formatted_transaction_details[
+                    conversion_row_id].get(ConversionDetailEntities.TRANSACTIONS.value, [])
+            formatted_transaction_details[conversion_row_id][ConversionDetailEntities.TRANSACTIONS.value].append(
+                transaction_detail)
+        return formatted_transaction_details
+
+    @staticmethod
+    def add_transaction_detail_to_conversion_detail(conversion_details, transaction_details):
+        for conversion_detail in conversion_details:
+            conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value).get(
+                ConversionEntities.ROW_ID.value)
+            transaction_detail = transaction_details.get(conversion_row_id, {}).get("transactions", [])
+            conversion_detail[ConversionDetailEntities.TRANSACTIONS.value] = transaction_detail
+        return conversion_details
+
+    def get_transactions_for_conversion_row_ids(self, conversion_row_ids):
+        logger.info(f"Getting the transactions for the given conversion_row_ids={conversion_row_ids}")
+        transaction_objs = self.conversion_repo.get_transactions_for_conversion_row_ids(
+            conversion_row_ids=conversion_row_ids)
+        return get_response_from_entities(transaction_objs)
 
     def get_conversion_complete_detail(self, conversion_id):
         logger.info(f"Getting the conversion complete detail")
-        conversion_detail_history = self.conversion_repo.get_conversion_history(address=None,
-                                                                                conversion_id=conversion_id)
-        conversion_detail_history_response = get_response_from_entities(conversion_detail_history)
-        return conversion_detail_history_response[0] if len(conversion_detail_history_response) else None
+        return self.__get_conversion_detail(conversion_id=conversion_id)
 
     @staticmethod
     def get_conversion_ids_from_conversion_detail(conversion_detail):
@@ -367,7 +435,7 @@ class ConversionService:
                                       error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
         transaction = self.create_transaction(conversion_transaction_id=conversion_transaction_row_id,
-                                              from_token_id=token_id, to_token_id=token_id,
+                                              token_id=token_id,
                                               transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                               transaction_operation=transaction_operation,
                                               transaction_hash=transaction_hash, transaction_amount=transaction_amount,

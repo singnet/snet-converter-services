@@ -73,6 +73,7 @@ class ErrorCode(Enum):
     TOKEN_CONTRACT_ADDRESS_EMPTY = "E0069"
     SIGNATURE_EXPIRED = "E0070"
     TOKEN_PAIR_NOT_EXISTS = "E0071"
+    PAGE_SIZE_EXCEEDS_LIMIT = "E0072"
 
 
 class ErrorDetails(Enum):
@@ -147,3 +148,4 @@ class ErrorDetails(Enum):
     E0069 = "Token contract address is empty"
     E0070 = "Signature expired for the given request"
     E0071 = "Token pair not exists"
+    E0072 = "Page size exceeds the max limit"

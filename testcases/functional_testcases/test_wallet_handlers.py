@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from application.handler.wallet_handlers import get_all_deposit_address, get_wallets_address_by_ethereum_address
 from infrastructure.models import TransactionDBModel, ConversionTransactionDBModel, ConversionDBModel, \
-    WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel
+    WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel, MessageGroupPoolDBModel
 from infrastructure.repositories.wallet_pair_repository import WalletPairRepository
 from testcases.functional_testcases.test_variables import TestVariables
 
@@ -110,4 +110,6 @@ class TestWallet(unittest.TestCase):
         wallet_repo.session.query(TokenDBModel).delete()
         wallet_repo.session.commit()
         wallet_repo.session.query(BlockChainDBModel).delete()
+        wallet_repo.session.commit()
+        wallet_repo.session.query(MessageGroupPoolDBModel).delete()
         wallet_repo.session.commit()

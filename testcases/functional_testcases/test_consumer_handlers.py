@@ -5,7 +5,7 @@ from unittest.mock import patch
 from application.handler.consumer_handlers import converter_event_consumer, converter_bridge
 from constants.status import ConversionTransactionStatus, TransactionVisibility, TransactionOperation, TransactionStatus
 from infrastructure.models import TransactionDBModel, ConversionTransactionDBModel, ConversionDBModel, \
-    WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel
+    WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel, MessageGroupPoolDBModel
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from testcases.functional_testcases.test_variables import TestVariables, consumer_token_received_event_message, \
     prepare_consumer_cardano_event_format, prepare_converter_bridge_event_format, \
@@ -115,7 +115,7 @@ class TestConsumer(unittest.TestCase):
                                                                               'tx_amount': '1E+8',
                                                                               'tx_operation': 'TOKEN_BURNT'},
                                                                           'blockchain_network_id': 2}),
-                                                      message_group_id="", message_deduplication_id=conversion_id)
+                                                      message_group_id="")
 
         conversion_count = conversion_repo.session.query(ConversionDBModel).all()
         self.assertEqual(4, len(conversion_count))
@@ -213,7 +213,7 @@ class TestConsumer(unittest.TestCase):
                                                                               'tx_amount': '131305425',
                                                                               'tx_operation': 'TOKEN_MINTED'},
                                                                           'blockchain_network_id': 2}),
-                                                      message_group_id="", message_deduplication_id='7298bce110974411b260cac758b37ee0')
+                                                      message_group_id="")
         conversion_count = conversion_repo.session.query(ConversionDBModel).all()
         self.assertEqual(3, len(conversion_count))
         conversion_transaction_count = conversion_repo.session.query(ConversionTransactionDBModel).all()
@@ -275,8 +275,7 @@ class TestConsumer(unittest.TestCase):
         conversion_repo.session.add_all(
             [create_transaction(row_id=1, id="391be6385abf4b608bdd20a44acd6abc",
                                 conversion_transaction_id=1,
-                                from_token_id=TestVariables().token_row_id_1,
-                                to_token_id=TestVariables().token_row_id_1,
+                                token_id=TestVariables().token_row_id_1,
                                 transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                 transaction_operation=TransactionOperation.TOKEN_BURNT.value,
                                 transaction_hash="22477fd4ea994689a04646cbbaafd133",
@@ -327,4 +326,6 @@ class TestConsumer(unittest.TestCase):
         conversion_repo.session.query(TokenDBModel).delete()
         conversion_repo.session.commit()
         conversion_repo.session.query(BlockChainDBModel).delete()
+        conversion_repo.session.commit()
+        conversion_repo.session.query(MessageGroupPoolDBModel).delete()
         conversion_repo.session.commit()
