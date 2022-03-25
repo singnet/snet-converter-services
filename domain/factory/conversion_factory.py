@@ -117,3 +117,13 @@ class ConversionFactory:
                                              updated_at=transaction.updated_at,
                                              conversion_transaction_obj=conversion_transaction_obj,
                                              token_obj=token_obj)
+
+    @staticmethod
+    def conversion_status_count(status_counts):
+        counts = dict()
+        overall = 0
+        for status_count in status_counts:
+            count = status_count.count
+            overall += count
+            counts[status_count.status] = count
+        return {"overall_count": overall, "each": counts}

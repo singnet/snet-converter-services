@@ -489,3 +489,7 @@ class ConversionService:
 
         return claim_conversion_response(signature=claim_signature, claim_amount=claim_amount,
                                          contract_address=contract_address)
+
+    def get_conversion_count_by_status(self, address):
+        logger.info(f"Getting the conversion count by status for the address={address}")
+        return self.conversion_repo.get_conversion_count_by_status(address=address)

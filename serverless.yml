@@ -131,6 +131,11 @@ custom:
         contentType: "application/json"
         schema: ${file(documentation/models/wallet.json):WalletsAddressRequestOutput}
 
+      - name: "GetConversionStatusCountOutput"
+        description: "Get Conversion Status Count Output"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):GetConversionStatusCountOutput}
+
 package:
   patterns:
     - "!.circleci/**"
@@ -661,7 +666,40 @@ functions:
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
 
-
-
+  get_conversion_history_count:
+    handler: application/handler/conversion_handlers.get_conversion_count_by_status
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/conversion/count
+          method: get
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyParams
+          request:
+            parameters:
+              querystrings:
+                address: true
+          documentation:
+            summary: "Getting the conversion history count"
+            description: "Getting the conversion history count"
+            tags:
+              - "Conversion"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Getting the  conversion history count"
+                responseModels:
+                  "application/json": "GetConversionStatusCountOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
 
 
