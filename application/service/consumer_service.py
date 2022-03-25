@@ -390,6 +390,8 @@ class ConsumerService:
         tx_operation = blockchain_event.get(ConverterBridgeEntities.TX_OPERATION.value)
 
         tx_hash = None
+        conversion_id = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value).get(
+            ConversionEntities.ID.value)
         if payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_BURNT.value:
             address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                 WalletPairEntities.FROM_ADDRESS.value)
@@ -398,10 +400,10 @@ class ConsumerService:
                 environment=db_from_blockchain_name)
             deposit_address_details = generate_deposit_address_details_for_cardano_operation(
                 wallet_pair=conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}))
-            response = CardanoService.burn_token(token=target_token.get(TokenEntities.SYMBOL.value),
-                                                 tx_amount=tx_amount,
-                                                 tx_details=tx_details, address=address,
-                                                 deposit_address_details=deposit_address_details)
+            response = CardanoService.burn_token(conversion_id=conversion_id,
+                                                 token=target_token.get(TokenEntities.SYMBOL.value),
+                                                 tx_amount=tx_amount, tx_details=tx_details,
+                                                 address=address, deposit_address_details=deposit_address_details)
             data = response.get(CardanoAPIEntities.DATA.value)
             if not data:
                 raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
@@ -423,7 +425,8 @@ class ConsumerService:
                 WalletPairEntities.TO_ADDRESS.value)
             source_address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                 WalletPairEntities.FROM_ADDRESS.value)
-            response = CardanoService.mint_token(token=target_token.get(TokenEntities.SYMBOL.value),
+            response = CardanoService.mint_token(conversion_id=conversion_id,
+                                                 token=target_token.get(TokenEntities.SYMBOL.value),
                                                  tx_amount=tx_amount, tx_details=tx_details, address=address,
                                                  source_address=source_address)
             data = response.get(CardanoAPIEntities.DATA.value)
