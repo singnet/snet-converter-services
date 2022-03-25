@@ -811,5 +811,101 @@
       "data",
       "error"
     ]
-  }
+  },
+  "GetConversionStatusCountInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "queryStringParameters": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "address"
+        ]
+      }
+    },
+    "required": [
+      "queryStringParameters"
+    ]
+  },
+  "GetConversionStatusCountOutput": {
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "overall_count": {
+          "type": "integer"
+        },
+        "each": {
+          "type": "object",
+          "properties": {
+            "SUCCESS": {
+              "type": "integer"
+            },
+            "PROCESSING": {
+              "type": "integer"
+            },
+            "USER_INITIATED": {
+              "type": "integer"
+            },
+            "CLAIM_INITIATED": {
+              "type": "integer"
+            },
+            "WAITING_FOR_CLAIM": {
+              "type": "integer"
+            },
+            "EXPIRED": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "SUCCESS",
+            "PROCESSING",
+            "USER_INITIATED",
+            "CLAIM_INITIATED",
+            "WAITING_FOR_CLAIM",
+            "EXPIRED"
+          ]
+        }
+      },
+      "required": [
+        "overall_count",
+        "each"
+      ]
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "null"
+        },
+        "message": {
+          "type": "null"
+        },
+        "details": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "details"
+      ]
+    }
+  },
+  "required": [
+    "status",
+    "data",
+    "error"
+  ]
+}
 }

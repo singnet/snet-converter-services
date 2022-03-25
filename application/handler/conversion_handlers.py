@@ -159,3 +159,23 @@ def get_conversion(event, context):
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def get_conversion_count_by_status(event, context):
+    logger.debug(f"Get conversion count by status event={json.dumps(event)}")
+    validate_schema(filepath=os.path.dirname(file_path) + "/../../documentation/models/conversion.json",
+                    schema_key="GetConversionStatusCountInput", input_json=event)
+
+    query_param = get_valid_value(event, HttpRequestParamType.REQUEST_PARAM_QUERY_STRING.value)
+    address = query_param.get(ApiParameters.ADDRESS.value, None)
+
+    if not address:
+        raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
+                                  error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
+
+    response = conversion_service.get_conversion_count_by_status(address=address)
+
+    return generate_lambda_response(HTTPStatus.OK.value,
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
+                                                       error=make_error_format()), cors_enabled=True)

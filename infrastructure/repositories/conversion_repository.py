@@ -14,6 +14,17 @@ from utils.general import get_uuid, datetime_in_utcnow
 class ConversionRepository(BaseRepository):
 
     @read_from_db()
+    def get_conversion_count_by_status(self, address):
+        status_counts = self.session.query(ConversionDBModel.status, func.count(ConversionDBModel.id).label("count")) \
+            .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
+            .filter(
+            or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address)) \
+            .group_by(ConversionDBModel.status) \
+            .all()
+
+        return ConversionFactory.conversion_status_count(status_counts)
+
+    @read_from_db()
     def get_conversion_detail(self, conversion_id):
         conversion_detail_query = self.session.query(ConversionDBModel) \
             .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
