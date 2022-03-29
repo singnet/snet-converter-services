@@ -4,7 +4,7 @@ import sys
 
 sys.path.append('/opt')
 
-from constants.general import MAX_PAGE_SIZE
+from constants.general import MAX_PAGE_SIZE, ETHEREUM_WALLET_ADDRESS_LENGTH
 
 from config import SLACK_HOOK
 from constants.error_details import ErrorCode, ErrorDetails
@@ -101,6 +101,10 @@ def get_conversion_history(event, context):
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
                                   error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
 
+    if len(address) != ETHEREUM_WALLET_ADDRESS_LENGTH:
+        raise BadRequestException(error_code=ErrorCode.INVALID_ETHEREUM_ADDRESS.value,
+                                  error_details=ErrorDetails[ErrorCode.INVALID_ETHEREUM_ADDRESS.value].value)
+
     page_size = int(query_param.get(ApiParameters.PAGE_SIZE.value, PaginationDefaults.PAGE_SIZE.value))
     page_number = int(query_param.get(ApiParameters.PAGE_NUMBER.value, PaginationDefaults.PAGE_NUMBER.value))
 
@@ -173,6 +177,10 @@ def get_conversion_count_by_status(event, context):
     if not address:
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
                                   error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
+
+    if len(address) != ETHEREUM_WALLET_ADDRESS_LENGTH:
+        raise BadRequestException(error_code=ErrorCode.INVALID_ETHEREUM_ADDRESS.value,
+                                  error_details=ErrorDetails[ErrorCode.INVALID_ETHEREUM_ADDRESS.value].value)
 
     response = conversion_service.get_conversion_count_by_status(address=address)
 
