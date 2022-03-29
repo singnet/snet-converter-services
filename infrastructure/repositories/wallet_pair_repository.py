@@ -1,6 +1,7 @@
 from sqlalchemy import or_
 
 from constants.general import CreatedBy
+from constants.status import ConversionStatus
 from domain.factory.wallet_pair_factory import WalletPairFactory
 from infrastructure.models import WalletPairDBModel, ConversionDBModel
 from infrastructure.repositories.base_repository import BaseRepository
@@ -126,6 +127,8 @@ class WalletPairRepository(BaseRepository):
                                           WalletPairDBModel.signature_metadata, WalletPairDBModel.signature_expiry,
                                           WalletPairDBModel.created_by, WalletPairDBModel.created_at,
                                           WalletPairDBModel.updated_at) \
+            .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
+            .filter(ConversionDBModel.status == ConversionStatus.USER_INITIATED.value) \
             .filter(WalletPairDBModel.deposit_address.isnot(None)).all()
 
         return [WalletPairFactory.wallet_pair(row_id=wallet_pair.row_id, id=wallet_pair.id,

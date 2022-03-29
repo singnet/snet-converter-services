@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock
 from sqlalchemy import distinct
 
 from application.handler.conversion_handlers import create_conversion_request, get_conversion_history, \
-    create_transaction_for_conversion, claim_conversion, get_conversion
+    create_transaction_for_conversion, claim_conversion, get_conversion, get_conversion_count_by_status
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.lambdas import LambdaResponseStatus
 from constants.status import ConversionStatus
@@ -433,6 +433,9 @@ class TestConversion(unittest.TestCase):
         bad_request_page_size_exceeds_limit = {'status': 'failed', 'data': None,
                                                'error': {'code': 'E0072', 'message': 'BAD_REQUEST',
                                                          'details': 'Page size exceeds the max limit'}}
+        bad_request_invalid_ethereum_address = {'status': 'failed', 'data': None,
+                                                'error': {'code': 'E0059', 'message': 'BAD_REQUEST',
+                                                          'details': 'Invalid ethereum address provided'}}
         success_response_with_history = {'status': 'success', 'data': {'items': [{'conversion': {
             'id': '7298bce110974411b260cac758b37ee0', 'deposit_amount': '1.33305E+8', 'claim_amount': '131305425',
             'fee_amount': '1999575', 'status': 'USER_INITIATED', 'created_at': '2022-01-12 04:10:54',
@@ -552,6 +555,11 @@ class TestConversion(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_property_value_empty)
 
+        event = {"queryStringParameters": {"address": "random address"}}
+        response = get_conversion_count_by_status(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_invalid_ethereum_address)
+
         event = {"queryStringParameters": {"address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1", "page_size": "100"}}
         response = get_conversion_history(event, {})
         body = json.loads(response["body"])
@@ -563,7 +571,7 @@ class TestConversion(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body, success_response_with_history)
 
-        event = {"queryStringParameters": {"address": "different address"}}
+        event = {"queryStringParameters": {"address": "0x27082A5dD14c4a265eC96e106d4cE4918b8Dd830"}}
         response = get_conversion_history(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, success_response_with_no_history)
@@ -861,6 +869,55 @@ class TestConversion(unittest.TestCase):
         response = claim_conversion(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, success_response)
+
+    @patch("common.utils.Utils.report_slack")
+    def test_get_conversion_count_by_status(self, mock_report_slack):
+        bad_request_schema_not_matching = {'status': 'failed', 'data': None,
+                                           'error': {'code': 'E0003', 'message': 'BAD_REQUEST',
+                                                     'details': 'Schema is not matching with request'}}
+        bad_request_property_value_empty = {'status': 'failed', 'data': None,
+                                            'error': {'code': 'E0005', 'message': 'BAD_REQUEST',
+                                                      'details': 'Property value is empty'}}
+        bad_request_invalid_ethereum_address = {'status': 'failed', 'data': None,
+                                                'error': {'code': 'E0059', 'message': 'BAD_REQUEST',
+                                                          'details': 'Invalid ethereum address provided'}}
+        success_response = {'status': 'success',
+                            'data': {'overall_count': 3, 'each': {'USER_INITIATED': 2, 'PROCESSING': 1}},
+                            'error': {'code': None, 'message': None, 'details': None}}
+        success_response_non_register_address = {'status': 'success', 'data': {'overall_count': 0, 'each': {}},
+                                                 'error': {'code': None, 'message': None, 'details': None}}
+
+        # Bad Request
+        event = dict()
+        response = get_conversion_count_by_status(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_schema_not_matching)
+
+        event = {"queryStringParameters": {"address": 4477}}
+        response = get_conversion_count_by_status(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_schema_not_matching)
+
+        event = {"queryStringParameters": {"address": ""}}
+        response = get_conversion_count_by_status(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_property_value_empty)
+
+        event = {"queryStringParameters": {"address": "random address"}}
+        response = get_conversion_count_by_status(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_invalid_ethereum_address)
+
+        # valid request
+        event = {"queryStringParameters": {"address": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}}
+        response = get_conversion_count_by_status(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, success_response)
+
+        event = {"queryStringParameters": {"address": "0xb3D785784136E96290E74F4E06e2d0695882B0C7"}}
+        response = get_conversion_count_by_status(event, {})
+        body = json.loads(response["body"])
+        self.assertEqual(body, success_response_non_register_address)
 
     def tearDown(self):
         TestConversion.delete_all_tables()

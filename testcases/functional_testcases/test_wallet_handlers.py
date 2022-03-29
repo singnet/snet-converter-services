@@ -29,6 +29,8 @@ class TestWallet(unittest.TestCase):
         wallet_repo.session.commit()
         wallet_repo.session.add_all(TestVariables().wallet_pair)
         wallet_repo.session.commit()
+        wallet_repo.session.add_all(TestVariables().conversion)
+        wallet_repo.session.commit()
 
     @patch("common.utils.Utils.report_slack")
     def test_get_wallets_address_by_ethereum_address(self, mock_report_slack):

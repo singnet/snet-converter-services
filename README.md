@@ -13,12 +13,18 @@ Converter Service│
 │   │           ├── GET       ----> (2)
 │   │   ├── conversion  
 │   │       ├── POST          ----> (3)
+|   |       |__ GET           ----> (7)  
 │   │       ├── history        
-│   │           ├── POST      ----> (5)
+│   │       |    ├── POST      ----> (5)
 |   |       |__{converion_id}
-|   |          |__ claim     -----> (6)
+|   |       |   |__ claim     -----> (6)
+|   |       |__ count
+|   |            |__ GET      -----> (9)
 │   │   ├── transaction  
 │   │       ├── POST          ----> (4)
+|   |   |__ wallet
+|   |       |__ address
+|   |          |__ GET        ----> (8)
 │   │   └── other-services
 ```
 
@@ -33,6 +39,7 @@ Converter Service│
  6. [Claim Conversion](#6-claim-conversion)
  7. [Get conversion](#7-get-conversion)
  8. [Get wallets address by ethereum address](#8-get-wallets-address-by-ethereum-address)
+ 9. [Get conversion count by status](#9--get-conversion-count-by-status)
 
 
 ## LIST OF Internal Lambda
@@ -553,6 +560,38 @@ Converter Service│
         "message": null,
         "details": null
     }
+}
+```
+
+### 9 . Get conversion count by status
+
+  API Url: `{DOMAIN_URL}/{STAGE}/v1/conversion/count?address={ethereum_address}` 
+
+  Method: `GET`
+ 
+  Query String Parameter:
+    Required `address`
+
+  Response:
+```json5
+{
+	"status": "success",
+	"data": {
+		"overall_count": 141,
+		"each": {
+			"SUCCESS": 99,
+			"PROCESSING": 20,
+			"USER_INITIATED": 10,
+			"CLAIM_INITIATED": 2,
+			"WAITING_FOR_CLAIM": 5,
+			"EXPIRED": 5
+		}
+	},
+	"error": {
+		"code": null,
+		"message": null,
+		"details": null
+	}
 }
 ```
 
