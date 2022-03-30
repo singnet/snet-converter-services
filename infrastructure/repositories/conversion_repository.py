@@ -1,11 +1,11 @@
-from sqlalchemy import or_, case, func
-from sqlalchemy.orm import joinedload
+from sqlalchemy import or_, case, func, and_
+from sqlalchemy.orm import joinedload, aliased
 
-from constants.general import CreatedBy
+from constants.general import CreatedBy, BlockchainName
 from constants.status import ConversionStatus, ConversionTransactionStatus
 from domain.factory.conversion_factory import ConversionFactory
 from infrastructure.models import ConversionDBModel, WalletPairDBModel, TokenPairDBModel, TokenDBModel, \
-    ConversionTransactionDBModel, TransactionDBModel
+    ConversionTransactionDBModel, TransactionDBModel, BlockChainDBModel
 from infrastructure.repositories.base_repository import BaseRepository
 from utils.database import read_from_db, update_in_db
 from utils.general import get_uuid, datetime_in_utcnow
@@ -303,3 +303,44 @@ class ConversionRepository(BaseRepository):
                                             status=conversion.status, claim_signature=conversion.claim_signature,
                                             created_by=conversion.created_by, created_at=conversion.created_at,
                                             updated_at=conversion.updated_at)
+
+    @read_from_db()
+    def get_expiring_conversion(self, ethereum_expire_datetime, cardano_expire_datetime):
+        from_token = aliased(TokenDBModel)
+        to_token = aliased(TokenDBModel)
+        from_blockchain = aliased(BlockChainDBModel)
+        to_blockchain = aliased(BlockChainDBModel)
+
+        conversions = self.session.query(ConversionDBModel.row_id, ConversionDBModel.id,
+                                         ConversionDBModel.wallet_pair_id, ConversionDBModel.deposit_amount,
+                                         ConversionDBModel.claim_amount, ConversionDBModel.fee_amount,
+                                         ConversionDBModel.status, ConversionDBModel.claim_signature,
+                                         ConversionDBModel.created_by, ConversionDBModel.created_at,
+                                         ConversionDBModel.updated_at) \
+            .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
+            .join(TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id) \
+            .join(from_token, from_token.row_id == TokenPairDBModel.from_token_id) \
+            .join(to_token, to_token.row_id == TokenPairDBModel.to_token_id) \
+            .join(from_blockchain, from_blockchain.row_id == from_token.blockchain_id) \
+            .join(to_blockchain, to_blockchain.row_id == to_token.blockchain_id) \
+            .filter(ConversionDBModel.status == ConversionStatus.USER_INITIATED.value,
+                    or_(and_(func.lower(from_blockchain.name) == BlockchainName.ETHEREUM.value.lower(),
+                             ConversionDBModel.created_at <= str(ethereum_expire_datetime)),
+                        and_(func.lower(from_blockchain.name) == BlockchainName.CARDANO.value.lower(),
+                             ConversionDBModel.created_at <= str(cardano_expire_datetime)))).all()
+
+        return [ConversionFactory.conversion(row_id=conversion.row_id, id=conversion.id,
+                                             wallet_pair_id=conversion.wallet_pair_id,
+                                             deposit_amount=conversion.deposit_amount,
+                                             claim_amount=conversion.claim_amount, fee_amount=conversion.fee_amount,
+                                             status=conversion.status, claim_signature=conversion.claim_signature,
+                                             created_by=conversion.created_by, created_at=conversion.created_at,
+                                             updated_at=conversion.updated_at) for conversion in conversions]
+
+    @update_in_db()
+    def set_conversions_to_expire(self, conversion_ids):
+        self.session.query(ConversionDBModel) \
+            .filter(ConversionDBModel.id.in_(conversion_ids)) \
+            .update({ConversionDBModel.status: ConversionStatus.EXPIRED.value})
+
+        self.session.commit()

@@ -6,7 +6,8 @@ from unittest.mock import patch, Mock
 from sqlalchemy import distinct
 
 from application.handler.conversion_handlers import create_conversion_request, get_conversion_history, \
-    create_transaction_for_conversion, claim_conversion, get_conversion, get_conversion_count_by_status
+    create_transaction_for_conversion, claim_conversion, get_conversion, get_conversion_count_by_status, \
+    expire_conversion
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.lambdas import LambdaResponseStatus
 from constants.status import ConversionStatus
@@ -918,6 +919,18 @@ class TestConversion(unittest.TestCase):
         response = get_conversion_count_by_status(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, success_response_non_register_address)
+
+    @patch("common.utils.Utils.report_slack")
+    def test_expire_conversion(self, mock_report_slack):
+        conversions = conversion_repo.session.query(ConversionDBModel).filter(
+            ConversionDBModel.status == ConversionStatus.EXPIRED.value).all()
+        self.assertEqual(len(conversions), 0)
+
+        expire_conversion({}, {})
+
+        conversions = conversion_repo.session.query(ConversionDBModel).filter(
+            ConversionDBModel.status == ConversionStatus.EXPIRED.value).all()
+        self.assertEqual(len(conversions), 2)
 
     def tearDown(self):
         TestConversion.delete_all_tables()

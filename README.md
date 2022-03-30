@@ -47,6 +47,7 @@ Converter Service│
  1. [Cardano Event Consumer](#1-converter-event-consumer)
  2. [Converter Bridge](#2-converter-bridge)
  3. [Get all deposit address](#3-get-all-the-deposit-address)
+ 4. [Expire conversion](#4-expire-the-conversion)
 
 ### 1. Get all blockchain
   API Url: `{DOMAIN_URL}/{STAGE}/v1/blockchain` 
@@ -673,3 +674,7 @@ Another sample  payload
     }
 }
 ```
+
+### 4. Expire the conversion
+
+we are expiring the conversion based on the configuration set
