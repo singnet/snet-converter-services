@@ -182,7 +182,8 @@ def create_transaction_response(transaction):
 
 
 def get_transaction(transaction):
-    token = get_token_response(transaction.get(TransactionEntities.TOKEN.value)) if transaction.get(TransactionEntities.TOKEN.value) else None
+    token = get_token_response(transaction.get(TransactionEntities.TOKEN.value)) if transaction.get(
+        TransactionEntities.TOKEN.value) else None
     return {
         TransactionEntities.ID.value: transaction[TransactionEntities.ID.value],
         TransactionEntities.TRANSACTION_OPERATION.value: transaction[TransactionEntities.TRANSACTION_OPERATION.value],
@@ -201,3 +202,7 @@ def get_transaction_by_hash_response(transaction):
     response[TransactionEntities.CONVERSION_TRANSACTION_ID.value] = transaction[
         TransactionEntities.CONVERSION_TRANSACTION_ID.value]
     return response
+
+
+def get_expiring_conversion_response(conversions):
+    return [conversion[ConversionEntities.ID.value] for conversion in conversions]

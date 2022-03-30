@@ -3,6 +3,7 @@ import math
 import uuid
 from datetime import datetime
 
+import dateutil
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
@@ -66,6 +67,10 @@ def get_uuid():
 
 def datetime_in_utcnow():
     return datetime.utcnow()
+
+
+def relative_date(date_time: datetime, hours: int) -> datetime:
+    return date_time - dateutil.relativedelta.relativedelta(hours=int(hours))
 
 
 def get_blockchain_from_token_pair_details(token_pair, blockchain_conversion_type):

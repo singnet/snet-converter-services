@@ -187,3 +187,10 @@ def get_conversion_count_by_status(event, context):
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def expire_conversion(event, context):
+    logger.debug(f"Job for expiring the conversion request={json.dumps(event)}")
+    conversion_service.expire_conversion()
+    logger.info("Successfully")

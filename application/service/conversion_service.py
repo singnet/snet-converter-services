@@ -5,12 +5,12 @@ from application.service.conversion_reponse import get_latest_user_pending_conve
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
     create_transaction_response, create_transaction_for_conversion_response, get_transaction_by_hash_response, \
     claim_conversion_response, \
-    get_conversion_response, update_conversion_response
+    get_conversion_response, update_conversion_response, get_expiring_conversion_response
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
-from config import SIGNATURE_EXPIRY_BLOCK_NUMBER
+from config import SIGNATURE_EXPIRY_BLOCK_NUMBER, EXPIRE_CONVERSION
 from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity
@@ -25,7 +25,8 @@ from utils.blockchain import validate_address, validate_conversion_claim_request
     validate_cardano_transaction_details_against_conversion
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
-    is_supported_network_conversion, get_ethereum_network_url, get_offset, paginate_items_response_format
+    is_supported_network_conversion, get_ethereum_network_url, get_offset, paginate_items_response_format, \
+    datetime_in_utcnow, relative_date
 from utils.signature import validate_conversion_signature, get_signature
 
 logger = get_logger(__name__)
@@ -493,3 +494,16 @@ class ConversionService:
     def get_conversion_count_by_status(self, address):
         logger.info(f"Getting the conversion count by status for the address={address}")
         return self.conversion_repo.get_conversion_count_by_status(address=address)
+
+    def expire_conversion(self):
+        current_datetime = datetime_in_utcnow()
+        cardano_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("CARDANO", 0))
+        ethereum_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("ETHEREUM", 0))
+        print(f"Expiring the conversion of ethereum and cardano  whose is less or than equal to "
+              f"{ethereum_expire_datetime} and {cardano_expire_datetime} respectively ")
+        conversions = self.conversion_repo.get_expiring_conversion(
+            ethereum_expire_datetime=ethereum_expire_datetime,
+            cardano_expire_datetime=cardano_expire_datetime)
+        conversion_ids = get_expiring_conversion_response(get_response_from_entities(conversions))
+        print(f"Expiring conversions total={len(conversion_ids)} conversion_ids={conversion_ids}")
+        self.conversion_repo.set_conversions_to_expire(conversion_ids=conversion_ids)

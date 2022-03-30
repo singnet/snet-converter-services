@@ -702,4 +702,16 @@ functions:
                 responseModels:
                   "application/json": "LambdaErrorMessage"
 
+  expire_conversion:
+    handler: application/handler/conversion_handlers.expire_conversion
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - schedule:
+          rate: rate(3 hours)
+          name: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-expire-conversion
+          description: 'Job for expiring the conversion based on the config'
+          enabled: true
+
 
