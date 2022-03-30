@@ -239,12 +239,12 @@ resources:
         Queues:
           - !Ref converterEventConsumerDLQQueue
 
-    converterBridgeQueue:
+    converterBridgeQueue1:
       Type: AWS::SQS::Queue
       Properties:
         FifoQueue: true
         ContentBasedDeduplication: true
-        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge.fifo
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge1.fifo
         VisibilityTimeout: 400
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 7200
@@ -252,21 +252,108 @@ resources:
           deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
           maxReceiveCount: 10
 
-    converterBridgeQueuePolicy:
+    converterBridgeQueue1Policy:
       Type: AWS::SQS::QueuePolicy
       Properties:
         PolicyDocument:
           Version: '2012-10-17'
-          Id: converterBridgeQueue
+          Id: converterBridgeQueue1
           Statement:
             - Sid: sns1Subscribe
               Effect: Allow
               Principal: "*"
               Action:
                 - sqs:SendMessage
-              Resource: !GetAtt converterBridgeQueue.Arn
+              Resource: !GetAtt converterBridgeQueue1.Arn
         Queues:
-          - !Ref converterBridgeQueue
+          - !Ref converterBridgeQueue1
+
+    converterBridgeQueue2:
+      Type: AWS::SQS::Queue
+      Properties:
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge2.fifo
+        VisibilityTimeout: 400
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 7200
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
+          maxReceiveCount: 10
+
+    converterBridgeQueue2Policy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterBridgeQueue2
+          Statement:
+            - Sid: sns1Subscribe
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterBridgeQueue2.Arn
+        Queues:
+          - !Ref converterBridgeQueue2
+
+    converterBridgeQueue3:
+      Type: AWS::SQS::Queue
+      Properties:
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge3.fifo
+        VisibilityTimeout: 400
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 7200
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
+          maxReceiveCount: 10
+
+    converterBridgeQueue3Policy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterBridgeQueue3
+          Statement:
+            - Sid: sns1Subscribe
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterBridgeQueue3.Arn
+        Queues:
+          - !Ref converterBridgeQueue3
+
+    converterBridgeQueue4:
+      Type: AWS::SQS::Queue
+      Properties:
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge4.fifo
+        VisibilityTimeout: 400
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 7200
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
+          maxReceiveCount: 10
+
+    converterBridgeQueue4Policy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterBridgeQueue4
+          Statement:
+            - Sid: sns1Subscribe
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterBridgeQueue4.Arn
+        Queues:
+          - !Ref converterBridgeQueue4
 
     converterBridgeDLQQueue:
       Type: AWS::SQS::Queue
@@ -293,7 +380,11 @@ resources:
               Resource: !GetAtt converterBridgeDLQQueue.Arn
               Condition:
                 ArnEquals:
-                  aws:SourceArn: !GetAtt converterBridgeQueue.Arn
+                  aws:SourceArn:
+                    - !GetAtt converterBridgeQueue1.Arn
+                    - !GetAtt converterBridgeQueue2.Arn
+                    - !GetAtt converterBridgeQueue3.Arn
+                    - !GetAtt converterBridgeQueue4.Arn
         Queues:
           - !Ref converterBridgeDLQQueue
 
@@ -605,7 +696,7 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt:
-              - converterBridgeQueue
+              - converterBridgeQueue1
               - Arn
           batchSize: 1
 
@@ -622,7 +713,7 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt:
-              - converterBridgeQueue
+              - converterBridgeQueue2
               - Arn
           batchSize: 1
 
@@ -639,7 +730,7 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt:
-              - converterBridgeQueue
+              - converterBridgeQueue3
               - Arn
           batchSize: 1
 
@@ -656,7 +747,7 @@ functions:
       - sqs:
           arn:
             Fn::GetAtt:
-              - converterBridgeQueue
+              - converterBridgeQueue4
               - Arn
           batchSize: 1
 
