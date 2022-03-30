@@ -499,7 +499,7 @@ class ConversionService:
         current_datetime = datetime_in_utcnow()
         cardano_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("CARDANO", 0))
         ethereum_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("ETHEREUM", 0))
-        print(f"Expiring the conversion of ethereum and cardano  whose is less or than equal to "
+        print(f"Expiring the conversion of ethereum and cardano  which is less than or  equal to "
               f"{ethereum_expire_datetime} and {cardano_expire_datetime} respectively ")
         conversions = self.conversion_repo.get_expiring_conversion(
             ethereum_expire_datetime=ethereum_expire_datetime,
