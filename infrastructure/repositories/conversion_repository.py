@@ -341,6 +341,6 @@ class ConversionRepository(BaseRepository):
     def set_conversions_to_expire(self, conversion_ids):
         self.session.query(ConversionDBModel) \
             .filter(ConversionDBModel.id.in_(conversion_ids)) \
-            .update({ConversionDBModel.status: ConversionStatus.EXPIRED.value})
+            .update({ConversionDBModel.status: ConversionStatus.EXPIRED.value}, synchronize_session=False)
 
         self.session.commit()

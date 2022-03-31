@@ -150,7 +150,11 @@ class ConsumerService:
             else:
                 message_group_id = MESSAGE_GROUP_ID
 
-            NotificationService.send_message_to_queue(queue=QueueName.CONVERTER_BRIDGE.value,
+            queue = QueueName.CONVERTER_BRIDGE.value
+            if message_group_id in QueueName._value2member_map_:
+                queue = QueueName[message_group_id].value
+
+            NotificationService.send_message_to_queue(queue=queue,
                                                       message=json.dumps(activity_event),
                                                       message_group_id=message_group_id)
             if message_group:
