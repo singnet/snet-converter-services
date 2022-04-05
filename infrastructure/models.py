@@ -172,6 +172,7 @@ class MessageGroupPoolDBModel(Base):
     id = Column("id", VARCHAR(50), unique=True, nullable=False)
     name = Column("name", VARCHAR(50), nullable=False)
     message_group_id = Column("message_group_id", VARCHAR(30), nullable=False, unique=True)
+    trigger_count = Column("trigger_count", BIGINT)
     is_enabled = Column("is_enabled", BOOLEAN, default=True)
     created_by = Column("created_by", VARCHAR(50), nullable=False)
     created_at = Column("created_at", TIMESTAMP,

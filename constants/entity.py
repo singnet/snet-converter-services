@@ -237,3 +237,9 @@ class CardanoAPIEntities(Enum):
 class WalletPairResponseEntities(Enum):
     ADDRESSES = "addresses"
     CARDANO_ADDRESS = "cardano_address"
+
+
+class SQSEntities(Enum):
+    QUEUE_URL = "QueueUrl"
+    MESSAGE_BODY = "MessageBody"
+    MESSAGE_GROUP_ID = "MessageGroupId"

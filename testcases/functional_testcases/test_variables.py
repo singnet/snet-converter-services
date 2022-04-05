@@ -273,8 +273,10 @@ def prepare_consumer_cardano_event_format(message):
     return input_event
 
 
-def prepare_consumer_ethereum_event_format(name, data):
-    return {"name": name, "data": data}
+def prepare_consumer_ethereum_event_format(message):
+    records = [{"body": json.dumps(message)}]
+    input_event = {"Records": records}
+    return input_event
 
 
 def prepare_converter_bridge_event_format(message):

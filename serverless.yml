@@ -671,6 +671,12 @@ functions:
                 responseModels:
                   "application/json": "LambdaErrorMessage"
 
+  post_converter_ethereum_events_to_queue:
+    handler: application/handler/consumer_handlers.post_converter_ethereum_events_to_queue
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+
   converter_event_consumer:
     handler: application/handler/consumer_handlers.converter_event_consumer
     role: ${file(./config.${self:provider.stage}.json):ROLE}

@@ -29,5 +29,9 @@ class PoolingRepository(BaseRepository):
     def update_message_pool(self, id):
         message_pool = self.session.query(MessageGroupPoolDBModel) \
             .filter(MessageGroupPoolDBModel.id == id).one()
+        if message_pool.trigger_count:
+            message_pool.trigger_count += 1
+        else:
+            message_pool.trigger_count = 1
         message_pool.updated_at = datetime.now()
         self.session.commit()

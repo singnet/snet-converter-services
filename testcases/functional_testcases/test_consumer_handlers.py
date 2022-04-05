@@ -2,7 +2,9 @@ import json
 import unittest
 from unittest.mock import patch
 
-from application.handler.consumer_handlers import converter_event_consumer, converter_bridge
+from application.handler.consumer_handlers import converter_event_consumer, converter_bridge, \
+    post_converter_ethereum_events_to_queue
+from constants.error_details import ErrorCode, ErrorDetails
 from constants.status import ConversionTransactionStatus, TransactionVisibility, TransactionOperation, TransactionStatus
 from infrastructure.models import TransactionDBModel, ConversionTransactionDBModel, ConversionDBModel, \
     WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, BlockChainDBModel, MessageGroupPoolDBModel
@@ -10,7 +12,7 @@ from infrastructure.repositories.conversion_repository import ConversionReposito
 from testcases.functional_testcases.test_variables import TestVariables, consumer_token_received_event_message, \
     prepare_consumer_cardano_event_format, prepare_converter_bridge_event_format, \
     prepare_consumer_ethereum_event_format, create_conversion_transaction, DAPP_AS_CREATED_BY, create_transaction
-from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException
+from utils.exceptions import InternalServerErrorException, BlockConfirmationNotEnoughException, BadRequestException
 
 conversion_repo = ConversionRepository()
 
@@ -36,6 +38,32 @@ class TestConsumer(unittest.TestCase):
         conversion_repo.session.add_all(TestVariables().conversion)
         conversion_repo.session.commit()
 
+    @patch("application.service.notification_service.NotificationService.send_message_to_queue")
+    @patch("common.utils.Utils.report_slack")
+    def test_post_converter_ethereum_events_to_queue(self, mock_report_slack, mock_send_message_to_queue):
+        # Invalid input
+        event = dict()
+        post_converter_ethereum_events_to_queue(event, {})
+
+        event = {"name": ""}
+        post_converter_ethereum_events_to_queue(event, {})
+
+        event = {"name": "", "data": ""}
+        post_converter_ethereum_events_to_queue(event, {})
+
+        event = {"name": "test", "data": "test"}
+        post_converter_ethereum_events_to_queue(event, {})
+
+        # expected message format to send
+        mock_send_message_to_queue.assert_called_with(queue="EVENT_CONSUMER",
+                                                      message=json.dumps({'blockchain_name': 'Ethereum',
+                                                                          'blockchain_event': {'name': 'test',
+                                                                                               'data': 'test'}}),
+                                                      message_group_id=None)
+
+    @patch("common.blockchain_util.BlockChainUtil.get_current_block_no")
+    @patch("common.blockchain_util.BlockChainUtil.get_transaction_receipt_from_blockchain")
+    @patch("utils.blockchain.validate_tx_hash_presence_in_blockchain")
     @patch("utils.blockchain.get_cardano_transaction_details")
     @patch("utils.blockchain.get_event_logs")
     @patch("common.blockchain_util.BlockChainUtil.contract_instance")
@@ -53,7 +81,9 @@ class TestConsumer(unittest.TestCase):
                                       mock_get_block, mock_send_message_to_sqs,
                                       mock_get_ethereum_transaction_details, mock_get_token_contract_path,
                                       mock_load_contract, mock_contract_instance, mock_get_event_logs,
-                                      mock_get_cardano_transaction_details):
+                                      mock_get_cardano_transaction_details,
+                                      mock_validate_tx_hash_presence_in_blockchain,
+                                      mock_get_transaction_receipt_from_blockchain, mock_get_current_block_no):
         mock_get_token_contract_path.return_value = "token.json"
         mock_load_contract.return_value = {"file": "data"}
         mock_contract_instance.return_value = {""}
@@ -135,58 +165,79 @@ class TestConsumer(unittest.TestCase):
 
         TestConsumer.delete_all_tables()
 
-        # Internal server error when passing empty consumer event
+        # Invalid request
         self.assertRaises(InternalServerErrorException, converter_event_consumer,
-                          prepare_consumer_ethereum_event_format("name", "data"), {})
+                          prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                  'blockchain_event': {'name': 'test',
+                                                                                       'data': 'test'}}), {})
 
         # Internal server error when no data is feeded in consumer side
         self.assertRaises(InternalServerErrorException, converter_event_consumer,
-                          prepare_consumer_ethereum_event_format("name fake", {"event": "fake"}), {})
+                          prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                  'blockchain_event': {'name': 'name fake',
+                                                                                       'data': {"event": "fake"}}}), {})
 
         self.setUp()
 
         # Internal server error when expected fields is not there
         self.assertRaises(InternalServerErrorException, converter_event_consumer,
-                          prepare_consumer_ethereum_event_format("name fake", {"event": "fake"}), {})
+                          prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                  'blockchain_event': {'name': 'name fake',
+                                                                                       'data': {"event": "fake"}}}), {})
 
         # Internal Server error  when expected fields is not there
         self.assertRaises(InternalServerErrorException, converter_event_consumer,
-                          prepare_consumer_ethereum_event_format("name fake",
-                                                                 {"name": "fake", "transactionHash": "some hash",
-                                                                  "event": "ConversionOut",
-                                                                  "json_str": ""}),
+                          prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                  'blockchain_event': {'name': 'name fake',
+                                                                                       'data': {"name": "fake",
+                                                                                                "transactionHash": "some hash",
+                                                                                                "event": "ConversionOut",
+                                                                                                "json_str": ""}}}),
                           {})
 
-        # Internal Server error  when missing contract event details
-        self.assertRaises(InternalServerErrorException, converter_event_consumer,
-                          prepare_consumer_ethereum_event_format("ConversionOut",
-                                                                 {"transactionHash": "some hash",
-                                                                  "event": "ConversionOut",
-                                                                  "json_str": "{'conversionId': b'd78aeaf865d94ec8a8792d2847ef7323'}"}),
-                          {})
+        mock_get_transaction_receipt_from_blockchain.side_effect = BadRequestException(
+            error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
+            error_details=ErrorDetails[ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
+        # BadRequest for invalid hash
+        converter_event_consumer(prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                         'blockchain_event': {'name': 'ConversionOut',
+                                                                                              'data': {
+                                                                                                  "transactionHash": "some hash",
+                                                                                                  "event": "ConversionOut",
+                                                                                                  "json_str": "{'conversionId': b'd78aeaf865d94ec8a8792d2847ef7323'}"}}}),
+                                 {})
+        mock_get_transaction_receipt_from_blockchain.side_effect = None
+        mock_validate_tx_hash_presence_in_blockchain.return_value = None
         # Internal Server error  when giving invalid conversion id
         self.assertRaises(InternalServerErrorException, converter_event_consumer,
-                          prepare_consumer_ethereum_event_format("ConversionOut",
-                                                                 {"transactionHash": "some hash",
-                                                                  "event": "ConversionOut",
-                                                                  "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'd78aeaf865d94ec8a8792d2847ef7323', 'amount': 12345600}"}),
+                          prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                  'blockchain_event': {'name': 'ConversionOut',
+                                                                                       'data': {
+                                                                                           "transactionHash": "some hash",
+                                                                                           "event": "ConversionOut",
+                                                                                           "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'd78aeaf865d94ec8a8792d2847ef7323', 'amount': 12345600}"}}}),
                           {})
 
         # Internal Server error  when token holder doesn't match
         self.assertRaises(InternalServerErrorException, converter_event_consumer,
-                          prepare_consumer_ethereum_event_format("ConversionOut",
-                                                                 {"transactionHash": "some hash",
-                                                                  "event": "ConversionOut",
-                                                                  "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa2', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 12345600}"}),
+                          prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                  'blockchain_event': {'name': 'ConversionOut',
+                                                                                       'data': {
+                                                                                           "transactionHash": "some hash",
+                                                                                           "event": "ConversionOut",
+                                                                                           "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa2', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 12345600}"}}}
+                                                                 ),
                           {})
 
         # Invalid address for transaction
         mock_get_ethereum_transaction_details.return_value = {"from": "some address"}
-        converter_event_consumer(prepare_consumer_ethereum_event_format("ConversionOut",
-                                                                        {
-                                                                            "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
-                                                                            "event": "ConversionOut",
-                                                                            "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 133305000}"}),
+        converter_event_consumer(prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                         'blockchain_event': {'name': 'ConversionOut',
+                                                                                              'data': {
+                                                                                                  "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
+                                                                                                  "event": "ConversionOut",
+                                                                                                  "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 133305000}"}}}
+                                                                        ),
                                  {})
         conversion_count = conversion_repo.session.query(ConversionDBModel).all()
         self.assertEqual(3, len(conversion_count))
@@ -200,12 +251,33 @@ class TestConsumer(unittest.TestCase):
             "amount": 133305000,
             "conversionId": b'7298bce110974411b260cac758b37ee0'
         }}]
-        converter_event_consumer(prepare_consumer_ethereum_event_format("ConversionOut",
-                                                                        {
-                                                                            "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
-                                                                            "event": "ConversionOut",
-                                                                            "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 133305000}"}),
-                                 {})
+
+        # Not enough ethereum block confirmation
+        mock_get_transaction_receipt_from_blockchain.return_value = {"blockNumber": 1234}
+        mock_get_current_block_no.return_value = 0
+        self.assertRaises(BlockConfirmationNotEnoughException, converter_event_consumer,
+                          prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                  'blockchain_event': {'name': 'ConversionOut',
+                                                                                       'data': {
+                                                                                           "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
+                                                                                           "event": "ConversionOut",
+                                                                                           "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 133305000}"}}}
+                                                                 )
+                          , {})
+
+        # Received Enough ethereum block confirmation
+        mock_get_transaction_receipt_from_blockchain.return_value = {"blockNumber": 1234}
+        mock_get_current_block_no.return_value = 1264
+        converter_event_consumer(
+            prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                    'blockchain_event': {'name': 'ConversionOut',
+                                                                         'data': {
+                                                                             "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
+                                                                             "event": "ConversionOut",
+                                                                             "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 133305000}"}}}
+                                                   )
+            , {})
+
         mock_send_message_to_queue.assert_called_with(queue="CONVERTER_BRIDGE",
                                                       message=json.dumps({'blockchain_name': 'Cardano',
                                                                           'blockchain_event': {
@@ -226,11 +298,14 @@ class TestConsumer(unittest.TestCase):
         self.assertEqual(transaction.transaction_operation, "TOKEN_BURNT")
 
         # Reprocessing the same request
-        response = converter_event_consumer(prepare_consumer_ethereum_event_format("ConversionOut",
-                                                                                   {
-                                                                                       "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
-                                                                                       "event": "ConversionOut",
-                                                                                       "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 133305000}"}),
+        response = converter_event_consumer(prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                                    'blockchain_event': {
+                                                                                        'name': 'ConversionOut',
+                                                                                        'data': {
+                                                                                            "transactionHash": "0x5a557f3d556601acb3d42b18e364e3389223bedaa645f92953c07277c880047c",
+                                                                                            "event": "ConversionOut",
+                                                                                            "json_str": "{'tokenHolder': '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1', 'conversionId': b'7298bce110974411b260cac758b37ee0', 'amount': 133305000}"}}}
+                                                                                   ),
                                             {})
         self.assertEqual(response, None)
 
