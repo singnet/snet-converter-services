@@ -22,13 +22,12 @@ class SqsService:
                                                error_details=ErrorDetails[
                                                    ErrorCode.QUEUE_DETAILS_NOT_FOUND.value].value)
 
-        logger.info(f"Started publishing the message to the queue_url={queue_url} with message={message}, "
-                    f"message group id={message_group_id}")
-        payload[SQSEntities.QUEUE_URL.value] = queue
+        payload[SQSEntities.QUEUE_URL.value] = queue_url
         payload[SQSEntities.MESSAGE_BODY.value] = message
         if message_group_id:
             payload[SQSEntities.MESSAGE_GROUP_ID.value] = message_group_id
 
+        logger.info(f"Started publishing the message to the queue with details={payload}")
         try:
             sqs_client = boto3.client('sqs')
             response = sqs_client.send_message(**payload)
