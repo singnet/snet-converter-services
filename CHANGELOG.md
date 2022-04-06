@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-04-05 20:00:00 
+
+### Added
+- Added lambda to post the ethereum events to queue
+- Added block confirmation on ethereum side 
+- Added count to message pool for auditing purpose
+
+### Fixed
+- Validating the hash before processing on the consumer
+
+
 ## 2022-03-30 12:00:00 
 
 ### Added
