@@ -8,6 +8,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-04-05 20:00:00 
+
+### Added
+- Added lambda to post the ethereum events to queue
+- Added block confirmation on ethereum side 
+- Added count to message pool for auditing purpose
+
+### Fixed
+- Validating the hash before processing on the consumer
+
+
+## 2022-03-30 12:00:00 
+
+### Added
+- Added job for expiring the conversion
+
+## 2022-03-25 12:00:00 
+
+### Added
+- Page size max limit check for conversion history (max size -20)
+- Added token and blockchain details to transaction history response
+- Added token and blockchain details to get conversion response 
+- Added multiple consumers for the sqs
+- Added dynamic message group pooling
+
+### Fixed
+- Fixed the message disappearance in the queue for conversion ADA to ETH
+- Optimized the waiting time to check the hash presence
+- Optimized the code for conversion history and get conversion
+- Improved the performance of conversion history
+
+### Removed
+- Removed THE `from_token_id` and `to_token_id` column and added a new column called `token_id`
+
+
+## 2022-03-24 12:00:00 
+
+### Fixed
+- Signature expiry check on conversion request using block number
+- Block confirmation logic has been optimized and add the call to converter bridge
+- Optimized the token pair api db calls 
+
 ## 2022-03-16 12:00:00 
 
 ### Added

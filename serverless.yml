@@ -41,6 +41,7 @@ custom:
     - ${file(./config.${self:provider.stage}.json):MplaceCommonCode_Layer}
     - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
     - ${file(./config.${self:provider.stage}.json):MplacePythonWeb3AndGrpc_Layer}
+    - ${file(./config.${self:provider.stage}.json):SnetContract}
   defaultVpc:
     securityGroupIds:
       - ${file(./config.${self:provider.stage}.json):SG1}
@@ -129,6 +130,11 @@ custom:
         description: "Get wallet's address "
         contentType: "application/json"
         schema: ${file(documentation/models/wallet.json):WalletsAddressRequestOutput}
+
+      - name: "GetConversionStatusCountOutput"
+        description: "Get Conversion Status Count Output"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):GetConversionStatusCountOutput}
 
 package:
   patterns:
@@ -233,37 +239,128 @@ resources:
         Queues:
           - !Ref converterEventConsumerDLQQueue
 
-    converterBridgeQueue:
+    converterBridgeQueue1:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge
-        VisibilityTimeout: 100
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge1.fifo
+        VisibilityTimeout: 400
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 7200
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
           maxReceiveCount: 10
 
-    converterBridgeQueuePolicy:
+    converterBridgeQueue1Policy:
       Type: AWS::SQS::QueuePolicy
       Properties:
         PolicyDocument:
           Version: '2012-10-17'
-          Id: converterBridgeQueue
+          Id: converterBridgeQueue1
           Statement:
             - Sid: sns1Subscribe
               Effect: Allow
               Principal: "*"
               Action:
                 - sqs:SendMessage
-              Resource: !GetAtt converterBridgeQueue.Arn
+              Resource: !GetAtt converterBridgeQueue1.Arn
         Queues:
-          - !Ref converterBridgeQueue
+          - !Ref converterBridgeQueue1
+
+    converterBridgeQueue2:
+      Type: AWS::SQS::Queue
+      Properties:
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge2.fifo
+        VisibilityTimeout: 400
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 7200
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
+          maxReceiveCount: 10
+
+    converterBridgeQueue2Policy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterBridgeQueue2
+          Statement:
+            - Sid: sns1Subscribe
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterBridgeQueue2.Arn
+        Queues:
+          - !Ref converterBridgeQueue2
+
+    converterBridgeQueue3:
+      Type: AWS::SQS::Queue
+      Properties:
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge3.fifo
+        VisibilityTimeout: 400
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 7200
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
+          maxReceiveCount: 10
+
+    converterBridgeQueue3Policy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterBridgeQueue3
+          Statement:
+            - Sid: sns1Subscribe
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterBridgeQueue3.Arn
+        Queues:
+          - !Ref converterBridgeQueue3
+
+    converterBridgeQueue4:
+      Type: AWS::SQS::Queue
+      Properties:
+        FifoQueue: true
+        ContentBasedDeduplication: true
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge4.fifo
+        VisibilityTimeout: 400
+        ReceiveMessageWaitTimeSeconds: 20
+        MessageRetentionPeriod: 7200
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
+          maxReceiveCount: 10
+
+    converterBridgeQueue4Policy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Id: converterBridgeQueue4
+          Statement:
+            - Sid: sns1Subscribe
+              Effect: Allow
+              Principal: "*"
+              Action:
+                - sqs:SendMessage
+              Resource: !GetAtt converterBridgeQueue4.Arn
+        Queues:
+          - !Ref converterBridgeQueue4
 
     converterBridgeDLQQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge-dlq
+        FifoQueue: true
+        ContentBasedDeduplication: false
+        QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge-dlq.fifo
         VisibilityTimeout: 60
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 604800
@@ -283,7 +380,11 @@ resources:
               Resource: !GetAtt converterBridgeDLQQueue.Arn
               Condition:
                 ArnEquals:
-                  aws:SourceArn: !GetAtt converterBridgeQueue.Arn
+                  aws:SourceArn:
+                    - !GetAtt converterBridgeQueue1.Arn
+                    - !GetAtt converterBridgeQueue2.Arn
+                    - !GetAtt converterBridgeQueue3.Arn
+                    - !GetAtt converterBridgeQueue4.Arn
         Queues:
           - !Ref converterBridgeDLQQueue
 
@@ -356,6 +457,7 @@ functions:
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
     environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH}
       CONVERTER_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_SIGNER_PRIVATE_KEY_PATH}
     events:
       - http:
@@ -569,6 +671,12 @@ functions:
                 responseModels:
                   "application/json": "LambdaErrorMessage"
 
+  post_converter_ethereum_events_to_queue:
+    handler: application/handler/consumer_handlers.post_converter_ethereum_events_to_queue
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+
   converter_event_consumer:
     handler: application/handler/consumer_handlers.converter_event_consumer
     role: ${file(./config.${self:provider.stage}.json):ROLE}
@@ -581,16 +689,71 @@ functions:
               - converterEventConsumerQueue
               - Arn
 
-  converter_bridge:
+  converter_bridge1:
     handler: application/handler/consumer_handlers.converter_bridge
     role: ${file(./config.${self:provider.stage}.json):ROLE}
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_1}
+    timeout: 300
+    maximumRetryAttempts: 1
     events:
       - sqs:
           arn:
             Fn::GetAtt:
-              - converterBridgeQueue
+              - converterBridgeQueue1
+              - Arn
+          batchSize: 1
+
+  converter_bridge2:
+    handler: application/handler/consumer_handlers.converter_bridge
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_2}
+    timeout: 300
+    maximumRetryAttempts: 1
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - converterBridgeQueue2
+              - Arn
+          batchSize: 1
+
+  converter_bridge3:
+    handler: application/handler/consumer_handlers.converter_bridge
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_3}
+    timeout: 300
+    maximumRetryAttempts: 1
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - converterBridgeQueue3
+              - Arn
+          batchSize: 1
+
+  converter_bridge4:
+    handler: application/handler/consumer_handlers.converter_bridge
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_4}
+    timeout: 300
+    maximumRetryAttempts: 1
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - converterBridgeQueue4
               - Arn
           batchSize: 1
 
@@ -600,7 +763,52 @@ functions:
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
 
+  get_conversion_history_count:
+    handler: application/handler/conversion_handlers.get_conversion_count_by_status
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/conversion/count
+          method: get
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyParams
+          request:
+            parameters:
+              querystrings:
+                address: true
+          documentation:
+            summary: "Getting the conversion history count"
+            description: "Getting the conversion history count"
+            tags:
+              - "Conversion"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Getting the  conversion history count"
+                responseModels:
+                  "application/json": "GetConversionStatusCountOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
 
-
+  expire_conversion:
+    handler: application/handler/conversion_handlers.expire_conversion
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - schedule:
+          rate: rate(3 hours)
+          name: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-expire-conversion
+          description: 'Job for expiring the conversion based on the config'
+          enabled: true
 
 

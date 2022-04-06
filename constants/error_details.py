@@ -68,6 +68,12 @@ class ErrorCode(Enum):
     DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE = "E0064"
     INVALID_CONVERSION_AMOUNT_PROVIDED = "E0065"
     MISMATCH_TOKEN_HOLDER = "E0066"
+    UNABLE_TO_FIND_EVENTS_FOR_HASH = "E0067"
+    CONVERSION_ALREADY_DONE = "E0068"
+    TOKEN_CONTRACT_ADDRESS_EMPTY = "E0069"
+    SIGNATURE_EXPIRED = "E0070"
+    TOKEN_PAIR_NOT_EXISTS = "E0071"
+    PAGE_SIZE_EXCEEDS_LIMIT = "E0072"
 
 
 class ErrorDetails(Enum):
@@ -137,3 +143,9 @@ class ErrorDetails(Enum):
     E0064 = "Not authorized to update the cardano transaction hash"
     E0065 = "Invalid conversion amount provided"
     E0066 = "Token holder address is mismatched from blockchain and conversion request"
+    E0067 = "Unable to find any events for the given hash"
+    E0068 = "Conversion has already been completed"
+    E0069 = "Token contract address is empty"
+    E0070 = "Signature expired for the given request"
+    E0071 = "Token pair not exists"
+    E0072 = "Page size exceeds the max limit"

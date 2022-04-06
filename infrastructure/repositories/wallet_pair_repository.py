@@ -1,6 +1,7 @@
 from sqlalchemy import or_
 
 from constants.general import CreatedBy
+from constants.status import ConversionStatus
 from domain.factory.wallet_pair_factory import WalletPairFactory
 from infrastructure.models import WalletPairDBModel, ConversionDBModel
 from infrastructure.repositories.base_repository import BaseRepository
@@ -12,7 +13,13 @@ class WalletPairRepository(BaseRepository):
 
     @read_from_db()
     def get_wallet_pair_by_addresses(self, from_address, to_address, token_pair_id):
-        wallet_pair = self.session.query(WalletPairDBModel).filter(
+        wallet_pair = self.session.query(WalletPairDBModel.row_id, WalletPairDBModel.id,
+                                         WalletPairDBModel.token_pair_id, WalletPairDBModel.from_address,
+                                         WalletPairDBModel.to_address, WalletPairDBModel.deposit_address,
+                                         WalletPairDBModel.deposit_address_detail, WalletPairDBModel.signature,
+                                         WalletPairDBModel.signature_metadata, WalletPairDBModel.signature_expiry,
+                                         WalletPairDBModel.created_by, WalletPairDBModel.created_at,
+                                         WalletPairDBModel.updated_at).filter(
             or_(WalletPairDBModel.from_address == from_address, WalletPairDBModel.from_address == to_address),
             or_(WalletPairDBModel.to_address == from_address, WalletPairDBModel.to_address == to_address),
             WalletPairDBModel.token_pair_id == token_pair_id,
@@ -59,7 +66,14 @@ class WalletPairRepository(BaseRepository):
 
     @read_from_db()
     def get_wallet_pair_by_deposit_address(self, deposit_address):
-        wallet_pair = self.session.query(WalletPairDBModel).filter(WalletPairDBModel.deposit_address == deposit_address) \
+        wallet_pair = self.session.query(WalletPairDBModel.row_id, WalletPairDBModel.id,
+                                         WalletPairDBModel.token_pair_id, WalletPairDBModel.from_address,
+                                         WalletPairDBModel.to_address, WalletPairDBModel.deposit_address,
+                                         WalletPairDBModel.deposit_address_detail, WalletPairDBModel.signature,
+                                         WalletPairDBModel.signature_metadata, WalletPairDBModel.signature_expiry,
+                                         WalletPairDBModel.created_by, WalletPairDBModel.created_at,
+                                         WalletPairDBModel.updated_at).filter(
+            WalletPairDBModel.deposit_address == deposit_address) \
             .order_by(WalletPairDBModel.created_at.desc()).first()
 
         if wallet_pair is None:
@@ -79,7 +93,13 @@ class WalletPairRepository(BaseRepository):
 
     @read_from_db()
     def get_wallet_pair_by_conversion_id(self, conversion_id):
-        wallet_pair = self.session.query(WalletPairDBModel) \
+        wallet_pair = self.session.query(WalletPairDBModel.row_id, WalletPairDBModel.id,
+                                         WalletPairDBModel.token_pair_id, WalletPairDBModel.from_address,
+                                         WalletPairDBModel.to_address, WalletPairDBModel.deposit_address,
+                                         WalletPairDBModel.deposit_address_detail, WalletPairDBModel.signature,
+                                         WalletPairDBModel.signature_metadata, WalletPairDBModel.signature_expiry,
+                                         WalletPairDBModel.created_by, WalletPairDBModel.created_at,
+                                         WalletPairDBModel.updated_at) \
             .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
             .filter(ConversionDBModel.id == conversion_id).first()
 
@@ -100,7 +120,15 @@ class WalletPairRepository(BaseRepository):
 
     @read_from_db()
     def get_all_deposit_address(self):
-        wallet_pairs = self.session.query(WalletPairDBModel) \
+        wallet_pairs = self.session.query(WalletPairDBModel.row_id, WalletPairDBModel.id,
+                                          WalletPairDBModel.token_pair_id, WalletPairDBModel.from_address,
+                                          WalletPairDBModel.to_address, WalletPairDBModel.deposit_address,
+                                          WalletPairDBModel.deposit_address_detail, WalletPairDBModel.signature,
+                                          WalletPairDBModel.signature_metadata, WalletPairDBModel.signature_expiry,
+                                          WalletPairDBModel.created_by, WalletPairDBModel.created_at,
+                                          WalletPairDBModel.updated_at) \
+            .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
+            .filter(ConversionDBModel.status == ConversionStatus.USER_INITIATED.value) \
             .filter(WalletPairDBModel.deposit_address.isnot(None)).all()
 
         return [WalletPairFactory.wallet_pair(row_id=wallet_pair.row_id, id=wallet_pair.id,

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from application.handler.blockchain_handlers import get_all_blockchain
 from infrastructure.models import BlockChainDBModel, TransactionDBModel, ConversionTransactionDBModel, \
-    ConversionDBModel, WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel
+    ConversionDBModel, WalletPairDBModel, TokenPairDBModel, ConversionFeeDBModel, TokenDBModel, MessageGroupPoolDBModel
 from infrastructure.repositories.blockchain_repository import BlockchainRepository
 from testcases.functional_testcases.test_variables import TestVariables
 
@@ -61,4 +61,6 @@ class TestBlockchain(unittest.TestCase):
         blockchain_repo.session.query(TokenDBModel).delete()
         blockchain_repo.session.commit()
         blockchain_repo.session.query(BlockChainDBModel).delete()
+        blockchain_repo.session.commit()
+        blockchain_repo.session.query(MessageGroupPoolDBModel).delete()
         blockchain_repo.session.commit()

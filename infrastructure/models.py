@@ -43,7 +43,7 @@ class TokenDBModel(Base):
     updated_at = Column("updated_at", TIMESTAMP,
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
-    blockchain_detail = relationship(BlockChainDBModel, uselist=False, lazy="select")
+    blockchain_detail = relationship(BlockChainDBModel, uselist=False, lazy="joined")
     __table_args__ = (UniqueConstraint(name, symbol, blockchain_id), {})
 
 
@@ -60,7 +60,7 @@ class ConversionFeeDBModel(Base):
     updated_at = Column("updated_at", TIMESTAMP,
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
-    token = relationship(TokenDBModel, foreign_keys=[token_id])
+    token = relationship(TokenDBModel, foreign_keys=[token_id], uselist=False, lazy="select")
 
 
 class TokenPairDBModel(Base):
@@ -80,9 +80,9 @@ class TokenPairDBModel(Base):
     updated_at = Column("updated_at", TIMESTAMP,
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
-    conversion_fee = relationship(ConversionFeeDBModel, foreign_keys=[conversion_fee_id])
-    from_token = relationship(TokenDBModel, foreign_keys=[from_token_id])
-    to_token = relationship(TokenDBModel, foreign_keys=[to_token_id])
+    conversion_fee = relationship(ConversionFeeDBModel, foreign_keys=[conversion_fee_id], uselist=False, lazy="joined")
+    from_token = relationship(TokenDBModel, foreign_keys=[from_token_id], uselist=False, lazy="joined")
+    to_token = relationship(TokenDBModel, foreign_keys=[to_token_id], uselist=False, lazy="joined")
     __table_args__ = (UniqueConstraint(from_token_id, to_token_id), {})
 
 
@@ -149,8 +149,7 @@ class TransactionDBModel(Base):
     conversion_transaction_id = Column("conversion_transaction_id", BIGINT,
                                        ForeignKey(ConversionTransactionDBModel.row_id),
                                        nullable=False)
-    from_token_id = Column("from_token_id", BIGINT, ForeignKey(TokenDBModel.row_id), nullable=False)
-    to_token_id = Column("to_token_id", BIGINT, ForeignKey(TokenDBModel.row_id), nullable=False)
+    token_id = Column("token_id", BIGINT, ForeignKey(TokenDBModel.row_id), nullable=False)
     transaction_visibility = Column("transaction_visibility", VARCHAR(30))
     transaction_operation = Column("transaction_operation", VARCHAR(30))
     transaction_hash = Column("transaction_hash", VARCHAR(250))
@@ -164,5 +163,20 @@ class TransactionDBModel(Base):
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
     conversion_transaction = relationship(ConversionTransactionDBModel, uselist=False, lazy="select")
-    from_token = relationship(TokenDBModel, foreign_keys=[from_token_id])
-    to_token = relationship(TokenDBModel, foreign_keys=[to_token_id])
+    token = relationship(TokenDBModel, foreign_keys=[token_id], uselist=False, lazy="select")
+
+
+class MessageGroupPoolDBModel(Base):
+    __tablename__ = "message_group_pool"
+    row_id = Column("row_id", BIGINT, primary_key=True, autoincrement=True)
+    id = Column("id", VARCHAR(50), unique=True, nullable=False)
+    name = Column("name", VARCHAR(50), nullable=False)
+    message_group_id = Column("message_group_id", VARCHAR(30), nullable=False, unique=True)
+    trigger_count = Column("trigger_count", BIGINT)
+    is_enabled = Column("is_enabled", BOOLEAN, default=True)
+    created_by = Column("created_by", VARCHAR(50), nullable=False)
+    created_at = Column("created_at", TIMESTAMP,
+                        server_default=func.current_timestamp(), nullable=False)
+    updated_at = Column("updated_at", TIMESTAMP,
+                        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
+                        nullable=False)

@@ -4,6 +4,8 @@ import sys
 
 sys.path.append('/opt')
 
+from constants.general import MAX_PAGE_SIZE, ETHEREUM_WALLET_ADDRESS_LENGTH
+
 from config import SLACK_HOOK
 from constants.error_details import ErrorCode, ErrorDetails
 from utils.exception_handler import exception_handler
@@ -99,8 +101,16 @@ def get_conversion_history(event, context):
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
                                   error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
 
+    if len(address) != ETHEREUM_WALLET_ADDRESS_LENGTH:
+        raise BadRequestException(error_code=ErrorCode.INVALID_ETHEREUM_ADDRESS.value,
+                                  error_details=ErrorDetails[ErrorCode.INVALID_ETHEREUM_ADDRESS.value].value)
+
     page_size = int(query_param.get(ApiParameters.PAGE_SIZE.value, PaginationDefaults.PAGE_SIZE.value))
     page_number = int(query_param.get(ApiParameters.PAGE_NUMBER.value, PaginationDefaults.PAGE_NUMBER.value))
+
+    if page_size > MAX_PAGE_SIZE:
+        raise BadRequestException(error_code=ErrorCode.PAGE_SIZE_EXCEEDS_LIMIT.value,
+                                  error_details=ErrorDetails[ErrorCode.PAGE_SIZE_EXCEEDS_LIMIT.value].value)
 
     response = conversion_service.get_conversion_history(address=address, page_size=page_size, page_number=page_number)
 
@@ -153,3 +163,34 @@ def get_conversion(event, context):
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def get_conversion_count_by_status(event, context):
+    logger.debug(f"Get conversion count by status event={json.dumps(event)}")
+    validate_schema(filepath=os.path.dirname(file_path) + "/../../documentation/models/conversion.json",
+                    schema_key="GetConversionStatusCountInput", input_json=event)
+
+    query_param = get_valid_value(event, HttpRequestParamType.REQUEST_PARAM_QUERY_STRING.value)
+    address = query_param.get(ApiParameters.ADDRESS.value, None)
+
+    if not address:
+        raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
+                                  error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
+
+    if len(address) != ETHEREUM_WALLET_ADDRESS_LENGTH:
+        raise BadRequestException(error_code=ErrorCode.INVALID_ETHEREUM_ADDRESS.value,
+                                  error_details=ErrorDetails[ErrorCode.INVALID_ETHEREUM_ADDRESS.value].value)
+
+    response = conversion_service.get_conversion_count_by_status(address=address)
+
+    return generate_lambda_response(HTTPStatus.OK.value,
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
+                                                       error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def expire_conversion(event, context):
+    logger.debug(f"Job for expiring the conversion request={json.dumps(event)}")
+    conversion_service.expire_conversion()
+    logger.info("Successfully")

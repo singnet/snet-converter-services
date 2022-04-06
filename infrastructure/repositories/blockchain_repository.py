@@ -20,8 +20,7 @@ class BlockchainRepository(BaseRepository):
                                              chain_id=blockchain.chain_id,
                                              block_confirmation=blockchain.block_confirmation,
                                              is_extension_available=blockchain.is_extension_available,
-                                             created_by=blockchain.created_by,
-                                             created_at=blockchain.created_at,
+                                             created_by=blockchain.created_by, created_at=blockchain.created_at,
                                              updated_at=blockchain.updated_at)
                 for blockchain in blockchains]
 
@@ -38,6 +37,5 @@ class BlockchainRepository(BaseRepository):
                                             chain_id=blockchain.chain_id,
                                             block_confirmation=blockchain.block_confirmation,
                                             is_extension_available=blockchain.is_extension_available,
-                                            created_by=blockchain.created_by,
-                                            created_at=blockchain.created_at,
+                                            created_by=blockchain.created_by, created_at=blockchain.created_at,
                                             updated_at=blockchain.updated_at)

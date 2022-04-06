@@ -1,9 +1,11 @@
 import json
-import requests
+import os
 from decimal import Decimal
 from http import HTTPStatus
+
+import requests
+
 from common.logger import get_logger
-from config import CARDANO_SERVICE_API
 from constants.entity import CardanoAPIEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from utils.exceptions import InternalServerErrorException
@@ -16,7 +18,7 @@ class CardanoService:
     @staticmethod
     def get_deposit_address(token_name):
         logger.info(f"Getting the deposit address for the token={token_name}")
-        base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+        base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
                                                error_details=ErrorDetails[
@@ -40,18 +42,20 @@ class CardanoService:
         return response
 
     @staticmethod
-    def burn_token(address, token, tx_amount, tx_details, deposit_address_details):
+    def burn_token(conversion_id, address, token, tx_amount, tx_details, deposit_address_details):
         logger.info(
-            f"Calling the burn token service on cardano with inputs as address={address}, {token}, tx_amount={tx_amount}, "
+            f"Calling the burn token service on cardano with inputs as conversion_id={conversion_id}, "
+            f"address={address}, {token}, tx_amount={tx_amount}, "
             f"tx_details={tx_details}, deposit_address_details={deposit_address_details}")
 
-        base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+        base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value,
                                                error_details=ErrorDetails[
                                                    ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value].value)
         try:
-            payload = CardanoService.generate_payload_format(address=address, tx_amount=str(Decimal(float(tx_amount))),
+            payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
+                                                             tx_amount=str(Decimal(float(tx_amount))),
                                                              tx_details=tx_details)
             payload[CardanoAPIEntities.DEPOSIT_ADDRESS_DETAILS.value] = deposit_address_details
             logger.info(f"Payload for burning ={json.dumps(payload)}")
@@ -73,18 +77,21 @@ class CardanoService:
         return response
 
     @staticmethod
-    def mint_token(address, token, tx_amount, tx_details, source_address):
+    def mint_token(conversion_id, address, token, tx_amount, tx_details, source_address):
         logger.info(
-            f"Calling the mint token service on cardano with inputs as address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, source_address={source_address}")
+            f"Calling the mint token service on cardano with inputs as conversion_id={conversion_id}, "
+            f"address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, "
+            f"source_address={source_address}")
 
-        base_path = CARDANO_SERVICE_API['CARDANO_SERVICE_BASE_PATH']
+        base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
                                                error_details=ErrorDetails[
                                                    ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
 
         try:
-            payload = CardanoService.generate_payload_format(address=address, tx_amount=str(Decimal(float(tx_amount))),
+            payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
+                                                             tx_amount=str(Decimal(float(tx_amount))),
                                                              tx_details=tx_details)
             payload[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
             logger.info(f"Payload for minting = {json.dumps(payload)}")
@@ -114,8 +121,9 @@ class CardanoService:
         }
 
     @staticmethod
-    def generate_payload_format(address, tx_amount, tx_details):
+    def generate_payload_format(conversion_id, address, tx_amount, tx_details):
         return {
+            CardanoAPIEntities.CONVERSION_ID.value: conversion_id,
             CardanoAPIEntities.CARDANO_ADDRESS.value: address, CardanoAPIEntities.AMOUNT.value: tx_amount,
             CardanoAPIEntities.TRANSACTION_DETAILS.value: tx_details
         }

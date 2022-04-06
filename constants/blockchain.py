@@ -36,5 +36,9 @@ class CardanoTransactionEntities(Enum):
     BLOCK_TIME = "block_time"
 
 
+class EthereumBlockchainEntities(Enum):
+    BLOCK_NUMBER = "blockNumber"
+
+
 class CardanoBlockEntities(Enum):
     CONFIRMATIONS = "confirmations"

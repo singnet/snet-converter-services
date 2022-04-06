@@ -61,12 +61,11 @@ def create_conversion_transaction(row_id, id, conversion_id, status, created_by,
                                         created_by=created_by, created_at=created_at, updated_at=updated_at)
 
 
-def create_transaction(row_id, id, conversion_transaction_id, from_token_id, to_token_id, transaction_visibility,
+def create_transaction(row_id, id, conversion_transaction_id, token_id, transaction_visibility,
                        transaction_operation, transaction_hash, transaction_amount, confirmation, status, created_by,
-                       created_at,updated_at):
+                       created_at, updated_at):
     return TransactionDBModel(row_id=row_id, id=id, conversion_transaction_id=conversion_transaction_id,
-                              from_token_id=from_token_id, to_token_id=to_token_id,
-                              transaction_visibility=transaction_visibility,
+                              token_id=token_id, transaction_visibility=transaction_visibility,
                               transaction_operation=transaction_operation, transaction_hash=transaction_hash,
                               transaction_amount=transaction_amount, confirmation=confirmation, status=status,
                               created_by=created_by,
@@ -210,7 +209,7 @@ class TestVariables:
         ]
         self.conversion = [create_conversion(row_id=self.conversion_id_1, id="7298bce110974411b260cac758b37ee0",
                                              wallet_pair_id=self.wallet_pair_id_1, deposit_amount=133305000,
-                                             claim_amount=(133305000-1999575), fee_amount=1999575,
+                                             claim_amount=(133305000 - 1999575), fee_amount=1999575,
                                              status=ConversionStatus.USER_INITIATED.value,
                                              claim_signature=None, created_by=DAPP_AS_CREATED_BY,
                                              created_at=created_at,
@@ -246,7 +245,7 @@ class TestVariables:
         self.transaction = [
             create_transaction(row_id=self.transaction_id_1, id="391be6385abf4b608bdd20a44acd6abc",
                                conversion_transaction_id=self.conversion_transaction_id_2,
-                               from_token_id=self.token_row_id_1, to_token_id=self.token_row_id_1,
+                               token_id=self.token_row_id_1,
                                transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                transaction_operation=TransactionOperation.TOKEN_RECEIVED.value,
                                transaction_hash="22477fd4ea994689a04646cbbaafd133",
@@ -256,7 +255,7 @@ class TestVariables:
                                created_at=created_at, updated_at=updated_at),
             create_transaction(row_id=self.transaction_id_3, id="1df60a2369f34247a5dc3ed29a8eef67",
                                conversion_transaction_id=self.conversion_transaction_id_2,
-                               from_token_id=self.token_row_id_2, to_token_id=self.token_row_id_2,
+                               token_id=self.token_row_id_2,
                                transaction_visibility=TransactionVisibility.EXTERNAL.value,
                                transaction_operation=TransactionOperation.TOKEN_RECEIVED.value,
                                transaction_hash="22477fd4ea994689a04646cbbaafd133",
@@ -274,8 +273,10 @@ def prepare_consumer_cardano_event_format(message):
     return input_event
 
 
-def prepare_consumer_ethereum_event_format(name, data):
-    return {"name": name, "data": data}
+def prepare_consumer_ethereum_event_format(message):
+    records = [{"body": json.dumps(message)}]
+    input_event = {"Records": records}
+    return input_event
 
 
 def prepare_converter_bridge_event_format(message):

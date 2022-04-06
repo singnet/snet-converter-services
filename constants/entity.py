@@ -113,14 +113,26 @@ class TransactionEntities(Enum):
     ROW_ID = "row_id"
     ID = "id"
     CONVERSION_TRANSACTION_ID = "transaction_conversion_id"
-    FROM_TOKEN_ID = "from_token_id"
-    TO_TOKEN_ID = "to_token_id"
+    TOKEN_ID = "token_id"
     TRANSACTION_VISIBILITY = "transaction_visibility"
     TRANSACTION_OPERATION = "transaction_operation"
     TRANSACTION_HASH = "transaction_hash"
     TRANSACTION_AMOUNT = "transaction_amount"
     CONFIRMATION = "confirmation"
     STATUS = "status"
+    CREATED_BY = "created_by"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+    CONVERSION_TRANSACTION = "conversion_transaction"
+    TOKEN = "token"
+
+
+class MessagePoolEntities(Enum):
+    ROW_ID = "row_id"
+    ID = "id"
+    NAME = "name"
+    MESSAGE_GROUP_ID = "message_group_id"
+    IS_ENABLED = "is_enabled"
     CREATED_BY = "created_by"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
@@ -191,6 +203,7 @@ class EthereumEventConsumerEntities(Enum):
     DATA = "data"
     TOKEN_HOLDER = "tokenHolder"
     AMOUNT = "amount"
+    ARGS = "args"
 
 
 class EthereumEventType(Enum):
@@ -218,8 +231,15 @@ class CardanoAPIEntities(Enum):
     INDEX = "index"
     ROLE = "role"
     DATA = "data"
+    CONVERSION_ID = "conversion_id"
 
 
 class WalletPairResponseEntities(Enum):
     ADDRESSES = "addresses"
     CARDANO_ADDRESS = "cardano_address"
+
+
+class SQSEntities(Enum):
+    QUEUE_URL = "QueueUrl"
+    MESSAGE_BODY = "MessageBody"
+    MESSAGE_GROUP_ID = "MessageGroupId"

@@ -10,16 +10,21 @@ from utils.exceptions import InternalServerErrorException
 logger = get_logger(__name__)
 
 
-def convert_consumer_event(event):
+def format_ethereum_event(event):
     new_format = []
     name = event.get(EthereumEventConsumerEntities.NAME.value, None)
     data = event.get(EthereumEventConsumerEntities.DATA.value, None)
+    if name and data:
+        new_format.append(consumer_required_format(blockchain_name=BlockchainName.ETHEREUM.value,
+                                                   blockchain_event=event))
+    return new_format
+
+
+def convert_consumer_event(event):
+    new_format = []
     records = event.get(CardanoEventConsumer.RECORDS.value, [])
     try:
-        if name and data:
-            new_format.append(consumer_required_format(blockchain_name=BlockchainName.ETHEREUM.value,
-                                                       blockchain_event=event))
-        elif records:
+        if records:
             for record in records:
                 body = record.get(CardanoEventConsumer.BODY.value)
                 if body:
@@ -29,6 +34,9 @@ def convert_consumer_event(event):
                         parsed_message = json.loads(message)
                         new_format.append(consumer_required_format(blockchain_name=BlockchainName.CARDANO.value,
                                                                    blockchain_event=parsed_message))
+                    else:
+                        new_format.append(parsed_body)
+
     except Exception as e:
         logger.info(f"Error while trying to parse the input={json.dumps(event)} with error of {e}")
         raise InternalServerErrorException(error_code=ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value,
