@@ -190,6 +190,25 @@ def get_conversion_count_by_status(event, context):
 
 
 @exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def get_transaction_by_conversion_id(event, context):
+    logger.debug(f"Getting the transactions for the conversion event request={json.dumps(event)}")
+    validate_schema(filepath=os.path.dirname(file_path) + "/../../documentation/models/conversion.json",
+                    schema_key="GetTransactionByConversionInput", input_json=event)
+
+    query_param = get_valid_value(event, HttpRequestParamType.REQUEST_PARAM_QUERY_STRING.value)
+    conversion_id = query_param.get(ApiParameters.CONVERSION_ID.value, None)
+
+    if not conversion_id:
+        raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
+                                  error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
+
+    response = conversion_service.get_transaction_by_conversion_id(conversion_id=conversion_id)
+    return generate_lambda_response(HTTPStatus.OK.value,
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
+                                                       error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
 def expire_conversion(event, context):
     logger.debug(f"Job for expiring the conversion request={json.dumps(event)}")
     conversion_service.expire_conversion()

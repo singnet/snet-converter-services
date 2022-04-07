@@ -7,7 +7,7 @@ from sqlalchemy import distinct
 
 from application.handler.conversion_handlers import create_conversion_request, get_conversion_history, \
     create_transaction_for_conversion, claim_conversion, get_conversion, get_conversion_count_by_status, \
-    expire_conversion
+    expire_conversion, get_transaction_by_conversion_id
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.lambdas import LambdaResponseStatus
 from constants.status import ConversionStatus
@@ -931,6 +931,67 @@ class TestConversion(unittest.TestCase):
         conversions = conversion_repo.session.query(ConversionDBModel).filter(
             ConversionDBModel.status == ConversionStatus.EXPIRED.value).all()
         self.assertEqual(len(conversions), 2)
+
+    @patch("common.utils.Utils.report_slack")
+    def test_get_transaction_by_conversion_id(self, mock_report_slack):
+        bad_request_schema_not_matching = {'status': 'failed', 'data': None,
+                                           'error': {'code': 'E0003', 'message': 'BAD_REQUEST',
+                                                     'details': 'Schema is not matching with request'}}
+        bad_request_property_value_empty = {'status': 'failed', 'data': None,
+                                            'error': {'code': 'E0005', 'message': 'BAD_REQUEST',
+                                                      'details': 'Property value is empty'}}
+        bad_request_invalid_conversion_id = {'status': 'failed', 'data': None,
+                                             'error': {'code': 'E0008', 'message': 'BAD_REQUEST',
+                                                       'details': 'Invalid conversion id provided'}}
+        success_response_no_transactions = {'status': 'success', 'data': [],
+                                            'error': {'code': None, 'message': None, 'details': None}}
+        success_response_with_transactions = {'status': 'success', 'data': [
+            {'id': '391be6385abf4b608bdd20a44acd6abc', 'transaction_operation': 'TOKEN_RECEIVED',
+             'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
+             'confirmation': 10, 'status': 'SUCCESS', 'created_at': '2022-01-12 04:10:54',
+             'updated_at': '2022-01-12 04:10:54',
+             'token': {'name': 'Singularity Ethereum', 'symbol': 'AGIX', 'allowed_decimal': 5,
+                       'blockchain': {'name': 'Ethereum', 'symbol': 'ETH', 'chain_id': 42}}},
+            {'id': '1df60a2369f34247a5dc3ed29a8eef67', 'transaction_operation': 'TOKEN_RECEIVED',
+             'transaction_hash': '22477fd4ea994689a04646cbbaafd133', 'transaction_amount': '1.66305E+18',
+             'confirmation': 10, 'status': 'WAITING_FOR_CONFIRMATION', 'created_at': '2022-01-12 04:10:54',
+             'updated_at': '2022-01-12 04:10:54',
+             'token': {'name': 'Singularity Cardano', 'symbol': 'AGIX', 'allowed_decimal': 10,
+                       'blockchain': {'name': 'Cardano', 'symbol': 'ADA', 'chain_id': 2}}}],
+                                              'error': {'code': None, 'message': None, 'details': None}}
+
+        event = dict()
+
+        # bad requests
+        response = get_transaction_by_conversion_id(event, None)
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_schema_not_matching)
+
+        event["queryStringParameters"] = dict()
+        response = get_transaction_by_conversion_id(event, None)
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_schema_not_matching)
+
+        event["queryStringParameters"]["conversion_id"] = ""
+        response = get_transaction_by_conversion_id(event, None)
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_property_value_empty)
+
+        event["queryStringParameters"]["conversion_id"] = "random id"
+        response = get_transaction_by_conversion_id(event, None)
+        body = json.loads(response["body"])
+        self.assertEqual(body, bad_request_invalid_conversion_id)
+
+        # valid requests
+        event["queryStringParameters"]["conversion_id"] = "7298bce110974411b260cac758b37ee0"
+        response = get_transaction_by_conversion_id(event, None)
+        body = json.loads(response["body"])
+        self.assertEqual(body, success_response_no_transactions)
+
+        event["queryStringParameters"]["conversion_id"] = "51769f201e46446fb61a9c197cb0706b"
+        response = get_transaction_by_conversion_id(event, None)
+        body = json.loads(response["body"])
+        self.assertEqual(body, success_response_with_transactions)
 
     def tearDown(self):
         TestConversion.delete_all_tables()

@@ -136,6 +136,11 @@ custom:
         contentType: "application/json"
         schema: ${file(documentation/models/conversion.json):GetConversionStatusCountOutput}
 
+      - name: "GetTransactionByConversionOutput"
+        description: "Get Transaction By Conversion Output"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):GetTransactionByConversionOutput}
+
 package:
   patterns:
     - "!.circleci/**"
@@ -550,6 +555,42 @@ functions:
                   description: "Getting the  conversion history"
                 responseModels:
                   "application/json": "GetConversionHistoryOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+
+  get_transaction_by_conversion_id:
+    handler: application/handler/conversion_handlers.get_transaction_by_conversion_id
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/transaction
+          method: get
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyParams
+          request:
+            parameters:
+              querystrings:
+                conversion_id: true
+          documentation:
+            summary: "Getting the transaction for the given conversion id"
+            description: "Getting the transaction for the given conversion id"
+            tags:
+              - "Transaction"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Getting the transactions"
+                responseModels:
+                  "application/json": "GetTransactionByConversionOutput"
               - statusCode: "403"
                 responseModels:
                   "application/json": "ApiErrorMessage"

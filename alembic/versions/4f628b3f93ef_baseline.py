@@ -1,8 +1,8 @@
 """baseline
 
-Revision ID: 4b9c0afa0a12
+Revision ID: 4f628b3f93ef
 Revises: 
-Create Date: 2022-02-28 08:56:38.959094
+Create Date: 2022-04-07 09:32:52.832717
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4b9c0afa0a12'
+revision = '4f628b3f93ef'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -34,6 +34,20 @@ def upgrade():
     sa.PrimaryKeyConstraint('row_id'),
     sa.UniqueConstraint('id'),
     sa.UniqueConstraint('name', 'symbol')
+    )
+    op.create_table('message_group_pool',
+    sa.Column('row_id', sa.BIGINT(), autoincrement=True, nullable=False),
+    sa.Column('id', sa.VARCHAR(length=50), nullable=False),
+    sa.Column('name', sa.VARCHAR(length=50), nullable=False),
+    sa.Column('message_group_id', sa.VARCHAR(length=30), nullable=False),
+    sa.Column('trigger_count', sa.BIGINT(), nullable=True),
+    sa.Column('is_enabled', sa.BOOLEAN(), nullable=True),
+    sa.Column('created_by', sa.VARCHAR(length=50), nullable=False),
+    sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
+    sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False),
+    sa.PrimaryKeyConstraint('row_id'),
+    sa.UniqueConstraint('id'),
+    sa.UniqueConstraint('message_group_id')
     )
     op.create_table('token',
     sa.Column('row_id', sa.BIGINT(), autoincrement=True, nullable=False),
@@ -93,6 +107,7 @@ def upgrade():
     sa.Column('from_address', sa.VARCHAR(length=250), nullable=False),
     sa.Column('to_address', sa.VARCHAR(length=250), nullable=False),
     sa.Column('deposit_address', sa.VARCHAR(length=250), nullable=True),
+    sa.Column('deposit_address_detail', sa.JSON(), nullable=True),
     sa.Column('signature', sa.VARCHAR(length=250), nullable=False),
     sa.Column('signature_metadata', sa.JSON(), nullable=False),
     sa.Column('signature_expiry', sa.TIMESTAMP(), nullable=True),
@@ -101,6 +116,7 @@ def upgrade():
     sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False),
     sa.ForeignKeyConstraint(['token_pair_id'], ['token_pair.row_id'], ),
     sa.PrimaryKeyConstraint('row_id'),
+    sa.UniqueConstraint('deposit_address'),
     sa.UniqueConstraint('id'),
     sa.UniqueConstraint('token_pair_id', 'from_address', 'to_address')
     )
@@ -109,8 +125,8 @@ def upgrade():
     sa.Column('id', sa.VARCHAR(length=50), nullable=False),
     sa.Column('wallet_pair_id', sa.BIGINT(), nullable=False),
     sa.Column('deposit_amount', sa.DECIMAL(precision=64, scale=0), nullable=False),
-    sa.Column('claim_amount', sa.DECIMAL(precision=64, scale=0), nullable=True),
-    sa.Column('fee_amount', sa.DECIMAL(precision=64, scale=0), nullable=True),
+    sa.Column('claim_amount', sa.DECIMAL(precision=64, scale=0), nullable=False),
+    sa.Column('fee_amount', sa.DECIMAL(precision=64, scale=0), nullable=False),
     sa.Column('status', sa.VARCHAR(length=30), nullable=False),
     sa.Column('claim_signature', sa.VARCHAR(length=250), nullable=True),
     sa.Column('created_by', sa.VARCHAR(length=50), nullable=False),
@@ -136,19 +152,18 @@ def upgrade():
     sa.Column('row_id', sa.BIGINT(), autoincrement=True, nullable=False),
     sa.Column('id', sa.VARCHAR(length=50), nullable=False),
     sa.Column('conversion_transaction_id', sa.BIGINT(), nullable=False),
-    sa.Column('from_token_id', sa.BIGINT(), nullable=False),
-    sa.Column('to_token_id', sa.BIGINT(), nullable=False),
+    sa.Column('token_id', sa.BIGINT(), nullable=False),
     sa.Column('transaction_visibility', sa.VARCHAR(length=30), nullable=True),
     sa.Column('transaction_operation', sa.VARCHAR(length=30), nullable=True),
     sa.Column('transaction_hash', sa.VARCHAR(length=250), nullable=True),
     sa.Column('transaction_amount', sa.DECIMAL(precision=50, scale=20), nullable=True),
+    sa.Column('confirmation', sa.INTEGER(), nullable=False),
     sa.Column('status', sa.VARCHAR(length=30), nullable=True),
     sa.Column('created_by', sa.VARCHAR(length=50), nullable=False),
     sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
     sa.Column('updated_at', sa.TIMESTAMP(), server_default=sa.text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'), nullable=False),
     sa.ForeignKeyConstraint(['conversion_transaction_id'], ['conversion_transaction.row_id'], ),
-    sa.ForeignKeyConstraint(['from_token_id'], ['token.row_id'], ),
-    sa.ForeignKeyConstraint(['to_token_id'], ['token.row_id'], ),
+    sa.ForeignKeyConstraint(['token_id'], ['token.row_id'], ),
     sa.PrimaryKeyConstraint('row_id'),
     sa.UniqueConstraint('id')
     )
@@ -164,5 +179,6 @@ def downgrade():
     op.drop_table('token_pair')
     op.drop_table('conversion_fee')
     op.drop_table('token')
+    op.drop_table('message_group_pool')
     op.drop_table('blockchain')
     # ### end Alembic commands ###
