@@ -25,6 +25,29 @@ class ConversionRepository(BaseRepository):
         return ConversionFactory.conversion_status_count(status_counts)
 
     @read_from_db()
+    def get_conversion_only(self, conversion_id):
+        conversion = self.session.query(ConversionDBModel.row_id, ConversionDBModel.id,
+                                        ConversionDBModel.wallet_pair_id, ConversionDBModel.deposit_amount,
+                                        ConversionDBModel.claim_amount, ConversionDBModel.fee_amount,
+                                        ConversionDBModel.status, ConversionDBModel.claim_signature,
+                                        ConversionDBModel.created_by, ConversionDBModel.created_at,
+                                        ConversionDBModel.updated_at) \
+            .filter(ConversionDBModel.id == conversion_id).first()
+
+        if conversion is None:
+            return None
+
+        return ConversionFactory.conversion(row_id=conversion.row_id, id=conversion.id,
+                                            wallet_pair_id=conversion.wallet_pair_id,
+                                            deposit_amount=conversion.deposit_amount,
+                                            claim_amount=conversion.claim_amount,
+                                            fee_amount=conversion.fee_amount, status=conversion.status,
+                                            claim_signature=conversion.claim_signature,
+                                            created_by=conversion.created_by,
+                                            created_at=conversion.created_at,
+                                            updated_at=conversion.updated_at)
+
+    @read_from_db()
     def get_conversion_detail(self, conversion_id):
         conversion_detail_query = self.session.query(ConversionDBModel) \
             .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \

@@ -159,7 +159,7 @@
                         "WAITING_FOR_CLAIM",
                         "CLAIM_INITIATED",
                         "SUCCESS",
-                         "EXPIRED"
+                        "EXPIRED"
                       ]
                     },
                     "created_at": {
@@ -400,6 +400,149 @@
           "items",
           "meta"
         ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  },
+  "GetTransactionByConversionInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "queryStringParameters": {
+        "type": "object",
+        "properties": {
+          "conversion_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "conversion_id"
+        ]
+      }
+    },
+    "required": [
+      "queryStringParameters"
+    ]
+  },
+  "GetTransactionByConversionIdOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success"
+        ]
+      },
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "transaction_operation": {
+              "type": "string"
+            },
+            "transaction_hash": {
+              "type": "string"
+            },
+            "transaction_amount": {
+              "type": "string"
+            },
+            "confirmation": {
+              "type": "integer"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "TOKEN_RECEIVED",
+                "TOKEN_BURNT",
+                "TOKEN_MINTED"
+              ]
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "updated_at": {
+              "type": "string"
+            },
+            "token": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "symbol": {
+                  "type": "string"
+                },
+                "allowed_decimal": {
+                  "type": "integer"
+                },
+                "blockchain": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "chain_id": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "symbol",
+                    "chain_id"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "symbol",
+                "allowed_decimal",
+                "blockchain"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "transaction_operation",
+            "transaction_hash",
+            "transaction_amount",
+            "confirmation",
+            "status",
+            "created_at",
+            "updated_at",
+            "token"
+          ]
+        }
       },
       "error": {
         "type": "object",
@@ -833,79 +976,79 @@
     ]
   },
   "GetConversionStatusCountOutput": {
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "type": "object",
-  "properties": {
-    "status": {
-      "type": "string"
-    },
-    "data": {
-      "type": "object",
-      "properties": {
-        "overall_count": {
-          "type": "integer"
-        },
-        "each": {
-          "type": "object",
-          "properties": {
-            "SUCCESS": {
-              "type": "integer"
-            },
-            "PROCESSING": {
-              "type": "integer"
-            },
-            "USER_INITIATED": {
-              "type": "integer"
-            },
-            "CLAIM_INITIATED": {
-              "type": "integer"
-            },
-            "WAITING_FOR_CLAIM": {
-              "type": "integer"
-            },
-            "EXPIRED": {
-              "type": "integer"
-            }
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "overall_count": {
+            "type": "integer"
           },
-          "required": [
-            "SUCCESS",
-            "PROCESSING",
-            "USER_INITIATED",
-            "CLAIM_INITIATED",
-            "WAITING_FOR_CLAIM",
-            "EXPIRED"
-          ]
-        }
+          "each": {
+            "type": "object",
+            "properties": {
+              "SUCCESS": {
+                "type": "integer"
+              },
+              "PROCESSING": {
+                "type": "integer"
+              },
+              "USER_INITIATED": {
+                "type": "integer"
+              },
+              "CLAIM_INITIATED": {
+                "type": "integer"
+              },
+              "WAITING_FOR_CLAIM": {
+                "type": "integer"
+              },
+              "EXPIRED": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "SUCCESS",
+              "PROCESSING",
+              "USER_INITIATED",
+              "CLAIM_INITIATED",
+              "WAITING_FOR_CLAIM",
+              "EXPIRED"
+            ]
+          }
+        },
+        "required": [
+          "overall_count",
+          "each"
+        ]
       },
-      "required": [
-        "overall_count",
-        "each"
-      ]
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
     },
-    "error": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "null"
-        },
-        "message": {
-          "type": "null"
-        },
-        "details": {
-          "type": "null"
-        }
-      },
-      "required": [
-        "code",
-        "message",
-        "details"
-      ]
-    }
-  },
-  "required": [
-    "status",
-    "data",
-    "error"
-  ]
-}
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
+  }
 }

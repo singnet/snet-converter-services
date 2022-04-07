@@ -22,6 +22,7 @@ Converter Service│
 |   |            |__ GET      -----> (9)
 │   │   ├── transaction  
 │   │       ├── POST          ----> (4)
+|   |       |__ GET           ----> (10)
 |   |   |__ wallet
 |   |       |__ address
 |   |          |__ GET        ----> (8)
@@ -40,6 +41,7 @@ Converter Service│
  7. [Get conversion](#7-get-conversion)
  8. [Get wallets address by ethereum address](#8-get-wallets-address-by-ethereum-address)
  9. [Get conversion count by status](#9--get-conversion-count-by-status)
+ 10. [Get transaction by conversion id](#10-get-transaction-by-conversion-id)
 
 
 ## LIST OF Internal Lambda
@@ -595,7 +597,68 @@ Converter Service│
 	}
 }
 ```
+ 
+### 10. Get Transaction by conversion id 
+API Url: `{DOMAIN_URL}/{STAGE}/v1/transaction?conversion_id={conversion_id}` 
 
+  Method: `GET`
+ 
+  Query String Parameter:
+    Required `conversion_id`
+
+  Response:
+```json5
+{
+    "status": "success",
+    "data": [
+        {
+            "id": "5d8c2e08e6f34390a2ae6365b9500161",
+            "transaction_operation": "TOKEN_BURNT",
+            "transaction_hash": "0x529524dff9479d5e12071cf6ca077a59da8eeb620b0812830c307871263dbeda",
+            "transaction_amount": "1.000055E+8",
+            "confirmation": 53,
+            "status": "SUCCESS",
+            "created_at": "2022-04-06 22:41:12",
+            "updated_at": "2022-04-06 23:15:16",
+            "token": {
+                "name": "Singularity AGIX Ethereum",
+                "symbol": "AGIX",
+                "allowed_decimal": 8,
+                "blockchain": {
+                    "name": "Ethereum",
+                    "symbol": "ETH",
+                    "chain_id": 3
+                }
+            }
+        },
+        {
+            "id": "b596acdff70843fcb8c2851ee7cd5e85",
+            "transaction_operation": "TOKEN_MINTED",
+            "transaction_hash": "19dd0aab446ed6af9815edd9a80a035d08e49cefca219653d495a72254827f8b",
+            "transaction_amount": "1.000055E+8",
+            "confirmation": 19,
+            "status": "SUCCESS",
+            "created_at": "2022-04-06 23:15:23",
+            "updated_at": "2022-04-06 23:27:28",
+            "token": {
+                "name": "Singularity AGIX Cardano",
+                "symbol": "AGIX",
+                "allowed_decimal": 8,
+                "blockchain": {
+                    "name": "Cardano",
+                    "symbol": "ADA",
+                    "chain_id": 2
+                }
+            }
+        }
+    ],
+    "error": {
+        "code": null,
+        "message": null,
+        "details": null
+    }
+}
+```
 
 ###Internal Lambda
 
