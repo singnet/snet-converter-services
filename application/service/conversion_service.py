@@ -5,7 +5,7 @@ from application.service.conversion_reponse import get_latest_user_pending_conve
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
     create_transaction_response, create_transaction_for_conversion_response, get_transaction_by_hash_response, \
     claim_conversion_response, \
-    get_conversion_response, update_conversion_response, get_expiring_conversion_response
+    get_conversion_response, update_conversion_response, get_expiring_conversion_response, get_transaction_response
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.blockchain_util import BlockChainUtil
@@ -71,6 +71,16 @@ class ConversionService:
                                                               confirmation=confirmation, status=status,
                                                               created_by=created_by)
         return create_transaction_response(transaction.to_dict())
+
+    def __get_conversion_only(self, conversion_id):
+        logger.info(f"Getting only the conversion for the given conversion_id={conversion_id}")
+        conversion = self.conversion_repo.get_conversion_only(conversion_id)
+
+        if conversion is None:
+            raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
+                                      error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
+
+        return conversion.to_dict()
 
     def get_conversion(self, conversion_id):
         logger.info(f"Getting the conversion for the conversion_id={conversion_id} ")
@@ -377,6 +387,12 @@ class ConversionService:
             transaction_detail = transaction_details.get(conversion_row_id, {}).get("transactions", [])
             conversion_detail[ConversionDetailEntities.TRANSACTIONS.value] = transaction_detail
         return conversion_details
+
+    def get_transaction_by_conversion_id(self, conversion_id):
+        logger.info(f"Getting the transactions for the given conversion_id={conversion_id}")
+        conversion = self.__get_conversion_only(conversion_id=conversion_id)
+        transactions = self.get_transactions_for_conversion_row_ids(conversion_row_ids=[conversion.get(ConversionEntities.ROW_ID.value)])
+        return get_transaction_response(transactions)
 
     def get_transactions_for_conversion_row_ids(self, conversion_row_ids):
         logger.info(f"Getting the transactions for the given conversion_row_ids={conversion_row_ids}")
