@@ -83,7 +83,8 @@ def exception_handler(*decorator_args, **decorator_kwargs):
                     make_response_body(status=LambdaResponseStatus.FAILED.value, data=None,
                                        error=make_error_format(error_code=internal_server_exception_obj.error_code,
                                                                error_message=internal_server_exception_obj.error_message,
-                                                               error_details=repr(e))), cors_enabled=True)
+                                                               error_details="Oops something went wrong, Try again")),
+                    cors_enabled=True)
 
         return wrapper
 

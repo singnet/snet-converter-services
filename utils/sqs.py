@@ -1,5 +1,3 @@
-import traceback
-
 import boto3
 
 from common.logger import get_logger
