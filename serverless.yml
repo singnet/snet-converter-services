@@ -151,7 +151,7 @@ custom:
   apiGatewayCaching:
     enabled: true
     clusterSize: '0.5'
-    ttlInSeconds: 600
+    ttlInSeconds: 3600
     dataEncrypted: true
   warmup:
     default:
