@@ -367,3 +367,37 @@ class ConversionRepository(BaseRepository):
             .update({ConversionDBModel.status: ConversionStatus.EXPIRED.value}, synchronize_session=False)
 
         self.session.commit()
+
+    @read_from_db()
+    def generate_conversion_report(self, start_date, end_date):
+        from_token = aliased(TokenDBModel)
+        to_token = aliased(TokenDBModel)
+        from_blockchain = aliased(BlockChainDBModel)
+        to_blockchain = aliased(BlockChainDBModel)
+
+        conversion_status_counts_query = self.session.query(from_token.symbol.label("token"),
+                                                            from_blockchain.symbol.label("from_blockchain"),
+                                                            to_blockchain.symbol.label("to_blockchain"),
+                                                            ConversionDBModel.status.label("status"),
+                                                            func.count(ConversionDBModel.id).label("count")) \
+            .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
+            .join(TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id) \
+            .join(from_token, from_token.row_id == TokenPairDBModel.from_token_id) \
+            .join(to_token, to_token.row_id == TokenPairDBModel.to_token_id) \
+            .join(from_blockchain, from_blockchain.row_id == from_token.blockchain_id) \
+            .join(to_blockchain, to_blockchain.row_id == to_token.blockchain_id)
+
+        if start_date:
+            conversion_status_counts_query = conversion_status_counts_query.filter(
+                ConversionDBModel.created_at >= start_date)
+
+        if end_date:
+            conversion_status_counts_query = conversion_status_counts_query.filter(
+                ConversionDBModel.created_at <= end_date)
+
+        conversion_status_counts = conversion_status_counts_query.group_by(from_token.id, from_token.symbol,
+                                                                           from_blockchain.symbol,
+                                                                           to_blockchain.symbol,
+                                                                           ConversionDBModel.status).all()
+
+        return ConversionFactory.generate_conversion_report(conversion_status_counts=conversion_status_counts)

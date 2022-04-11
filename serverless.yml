@@ -892,4 +892,16 @@ functions:
           description: 'Job for expiring the conversion based on the config'
           enabled: true
 
+  generate_conversion_report:
+    handler: application/handler/conversion_handlers.generate_conversion_report
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - schedule:
+          rate: cron(0 1 * * ? *)
+          name: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-generate-conversion-report
+          description: 'Job for generating the conversion report'
+          enabled: true
+
 
