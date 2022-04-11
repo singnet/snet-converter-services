@@ -213,3 +213,11 @@ def expire_conversion(event, context):
     logger.debug(f"Job for expiring the conversion request={json.dumps(event)}")
     conversion_service.expire_conversion()
     logger.info("Successfully")
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def generate_conversion_report(event, context):
+    logger.debug(f"Generating the conversion report request={json.dumps(event)}")
+    conversion_service.generate_conversion_report()
+    logger.info("Successfully")
+

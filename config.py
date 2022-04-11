@@ -18,6 +18,14 @@ SLACK_HOOK = {
     "headers": {"Content-Type": "application/json"},
 }
 
+CONVERTER_REPORTING_SLACK_HOOK = {
+    "hostname": "",
+    "port": 443,
+    "path": "",
+    "method": "POST",
+    "headers": {"Content-Type": "application/json"},
+}
+
 BLOCKCHAIN_DETAILS = {
     "ethereum": {
         "network": {
