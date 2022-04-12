@@ -1,4 +1,3 @@
-import traceback
 import boto3
 
 from common.logger import get_logger
@@ -27,6 +26,5 @@ class SnsService:
             )
             logger.info(response)
         except Exception as e:
-            traceback.print_exc()
             logger.error(f"Unable to publish because of {e}")
             raise e

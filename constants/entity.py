@@ -243,3 +243,11 @@ class SQSEntities(Enum):
     QUEUE_URL = "QueueUrl"
     MESSAGE_BODY = "MessageBody"
     MESSAGE_GROUP_ID = "MessageGroupId"
+
+
+class ConversionReportingEntities(Enum):
+    FROM_BLOCKCHAIN = "from_blockchain"
+    TO_BLOCKCHAIN = "to_blockchain"
+    TOKEN = "token"
+    TOTAL_CONVERSION = "total_conversion"
+    EACH_CONVERSION = "each_conversion"

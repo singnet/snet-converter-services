@@ -1,3 +1,4 @@
+from constants.entity import ConversionReportingEntities
 from domain.entities.conversion import Conversion
 from domain.entities.conversion_detail import ConversionDetail
 from domain.entities.transaction import Transaction
@@ -127,3 +128,25 @@ class ConversionFactory:
             overall += count
             counts[status_count.status] = count
         return {"overall_count": overall, "each": counts}
+
+    @staticmethod
+    def generate_conversion_report(conversion_status_counts):
+        report = dict()
+        for conversion_status_count in conversion_status_counts:
+            token = conversion_status_count.token
+            from_blockchain = conversion_status_count.from_blockchain
+            to_blockchain = conversion_status_count.to_blockchain
+            count = conversion_status_count.count
+            status = conversion_status_count.status
+            key = f"{token}_{from_blockchain}_{to_blockchain}"
+            report[key] = report.get(key, {})
+            report[key][ConversionReportingEntities.TOKEN.value] = token
+            report[key][ConversionReportingEntities.FROM_BLOCKCHAIN.value] = from_blockchain
+            report[key][ConversionReportingEntities.TO_BLOCKCHAIN.value] = to_blockchain
+            report[key][ConversionReportingEntities.TOTAL_CONVERSION.value] = report[key].get(
+                ConversionReportingEntities.TOTAL_CONVERSION.value, 0) + count
+            report[key][ConversionReportingEntities.EACH_CONVERSION.value] = report[key].get(
+                ConversionReportingEntities.EACH_CONVERSION.value, [])
+            report[key][ConversionReportingEntities.EACH_CONVERSION.value].append({status: count})
+
+        return report

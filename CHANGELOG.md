@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-04-11 20:00:00 
+
+### Added
+- Added cloudwatch log retention to 30  days 
+- Enabled API GW caching  and added 2 apis to caching
+- Enabled API GW logging and lambda xray
+- Enabled lambda warmup for all API pointing lambda's
+- Added a conversion reporting lambda which runs everyday at 1 AM UTC
+
+
 ## 2022-04-07 20:00:00 
 
 ### Added

@@ -7,7 +7,7 @@ from sqlalchemy import distinct
 
 from application.handler.conversion_handlers import create_conversion_request, get_conversion_history, \
     create_transaction_for_conversion, claim_conversion, get_conversion, get_conversion_count_by_status, \
-    expire_conversion, get_transaction_by_conversion_id
+    expire_conversion, get_transaction_by_conversion_id, generate_conversion_report
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.lambdas import LambdaResponseStatus
 from constants.status import ConversionStatus
@@ -992,6 +992,11 @@ class TestConversion(unittest.TestCase):
         response = get_transaction_by_conversion_id(event, None)
         body = json.loads(response["body"])
         self.assertEqual(body, success_response_with_transactions)
+
+    @patch("common.utils.Utils.report_slack")
+    def test_generate_conversion_report(self, mock_report_slack):
+        event = dict()
+        generate_conversion_report(event, {})
 
     def tearDown(self):
         TestConversion.delete_all_tables()

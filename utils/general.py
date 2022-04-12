@@ -2,8 +2,8 @@ import json
 import math
 import uuid
 from datetime import datetime
+from datetime import timedelta
 
-import dateutil
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 
@@ -12,7 +12,7 @@ from config import BLOCKCHAIN_DETAILS
 from constants.blockchain import EthereumSupportedNetwork, CardanoSupportedNetwork, EthereumNetwork, CardanoNetwork, \
     EthereumEnvironment, CardanoEnvironment
 from constants.entity import TokenPairEntities, TokenEntities, BlockchainEntities, PaginationEntity, \
-    TransactionEntities
+    TransactionEntities, ConversionReportingEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName
 from constants.lambdas import PaginationDefaults
@@ -69,8 +69,8 @@ def datetime_in_utcnow():
     return datetime.utcnow()
 
 
-def relative_date(date_time: datetime, hours: int) -> datetime:
-    return date_time - dateutil.relativedelta.relativedelta(hours=int(hours))
+def relative_date(date_time: datetime, hours: int = 0, days: int = 0) -> datetime:
+    return date_time - timedelta(hours=int(hours), days=int(days))
 
 
 def get_blockchain_from_token_pair_details(token_pair, blockchain_conversion_type):
@@ -188,3 +188,20 @@ def get_cardano_network_url_and_project_id(chain_id):
 
 def string_to_bytes_to_hex(message):
     return f"0x{message.encode('utf-8').hex()}"
+
+
+def get_formatted_conversion_status_report(start_date, end_date, report):
+    content = "\nHey there :wave: \n ********************************************************************************"
+    content = content + f"\nConversion Report from :timer_clock: {start_date} to {end_date} :timer_clock:"
+    content = content + "\n********************************************************************************"
+    content = content + "\nFrom BC\tTo BC\tToken\tConversion Count\tConversion Count by Status"
+    content = content + "\n---------------------------------------------------------------------------------------"
+    for key, value in report.items():
+        from_blockchain = value.get(ConversionReportingEntities.FROM_BLOCKCHAIN.value)
+        to_blockchain = value.get(ConversionReportingEntities.TO_BLOCKCHAIN.value)
+        token = value.get(ConversionReportingEntities.TOKEN.value)
+        total_count = value.get(ConversionReportingEntities.TOTAL_CONVERSION.value)
+        each_count = value.get(ConversionReportingEntities.EACH_CONVERSION.value)
+        content = content + f"\n{from_blockchain}\t{to_blockchain}\t{token}\t{total_count}\t{each_count}"
+    content = content + "\n------------------------------- Done :white_check_mark: -------------------------------\n"
+    return content

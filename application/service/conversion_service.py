@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 from application.service.conversion_reponse import get_latest_user_pending_conversion_request_response, \
@@ -10,7 +11,8 @@ from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
-from config import SIGNATURE_EXPIRY_BLOCK_NUMBER, EXPIRE_CONVERSION
+from common.utils import Utils
+from config import SIGNATURE_EXPIRY_BLOCK_NUMBER, EXPIRE_CONVERSION, CONVERTER_REPORTING_SLACK_HOOK
 from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity
@@ -26,7 +28,7 @@ from utils.blockchain import validate_address, validate_conversion_claim_request
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
     is_supported_network_conversion, get_ethereum_network_url, get_offset, paginate_items_response_format, \
-    datetime_in_utcnow, relative_date
+    datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report
 from utils.signature import validate_conversion_signature, get_signature
 
 logger = get_logger(__name__)
@@ -391,7 +393,8 @@ class ConversionService:
     def get_transaction_by_conversion_id(self, conversion_id):
         logger.info(f"Getting the transactions for the given conversion_id={conversion_id}")
         conversion = self.__get_conversion_only(conversion_id=conversion_id)
-        transactions = self.get_transactions_for_conversion_row_ids(conversion_row_ids=[conversion.get(ConversionEntities.ROW_ID.value)])
+        transactions = self.get_transactions_for_conversion_row_ids(
+            conversion_row_ids=[conversion.get(ConversionEntities.ROW_ID.value)])
         return get_transaction_response(transactions)
 
     def get_transactions_for_conversion_row_ids(self, conversion_row_ids):
@@ -523,3 +526,21 @@ class ConversionService:
         conversion_ids = get_expiring_conversion_response(get_response_from_entities(conversions))
         print(f"Expiring conversions total={len(conversion_ids)} conversion_ids={conversion_ids}")
         self.conversion_repo.set_conversions_to_expire(conversion_ids=conversion_ids)
+
+    def generate_conversion_report(self):
+        current_date = datetime_in_utcnow().date()
+        previous_date_str = datetime_to_str(relative_date(current_date, days=1))
+
+        # Generate report only for previous date
+        self.__generate_conversion_report(start_date=previous_date_str, end_date=previous_date_str)
+
+        # Generate report till previous date
+        self.__generate_conversion_report(start_date=None, end_date=previous_date_str)
+
+    def __generate_conversion_report(self, start_date, end_date):
+        logger.info(f"Getting the conversion report from start_date={start_date} and end_date={end_date}")
+        report = self.conversion_repo.generate_conversion_report(start_date=start_date, end_date=end_date)
+        logger.info(json.dumps(report))
+        formatted_content = get_formatted_conversion_status_report(start_date=start_date, end_date=end_date,
+                                                                   report=report)
+        Utils().report_slack(slack_msg=formatted_content, SLACK_HOOK=CONVERTER_REPORTING_SLACK_HOOK)
