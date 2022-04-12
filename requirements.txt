@@ -1,3 +1,2 @@
 blockfrost-python==0.4.2
-texttable==1.6.4
 

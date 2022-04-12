@@ -193,15 +193,17 @@ def string_to_bytes_to_hex(message):
 
 
 def get_formatted_conversion_status_report(start_date, end_date, report):
-    table_content = [["From Blockchain", "To Blockchain", "Token", "Conversion Count", "Conversion Count By Status"]]
-    t = Texttable()
+    content = "\nHey there :wave: \n ********************************************************************************"
+    content = content + f"\nConversion Report from :timer_clock: {start_date} to {end_date} :timer_clock:"
+    content = content + "\n********************************************************************************"
+    content = content + "\nFrom BC\tTo BC\tToken\tConversion Count\tConversion Count by Status"
+    content = content + "\n---------------------------------------------------------------------------------------"
     for key, value in report.items():
         from_blockchain = value.get(ConversionReportingEntities.FROM_BLOCKCHAIN.value)
         to_blockchain = value.get(ConversionReportingEntities.TO_BLOCKCHAIN.value)
         token = value.get(ConversionReportingEntities.TOKEN.value)
         total_count = value.get(ConversionReportingEntities.TOTAL_CONVERSION.value)
         each_count = value.get(ConversionReportingEntities.EACH_CONVERSION.value)
-        table_content.append([from_blockchain, to_blockchain, token, total_count, each_count])
-
-    t.add_rows(table_content)
-    return f"\nConversion report from start_date={start_date} to end_date={end_date}\n{t.draw()}"
+        content = content + f"\n{from_blockchain}\t{to_blockchain}\t{token}\t{total_count}\t{each_count}"
+    content = content + "\n------------------------------- Done :white_check_mark: -------------------------------\n"
+    return content

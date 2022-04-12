@@ -389,11 +389,11 @@ class ConversionRepository(BaseRepository):
 
         if start_date:
             conversion_status_counts_query = conversion_status_counts_query.filter(
-                ConversionDBModel.created_at >= start_date)
+                func.date(ConversionDBModel.created_at) >= start_date)
 
         if end_date:
             conversion_status_counts_query = conversion_status_counts_query.filter(
-                ConversionDBModel.created_at <= end_date)
+                func.date(ConversionDBModel.created_at) <= end_date)
 
         conversion_status_counts = conversion_status_counts_query.group_by(from_token.id, from_token.symbol,
                                                                            from_blockchain.symbol,
