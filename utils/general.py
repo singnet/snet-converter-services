@@ -4,10 +4,8 @@ import uuid
 from datetime import datetime
 from datetime import timedelta
 
-import dateutil
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
-from texttable import Texttable
 
 from common.logger import get_logger
 from config import BLOCKCHAIN_DETAILS
