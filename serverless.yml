@@ -57,6 +57,13 @@ custom:
     subnetIds:
       - ${file(./config.${self:provider.stage}.json):VPC1}
       - ${file(./config.${self:provider.stage}.json):VPC2}
+  defaultVpcWithCardanoSG:
+    securityGroupIds:
+      - ${file(./config.${self:provider.stage}.json):SG1}
+      - ${file(./config.${self:provider.stage}.json):CardanoSG}
+    subnetIds:
+      - ${file(./config.${self:provider.stage}.json):VPC1}
+      - ${file(./config.${self:provider.stage}.json):VPC2}
   defaultCors:
     origin: ${file(./config.${self:provider.stage}.json):ORIGIN}
     headers:
@@ -772,7 +779,7 @@ functions:
   converter_bridge1:
     handler: application/handler/consumer_handlers.converter_bridge
     role: ${file(./config.${self:provider.stage}.json):ROLE}
-    vpc: ${self:custom.defaultVpc}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
     layers: ${self:custom.defaultLayers}
     environment:
       CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_1}
@@ -789,7 +796,7 @@ functions:
   converter_bridge2:
     handler: application/handler/consumer_handlers.converter_bridge
     role: ${file(./config.${self:provider.stage}.json):ROLE}
-    vpc: ${self:custom.defaultVpc}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
     layers: ${self:custom.defaultLayers}
     environment:
       CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_2}
@@ -806,7 +813,7 @@ functions:
   converter_bridge3:
     handler: application/handler/consumer_handlers.converter_bridge
     role: ${file(./config.${self:provider.stage}.json):ROLE}
-    vpc: ${self:custom.defaultVpc}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
     layers: ${self:custom.defaultLayers}
     environment:
       CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_3}
@@ -823,7 +830,7 @@ functions:
   converter_bridge4:
     handler: application/handler/consumer_handlers.converter_bridge
     role: ${file(./config.${self:provider.stage}.json):ROLE}
-    vpc: ${self:custom.defaultVpc}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
     layers: ${self:custom.defaultLayers}
     environment:
       CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_SERVICE_BASE_PATH_4}
