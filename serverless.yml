@@ -217,7 +217,7 @@ resources:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-event-consumer
-        VisibilityTimeout: 100
+        VisibilityTimeout: 60
         ReceiveMessageWaitTimeSeconds: 20
         MessageRetentionPeriod: 7200
         RedrivePolicy:
@@ -498,7 +498,7 @@ functions:
   create_conversion_request:
     handler: application/handler/conversion_handlers.create_conversion_request
     role: ${file(./config.${self:provider.stage}.json):ROLE_WITH_SM}
-    vpc: ${self:custom.defaultVpc}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
     layers: ${self:custom.defaultLayers}
     warmup: true
     environment:
