@@ -74,6 +74,8 @@ custom:
       - X-Amz-Security-Token
       - X-Amz-User-Agent
       - x-requested-with
+  defaultQueueRetry: 5
+  defaultMessageRetentionPeriod: 14400
   documentation:
     models:
       - name: "ApiErrorMessage"
@@ -219,7 +221,7 @@ resources:
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-event-consumer
         VisibilityTimeout: 60
         ReceiveMessageWaitTimeSeconds: 20
-        MessageRetentionPeriod: 7200
+        MessageRetentionPeriod: ${self:custom.defaultMessageRetentionPeriod}
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt converterEventConsumerDLQQueue.Arn
           maxReceiveCount: 15
@@ -283,12 +285,12 @@ resources:
         FifoQueue: true
         ContentBasedDeduplication: true
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge1.fifo
-        VisibilityTimeout: 400
+        VisibilityTimeout: 320
         ReceiveMessageWaitTimeSeconds: 20
-        MessageRetentionPeriod: 7200
+        MessageRetentionPeriod: ${self:custom.defaultMessageRetentionPeriod}
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
-          maxReceiveCount: 10
+          maxReceiveCount: ${self:custom.defaultQueueRetry}
 
     converterBridgeQueue1Policy:
       Type: AWS::SQS::QueuePolicy
@@ -312,12 +314,12 @@ resources:
         FifoQueue: true
         ContentBasedDeduplication: true
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge2.fifo
-        VisibilityTimeout: 400
+        VisibilityTimeout: 320
         ReceiveMessageWaitTimeSeconds: 20
-        MessageRetentionPeriod: 7200
+        MessageRetentionPeriod: ${self:custom.defaultMessageRetentionPeriod}
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
-          maxReceiveCount: 10
+          maxReceiveCount: ${self:custom.defaultQueueRetry}
 
     converterBridgeQueue2Policy:
       Type: AWS::SQS::QueuePolicy
@@ -341,12 +343,12 @@ resources:
         FifoQueue: true
         ContentBasedDeduplication: true
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge3.fifo
-        VisibilityTimeout: 400
+        VisibilityTimeout: 320
         ReceiveMessageWaitTimeSeconds: 20
-        MessageRetentionPeriod: 7200
+        MessageRetentionPeriod: ${self:custom.defaultMessageRetentionPeriod}
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
-          maxReceiveCount: 10
+          maxReceiveCount: ${self:custom.defaultQueueRetry}
 
     converterBridgeQueue3Policy:
       Type: AWS::SQS::QueuePolicy
@@ -370,12 +372,12 @@ resources:
         FifoQueue: true
         ContentBasedDeduplication: true
         QueueName: ${file(./config.${self:provider.stage}.json):ENVIRONMENT}-converter-bridge4.fifo
-        VisibilityTimeout: 400
+        VisibilityTimeout: 320
         ReceiveMessageWaitTimeSeconds: 20
-        MessageRetentionPeriod: 7200
+        MessageRetentionPeriod: ${self:custom.defaultMessageRetentionPeriod}
         RedrivePolicy:
           deadLetterTargetArn: !GetAtt converterBridgeDLQQueue.Arn
-          maxReceiveCount: 10
+          maxReceiveCount: ${self:custom.defaultQueueRetry}
 
     converterBridgeQueue4Policy:
       Type: AWS::SQS::QueuePolicy
@@ -775,6 +777,7 @@ functions:
             Fn::GetAtt:
               - converterEventConsumerQueue
               - Arn
+          batchSize: 1
 
   converter_bridge1:
     handler: application/handler/consumer_handlers.converter_bridge
