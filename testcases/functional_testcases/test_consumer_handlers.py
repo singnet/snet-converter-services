@@ -329,14 +329,14 @@ class TestConsumer(unittest.TestCase):
                                                                      'tx_operation': 'TOKEN_BURNT'},
                                                                  'blockchain_network_id': 2}), {})
 
-        # Internal server error because this conversion id doesn't have transactions
-        self.assertRaises(InternalServerErrorException, converter_bridge,
-                          prepare_converter_bridge_event_format({'blockchain_name': 'Cardano',
-                                                                 'blockchain_event': {
-                                                                     'conversion_id': '7298bce110974411b260cac758b37ee0',
-                                                                     'tx_amount': '1E+8',
-                                                                     'tx_operation': 'TOKEN_BURNT'},
-                                                                 'blockchain_network_id': 2}), {})
+        # Bad Request error because input event won't match with generated event
+        response = converter_bridge(prepare_converter_bridge_event_format({'blockchain_name': 'Cardano',
+                                                                           'blockchain_event': {
+                                                                               'conversion_id': '7298bce110974411b260cac758b37ee0',
+                                                                               'tx_amount': '1E+8',
+                                                                               'tx_operation': 'TOKEN_BURNT'},
+                                                                           'blockchain_network_id': 2}), {})
+        self.assertEqual(response, None)
 
         conversion = conversion_repo.session.query(ConversionDBModel).filter(
             ConversionDBModel.id == "7298bce110974411b260cac758b37ee0").first()
@@ -360,14 +360,14 @@ class TestConsumer(unittest.TestCase):
                                 created_at="2022-01-12 04:10:54",
                                 updated_at="2022-01-12 04:10:54")])
 
-        # Internal server error because input event won't match with generated event
-        self.assertRaises(InternalServerErrorException, converter_bridge,
-                          prepare_converter_bridge_event_format({'blockchain_name': 'Cardano',
-                                                                 'blockchain_event': {
-                                                                     'conversion_id': '7298bce110974411b260cac758b37ee0',
-                                                                     'tx_amount': '1E+8',
-                                                                     'tx_operation': 'TOKEN_BURNT'},
-                                                                 'blockchain_network_id': 2}), {})
+        # Bad Request error because input event won't match with generated event
+        response = converter_bridge(prepare_converter_bridge_event_format({'blockchain_name': 'Cardano',
+                                                                           'blockchain_event': {
+                                                                               'conversion_id': '7298bce110974411b260cac758b37ee0',
+                                                                               'tx_amount': '1E+8',
+                                                                               'tx_operation': 'TOKEN_BURNT'},
+                                                                           'blockchain_network_id': 2}), {})
+        self.assertEqual(response, None)
 
         # valid request
         mock_get_block.return_value = {"confirmations": 0}

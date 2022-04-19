@@ -10,7 +10,7 @@ from utils.exceptions import InternalServerErrorException
 logger = get_logger(__name__)
 
 
-def format_ethereum_event(event):
+def format_ethereum_event(event) -> list:
     new_format = []
     name = event.get(EthereumEventConsumerEntities.NAME.value, None)
     data = event.get(EthereumEventConsumerEntities.DATA.value, None)
@@ -20,7 +20,7 @@ def format_ethereum_event(event):
     return new_format
 
 
-def convert_consumer_event(event):
+def convert_consumer_event(event) -> list:
     new_format = []
     records = event.get(CardanoEventConsumer.RECORDS.value, [])
     try:
@@ -52,7 +52,7 @@ def consumer_required_format(blockchain_name, blockchain_event):
     }
 
 
-def convert_converter_bridge_event(event):
+def convert_converter_bridge_event(event) -> list:
     new_format = []
     records = event.get(ConverterBridgeEntities.RECORDS.value, [])
     try:

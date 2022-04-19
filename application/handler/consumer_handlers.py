@@ -20,6 +20,7 @@ logger = get_logger(__name__)
 def post_converter_ethereum_events_to_queue(event, context):
     logger.debug(f"Posting ethereum events to queue event={json.dumps(event)}")
     new_format = format_ethereum_event(event=event)
+    logger.info(f"Total events received={len(new_format)}")
     for event in new_format:
         ConsumerService.post_converter_ethereum_events_to_queue(event)
 
@@ -28,6 +29,7 @@ def post_converter_ethereum_events_to_queue(event, context):
 def converter_event_consumer(event, context):
     logger.debug(f"Confirm and trigger transaction process request event={json.dumps(event)}")
     new_format = convert_consumer_event(event=event)
+    logger.info(f"Total events received={len(new_format)}")
     for event in new_format:
         consumer_service.converter_event_consumer(payload=event)
 
@@ -36,5 +38,6 @@ def converter_event_consumer(event, context):
 def converter_bridge(event, context):
     logger.debug(f"Converter bridge request event={json.dumps(event)}")
     new_format = convert_converter_bridge_event(event=event)
+    logger.info(f"Total events received={len(new_format)}")
     for event in new_format:
         consumer_service.converter_bridge(payload=event)
