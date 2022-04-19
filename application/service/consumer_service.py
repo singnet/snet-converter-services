@@ -140,6 +140,7 @@ class ConsumerService:
                                                          tx_status=TransactionStatus.SUCCESS.value)
 
         conversion_id = conversion.get(ConversionEntities.ID.value)
+        logger.info(f"Conversion id= {conversion_id}")
         conversion_complete_detail = self.conversion_service.get_conversion_complete_detail(conversion_id=conversion_id)
 
         if not conversion_complete_detail:
@@ -353,9 +354,8 @@ class ConsumerService:
             print("Successfully processed the request")
         else:
             logger.info("Unable to match the request activity event")
-            raise InternalServerErrorException(error_code=ErrorCode.ACTIVITY_EVENT_NOT_MATCHING.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.ACTIVITY_EVENT_NOT_MATCHING.value].value)
+            raise BadRequestException(error_code=ErrorCode.ACTIVITY_EVENT_NOT_MATCHING.value,
+                                      error_details=ErrorDetails[ErrorCode.ACTIVITY_EVENT_NOT_MATCHING.value].value)
 
     def process_converter_bridge_request(self, conversion_complete_detail, payload):
         logger.info("Processing the conversion bridge request")
