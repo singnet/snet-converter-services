@@ -251,3 +251,6 @@ class ConversionReportingEntities(Enum):
     TOKEN = "token"
     TOTAL_CONVERSION = "total_conversion"
     EACH_CONVERSION = "each_conversion"
+    AMOUNT = "amount"
+    STATUS = "status"
+    COUNT = "count"
