@@ -138,6 +138,7 @@ class ConversionFactory:
             to_blockchain = conversion_status_count.to_blockchain
             count = conversion_status_count.count
             status = conversion_status_count.status
+            amount = str(conversion_status_count.amount)
             key = f"{token}_{from_blockchain}_{to_blockchain}"
             report[key] = report.get(key, {})
             report[key][ConversionReportingEntities.TOKEN.value] = token
@@ -147,6 +148,8 @@ class ConversionFactory:
                 ConversionReportingEntities.TOTAL_CONVERSION.value, 0) + count
             report[key][ConversionReportingEntities.EACH_CONVERSION.value] = report[key].get(
                 ConversionReportingEntities.EACH_CONVERSION.value, [])
-            report[key][ConversionReportingEntities.EACH_CONVERSION.value].append({status: count})
+            report[key][ConversionReportingEntities.EACH_CONVERSION.value].append(
+                {ConversionReportingEntities.STATUS.value: status, ConversionReportingEntities.COUNT.value: count,
+                 ConversionReportingEntities.AMOUNT.value: amount})
 
         return report
