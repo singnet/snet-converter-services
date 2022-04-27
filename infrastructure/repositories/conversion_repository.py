@@ -379,7 +379,8 @@ class ConversionRepository(BaseRepository):
                                                             from_blockchain.symbol.label("from_blockchain"),
                                                             to_blockchain.symbol.label("to_blockchain"),
                                                             ConversionDBModel.status.label("status"),
-                                                            func.count(ConversionDBModel.id).label("count")) \
+                                                            func.count(ConversionDBModel.id).label("count"),
+                                                            func.sum(ConversionDBModel.claim_amount).label("amount")) \
             .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
             .join(TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id) \
             .join(from_token, from_token.row_id == TokenPairDBModel.from_token_id) \
@@ -398,6 +399,7 @@ class ConversionRepository(BaseRepository):
         conversion_status_counts = conversion_status_counts_query.group_by(from_token.id, from_token.symbol,
                                                                            from_blockchain.symbol,
                                                                            to_blockchain.symbol,
-                                                                           ConversionDBModel.status).all()
+                                                                           ConversionDBModel.status)\
+            .order_by(from_token.symbol.asc()).all()
 
         return ConversionFactory.generate_conversion_report(conversion_status_counts=conversion_status_counts)
