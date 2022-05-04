@@ -419,7 +419,7 @@ class ConsumerService:
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             tx_details = CardanoService.generate_transaction_detail(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
-                environment=db_to_blockchain_name)
+                environment=db_from_blockchain_name)
             address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                 WalletPairEntities.TO_ADDRESS.value)
             source_address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
