@@ -10,7 +10,7 @@ from application.service.pooling_service import PoolingService
 from application.service.token_service import TokenService
 from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
-from config import MESSAGE_GROUP_ID
+from config import MESSAGE_GROUP_ID, SLACK_HOOK
 from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventConsumer, EventConsumerEntity, \
     WalletPairEntities, ConversionEntities, ConverterBridgeEntities, EthereumEventConsumerEntities, EthereumEventType, \
     TransactionEntities, TokenEntities, ConversionDetailEntities, CardanoAPIEntities, TokenPairEntities, \
@@ -24,6 +24,7 @@ from utils.blockchain import get_next_activity_event_on_conversion, validate_con
     validate_conversion_request_amount, validate_consumer_event_type, convert_str_to_decimal, \
     get_current_block_confirmation, wait_until_transaction_hash_exists_in_blockchain, \
     validate_tx_hash_presence_in_blockchain
+from utils.exception_handler import bridge_exception_handler
 from utils.exceptions import BadRequestException, InternalServerErrorException, BlockConfirmationNotEnoughException
 
 logger = get_logger(__name__)
@@ -322,6 +323,7 @@ class ConsumerService:
                                                       error_details=ErrorDetails[
                                                           ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
 
+    @bridge_exception_handler(SLACK_HOOK=SLACK_HOOK, logger=logger)
     def converter_bridge(self, payload):
         logger.info(f"Converter bridge received the payload={payload}")
         blockchain_name = payload.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value)
@@ -417,7 +419,7 @@ class ConsumerService:
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             tx_details = CardanoService.generate_transaction_detail(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
-                environment=db_to_blockchain_name)
+                environment=db_from_blockchain_name)
             address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
                 WalletPairEntities.TO_ADDRESS.value)
             source_address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
