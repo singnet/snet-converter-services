@@ -319,49 +319,7 @@ Converter Service│
                             "symbol": "ETH",
                             "chain_id": 3
                         }
-                    },
-                    "transactions": [
-                        {
-                            "id": "344d1f4e88c0415c8a8d2ec464cde36c",
-                            "transaction_operation": "TOKEN_RECEIVED",
-                            "transaction_hash": "93087d747871642b883b6343f74c5e32678daf1611df7f70bcd0ba59fe9c4c1d",
-                            "transaction_amount": "1E+6",
-                            "confirmation": 3,
-                            "status": "SUCCESS",
-                            "created_at": "2022-03-23 16:41:30",
-                            "updated_at": "2022-03-23 16:41:30",
-                            "token": {
-                                "name": "Singularity NTX Cardano",
-                                "symbol": "NTX",
-                                "allowed_decimal": 6,
-                                "blockchain": {
-                                    "name": "Cardano",
-                                    "symbol": "ADA",
-                                    "chain_id": 2
-                                }
-                            }
-                        },
-                        {
-                            "id": "3c4c0ab5d7e44b83a6215b52fa685571",
-                            "transaction_operation": "TOKEN_BURNT",
-                            "transaction_hash": "98c8b3451f30dc5009e711fa4113cfadc6462f8f0a302079a664b891d57e37d8",
-                            "transaction_amount": "1E+6",
-                            "confirmation": 3,
-                            "status": "SUCCESS",
-                            "created_at": "2022-03-23 16:41:36",
-                            "updated_at": "2022-03-23 16:43:30",
-                            "token": {
-                                "name": "Singularity NTX Cardano",
-                                "symbol": "NTX",
-                                "allowed_decimal": 6,
-                                "blockchain": {
-                                    "name": "Cardano",
-                                    "symbol": "ADA",
-                                    "chain_id": 2
-                                }
-                            }
-                        }
-                    ]
+                    }
                 },
                 {
                     "conversion": {
@@ -397,8 +355,7 @@ Converter Service│
                             "symbol": "ADA",
                             "chain_id": 2
                         }
-                    },
-                    "transactions": []
+                    }
                 }
             ],
             "meta": {

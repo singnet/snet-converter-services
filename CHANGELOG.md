@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## 2022-05-13 20:00:00 
+
+### Removed
+- Removed transaction details from transaction history api
+
 ## 2022-04-11 20:00:00 
 
 ### Added
