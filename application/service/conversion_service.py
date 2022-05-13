@@ -344,17 +344,7 @@ class ConversionService:
             conversion_history_obj = self.conversion_repo.get_conversion_history(address=address, conversion_id=None,
                                                                                  offset=offset, limit=page_size)
             conversion_history = get_response_from_entities(conversion_history_obj)
-
-            conversion_row_ids = ConversionService.get_conversion_row_ids(conversion_details=conversion_history)
-            transaction_details = dict()
-            if conversion_row_ids:
-                transaction_details = self.get_transactions_for_conversion_row_ids(
-                    conversion_row_ids=conversion_row_ids)
-            transaction_details = self.format_transactions_with_conversion(transaction_details=transaction_details)
-            conversion_history = self.add_transaction_detail_to_conversion_detail(conversion_details=conversion_history,
-                                                                                  transaction_details=transaction_details)
             conversion_detail_history_response = get_conversion_history_response(conversion_history)
-
         else:
             conversion_detail_history_response = []
 

@@ -274,101 +274,13 @@
                     "allowed_decimal",
                     "blockchain"
                   ]
-                },
-                "transactions": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "transaction_operation": {
-                        "type": "string"
-                      },
-                      "transaction_hash": {
-                        "type": "string"
-                      },
-                      "transaction_amount": {
-                        "type": "string"
-                      },
-                      "confirmation": {
-                        "type": "integer"
-                      },
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "TOKEN_RECEIVED",
-                          "TOKEN_BURNT",
-                          "TOKEN_MINTED"
-                        ]
-                      },
-                      "created_at": {
-                        "type": "string"
-                      },
-                      "updated_at": {
-                        "type": "string"
-                      },
-                      "token": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string"
-                          },
-                          "symbol": {
-                            "type": "string"
-                          },
-                          "allowed_decimal": {
-                            "type": "integer"
-                          },
-                          "blockchain": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "symbol": {
-                                "type": "string"
-                              },
-                              "chain_id": {
-                                "type": "integer"
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "symbol",
-                              "chain_id"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "name",
-                          "symbol",
-                          "allowed_decimal",
-                          "blockchain"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "transaction_operation",
-                      "transaction_hash",
-                      "transaction_amount",
-                      "confirmation",
-                      "status",
-                      "created_at",
-                      "updated_at",
-                      "token"
-                    ]
-                  }
                 }
               },
               "required": [
                 "conversion",
                 "wallet_pair",
                 "from_token",
-                "to_token",
-                "transactions"
+                "to_token"
               ]
             }
           },

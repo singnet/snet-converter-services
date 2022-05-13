@@ -154,7 +154,16 @@ def get_conversion_response(conversion):
 
 
 def get_conversion_history_response(history):
-    return [get_conversion_response(conversion=conversion) for conversion in history]
+    return [{
+        ConversionDetailEntities.CONVERSION.value: get_conversion_history_for_conversion_response(
+            conversion[ConversionDetailEntities.CONVERSION.value]),
+        ConversionDetailEntities.WALLET_PAIR.value: get_wallet_pair_response(
+            conversion[ConversionDetailEntities.WALLET_PAIR.value]),
+        ConversionDetailEntities.FROM_TOKEN.value: get_token_response(
+            conversion[ConversionDetailEntities.FROM_TOKEN.value]),
+        ConversionDetailEntities.TO_TOKEN.value: get_token_response(
+            conversion[ConversionDetailEntities.TO_TOKEN.value])
+    } for conversion in history]
 
 
 def create_transaction_for_conversion_response(transaction):
