@@ -245,6 +245,9 @@ class ConsumerService:
         deposit_address = blockchain_event.get(CardanoEventConsumer.ADDRESS.value)
         tx_amount = blockchain_event.get(CardanoEventConsumer.TRANSACTION_DETAIL.value, {}).get(
             CardanoEventConsumer.TX_AMOUNT.value)
+        policy_id = blockchain_event.get(CardanoEventConsumer.ASSET.value, {}).get(CardanoEventConsumer.POLICY_ID.value)
+        asset_name = blockchain_event.get(CardanoEventConsumer.ASSET.value, {}).get(
+            CardanoEventConsumer.ASSET_NAME.value)
 
         if deposit_address is None or tx_amount is None or tx_hash is None:
             raise InternalServerErrorException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
@@ -266,6 +269,17 @@ class ConsumerService:
             validate_conversion_request_amount(amount=tx_amount,
                                                min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                                max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
+
+            token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
+                TokenEntities.TOKEN_ADDRESS.value)
+            token_symbol = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
+                TokenEntities.SYMBOL.value)
+
+            if policy_id is None or asset_name is None or policy_id != token_address or asset_name != token_symbol.encode(
+                    'utf-8').hex():
+                raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value,
+                                          error_details=ErrorDetails[ErrorCode.INVALID_ASSET_TRANSFERRED.value].value)
+
             tx_amount = Decimal(float(tx_amount))
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
                 fee_amount = calculate_fee_amount(amount=tx_amount, percentage=token_pair.get(
