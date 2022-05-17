@@ -171,6 +171,9 @@ class CardanoEventConsumer(Enum):
     RECORDS = "Records"
     BODY = "body"
     MESSAGE = "Message"
+    ASSET = "asset"
+    POLICY_ID = "policy_id"
+    ASSET_NAME = "asset_name"
 
 
 class ConverterBridgeEntities(Enum):

@@ -74,6 +74,7 @@ class ErrorCode(Enum):
     SIGNATURE_EXPIRED = "E0070"
     TOKEN_PAIR_NOT_EXISTS = "E0071"
     PAGE_SIZE_EXCEEDS_LIMIT = "E0072"
+    INVALID_ASSET_TRANSFERRED = "E0073"
 
 
 class ErrorDetails(Enum):
@@ -149,3 +150,4 @@ class ErrorDetails(Enum):
     E0070 = "Signature expired for the given request"
     E0071 = "Token pair not exists"
     E0072 = "Page size exceeds the max limit"
+    E0073 = "Invalid asset transferred to the deposit address"
