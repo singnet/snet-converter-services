@@ -117,12 +117,22 @@ class TestConsumer(unittest.TestCase):
              "transaction_detail": {"tx_type": "TOKEN_RECEIVED", "tx_amount": "10000"}}), {})
         self.assertEqual(response, None)
 
+        # Policy id and asset name not provided
+        response = converter_event_consumer(prepare_consumer_cardano_event_format(
+            {"tx_hash": "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449",
+             "address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+             "transaction_detail": {"tx_type": "TOKEN_RECEIVED",
+                                    "tx_amount": "1E+8"}}), {})
+        self.assertEqual(response, None)
+
         # valid request
         # Blockchain confirmation not enough error  when block confirmation not meet
         self.assertRaises(BlockConfirmationNotEnoughException, converter_event_consumer,
                           prepare_consumer_cardano_event_format(
                               {"tx_hash": "1667dce54e1729aec07ab11342f2464335d6542530102e64f7dc47847f669449",
                                "address": "addr_test1qza8485avt2xn3vy63plawqt0gk3ykpf98wusc4qrml2avu0pkm5rp3pkz6q4n3kf8znlf3y749lll8lfmg5x86kgt8qju7vx8",
+                               "asset": {"policy_id": "ae8a0b54484418a3db56f4e9b472d51cbc860667489366ba6e150c8a",
+                                         "asset_name": "41474958"},
                                "transaction_detail": {"tx_type": "TOKEN_RECEIVED",
                                                       "tx_amount": "1E+8"}}), {})
         transaction = conversion_repo.session.query(TransactionDBModel).filter(
