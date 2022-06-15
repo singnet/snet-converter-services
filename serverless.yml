@@ -33,6 +33,8 @@ provider:
     apiGateway: true
   logs:
     restApi: true
+  apiGateway:
+    disableDefaultEndpoint: true
 
 custom:
   pythonRequirements:
