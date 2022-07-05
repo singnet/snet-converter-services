@@ -208,14 +208,18 @@ class TestConsumer(unittest.TestCase):
         mock_get_transaction_receipt_from_blockchain.side_effect = BadRequestException(
             error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
             error_details=ErrorDetails[ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
-        # BadRequest for invalid hash
-        converter_event_consumer(prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
-                                                                         'blockchain_event': {'name': 'ConversionOut',
-                                                                                              'data': {
-                                                                                                  "transactionHash": "some hash",
-                                                                                                  "event": "ConversionOut",
-                                                                                                  "json_str": "{'conversionId': b'd78aeaf865d94ec8a8792d2847ef7323'}"}}}),
-                                 {})
+
+        # Internal server for invalid hash / any exception
+        self.assertRaises(InternalServerErrorException,
+                          converter_event_consumer,
+                          prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
+                                                                  'blockchain_event': {'name': 'ConversionOut',
+                                                                                       'data': {
+                                                                                           "transactionHash": "some hash",
+                                                                                           "event": "ConversionOut",
+                                                                                           "json_str": "{'conversionId': b'd78aeaf865d94ec8a8792d2847ef7323'}"}}}),
+                          {})
+
         mock_get_transaction_receipt_from_blockchain.side_effect = None
         mock_validate_tx_hash_presence_in_blockchain.return_value = None
         # Internal Server error  when giving invalid conversion id
