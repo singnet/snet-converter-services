@@ -301,9 +301,10 @@ def validate_tx_hash_presence_in_blockchain(blockchain_name, tx_hash, network_id
                                       error_details=ErrorDetails[ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
 
     except Exception as e:
-        logger.info(e)
-        raise BadRequestException(error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
-                                  error_details=ErrorDetails[ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
+        logger.error(f"Error occurred while checking for tx hash={tx_hash} presence in blockchain={blockchain_name}"
+                     f" on the chain_id={network_id} because of {e}")
+        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value,
+                                           error_details=ErrorDetails[ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value].value)
 
 
 def validate_consumer_event_type(blockchain_name, event_type):
