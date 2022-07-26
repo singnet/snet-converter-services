@@ -253,6 +253,12 @@ resources:
         Protocol: sqs
         Endpoint: !GetAtt converterEventConsumerQueue.Arn
         TopicArn: ${file(./config.${self:provider.stage}.json):CARDANO_EVENT_LISTENER_TOPIC_ARN}
+        FilterPolicy:
+          event_type:
+            - TOKEN_TRANSFER
+            - TOKEN_BURNED
+            - TOKEN_MINTED
+
 
     converterEventConsumerDLQQueue:
       Type: AWS::SQS::Queue
