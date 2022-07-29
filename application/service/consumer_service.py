@@ -121,13 +121,13 @@ class ConsumerService:
                     tx_id=transaction.get(TransactionEntities.ID.value))
             else:
                 logger.info(f"Invalid event type provided ={event_type}")
-                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+                raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
+                                          error_details=ErrorDetails[
+                                              ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
         else:
             logger.info(f"Invalid event type provided ={event_type}")
-            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
-                                               error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+            raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
+                                      error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
 
         if transaction is None:
             transaction = self.conversion_service.get_transaction_by_hash(tx_hash=tx_hash)
