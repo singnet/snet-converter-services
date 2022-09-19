@@ -10,6 +10,7 @@ plugins:
   - serverless-python-requirements
   - serverless-api-gateway-caching
   - serverless-plugin-warmup
+  - serverless-plugin-log-subscription
 
 provider:
   name: aws
@@ -35,6 +36,11 @@ provider:
     restApi: true
   apiGateway:
     disableDefaultEndpoint: true
+  logSubscription:
+    enabled: true
+    destinationArn: ${file(./config.${self:provider.stage}.json):ALERTING_LAMBDA_ARN}
+    filterPattern: '?"ERROR" ?"Error" ?"error" ?"timed out"'
+    addLambdaPermission: false
 
 custom:
   pythonRequirements:
