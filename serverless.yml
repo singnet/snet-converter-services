@@ -36,11 +36,6 @@ provider:
     restApi: true
   apiGateway:
     disableDefaultEndpoint: true
-  logSubscription:
-    enabled: true
-    destinationArn: ${file(./config.${self:provider.stage}.json):ALERTING_LAMBDA_ARN}
-    filterPattern: '?"ERROR" ?"Error" ?"error" ?"timed out"'
-    addLambdaPermission: false
 
 custom:
   pythonRequirements:
@@ -183,6 +178,11 @@ custom:
         - schedule: rate(5 minutes) # Run WarmUp every 5 minutes
       prewarm: true # Run WarmUp immediately after a deploymentlambda
       concurrency: 1 # Warm up 1 concurrent instances
+  logSubscription:
+    enabled: true
+    destinationArn: ${file(./config.${self:provider.stage}.json):ALERTING_LAMBDA_ARN}
+    filterPattern: '?"ERROR" ?"Error" ?"error" ?"timed out"'
+    addLambdaPermission: false
 
 package:
   patterns:
