@@ -195,8 +195,8 @@ class TestConsumer(unittest.TestCase):
                                                                   'blockchain_event': {'name': 'name fake',
                                                                                        'data': {"event": "fake"}}}), {})
 
-        # Internal Server error  when expected fields is not there
-        self.assertRaises(InternalServerErrorException, converter_event_consumer,
+        # badrequest  when expected fields is not there
+        response = converter_event_consumer(
                           prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
                                                                   'blockchain_event': {'name': 'name fake',
                                                                                        'data': {"name": "fake",
@@ -204,6 +204,7 @@ class TestConsumer(unittest.TestCase):
                                                                                                 "event": "ConversionOut",
                                                                                                 "json_str": ""}}}),
                           {})
+        self.assertEqual(response, None)
 
         mock_get_transaction_receipt_from_blockchain.side_effect = BadRequestException(
             error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,

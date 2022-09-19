@@ -304,17 +304,20 @@ def validate_tx_hash_presence_in_blockchain(blockchain_name, tx_hash, network_id
         logger.error(f"Error occurred while checking for tx hash={tx_hash} presence in blockchain={blockchain_name}"
                      f" on the chain_id={network_id} because of {e}")
         raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value,
-                                           error_details=ErrorDetails[ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value].value)
+                                           error_details=ErrorDetails[
+                                               ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value].value)
 
 
 def validate_consumer_event_type(blockchain_name, event_type):
     logger.info(f"Validating the consumer event type for blockchain_name={blockchain_name}, event_type={event_type}")
     if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower() and event_type not in EthereumAllowedEventType:
-        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
-                                           error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+        logger.info(f"Invalid event_type={event_type} provided, so skipping it")
+        raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
+                                  error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
     elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower() and event_type not in CardanoAllowedEventType:
-        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
-                                           error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+        logger.info(f"Invalid event_type={event_type} provided, so skipping it ")
+        raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
+                                  error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
 
 
 def validate_consumer_event_against_transaction(event_type, transaction, blockchain_name):

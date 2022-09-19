@@ -14,7 +14,8 @@
     "serverless-prune-plugin": "^1.4.4",
     "serverless-python-requirements": "^5.1.1",
     "serverless-api-gateway-caching": "^1.7.5",
-    "serverless-plugin-warmup": "5.3.1"
+    "serverless-plugin-warmup": "5.3.1",
+    "serverless-plugin-log-subscription": "2.1.2"
   },
   "repository": {
     "type": "git",
