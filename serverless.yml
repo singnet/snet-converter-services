@@ -7,7 +7,7 @@ plugins:
   - serverless-prune-plugin
   - serverless-aws-documentation
   - serverless-latest-layer-version
-  - serverless-python-requirements
+  # - serverless-python-requirements
   - serverless-api-gateway-caching
   - serverless-plugin-warmup
   - serverless-plugin-log-subscription
@@ -38,12 +38,12 @@ provider:
     disableDefaultEndpoint: true
 
 custom:
-  pythonRequirements:
-    fileName: requirements.txt
-    dockerizePip: true
-    useDownloadCache: true
-    useStaticCache: true
-    cacheLocation: "/var/cache/serverless"
+  # pythonRequirements:
+  #   fileName: requirements.txt
+  #   dockerizePip: true
+  #   useDownloadCache: true
+  #   useStaticCache: true
+  #   cacheLocation: "/var/cache/serverless"
   prune:
     automatic: true
     includeLayers: true
@@ -53,6 +53,7 @@ custom:
     - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
     - ${file(./config.${self:provider.stage}.json):MplacePythonWeb3AndGrpc_Layer}
     - ${file(./config.${self:provider.stage}.json):SnetContract}
+    - ${file(./config.${self:provider.stage}.json):MplacePythonBlockfrost_Layer}
   defaultVpc:
     securityGroupIds:
       - ${file(./config.${self:provider.stage}.json):SG1}
