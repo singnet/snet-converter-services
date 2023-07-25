@@ -34,6 +34,12 @@ CardanoToEthereumEvent = {
     "cardano": [TransactionOperation.TOKEN_RECEIVED.value, TransactionOperation.TOKEN_BURNT.value],
     "ethereum": [TransactionOperation.TOKEN_MINTED.value]}
 
+EthereumToBinanceEvent = {"ethereum": [TransactionOperation.TOKEN_BURNT.value],
+                          "binance": [TransactionOperation.TOKEN_MINTED.value]}
+
+BinanceToEthereumEvent = {"binance": [TransactionOperation.TOKEN_BURNT.value],
+                          "ethereum": [TransactionOperation.TOKEN_MINTED.value]}
+
 
 class TransactionStatus(Enum):
     WAITING_FOR_CONFIRMATION = "WAITING_FOR_CONFIRMATION"

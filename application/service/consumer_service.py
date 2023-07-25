@@ -14,7 +14,7 @@ from config import MESSAGE_GROUP_ID, SLACK_HOOK
 from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventConsumer, EventConsumerEntity, \
     WalletPairEntities, ConversionEntities, ConverterBridgeEntities, EthereumEventConsumerEntities, EthereumEventType, \
     TransactionEntities, TokenEntities, ConversionDetailEntities, CardanoAPIEntities, TokenPairEntities, \
-    ConversionFeeEntities, MessagePoolEntities
+    ConversionFeeEntities, MessagePoolEntities, BinanceEventConsumerEntities, BinanceEventType
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, QueueName
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
@@ -52,8 +52,7 @@ class ConsumerService:
         blockchain_event = payload.get(EventConsumerEntity.BLOCKCHAIN_EVENT.value)
 
         if not blockchain_name or not blockchain_event:
-            logger.info(
-                f"Either blockchain name={blockchain_name} or blockchain_event={blockchain_event}  is empty")
+            logger.info(f"Either blockchain name={blockchain_name} or blockchain_event={blockchain_event}  is empty")
             raise InternalServerErrorException(error_code=ErrorCode.CONSUMER_EVENT_EMPTY.value,
                                                error_details=ErrorDetails[ErrorCode.CONSUMER_EVENT_EMPTY.value].value)
 
@@ -61,23 +60,28 @@ class ConsumerService:
 
         if not blockchain_detail:
             logger.info("Not supported blockchain")
-            raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM.value,
+                error_details=ErrorDetails[ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM.value].value)
+
         blockchain_network_id = blockchain_detail.get(BlockchainEntities.CHAIN_ID.value)
 
         if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
             event_type = blockchain_event.get(EthereumEventConsumerEntities.NAME.value)
-            tx_hash = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}).get(
-                EthereumEventConsumerEntities.TRANSACTION_HASH.value)
+            tx_hash = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}) \
+                                      .get(EthereumEventConsumerEntities.TRANSACTION_HASH.value)
+        elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
+            event_type = blockchain_event.get(BinanceEventConsumerEntities.NAME.value)
+            tx_hash = blockchain_event.get(BinanceEventConsumerEntities.DATA.value, {}) \
+                                      .get(BinanceEventConsumerEntities.TRANSACTION_HASH.value)
         elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
-            event_type = blockchain_event.get(CardanoEventConsumer.TRANSACTION_DETAIL.value, {}).get(
-                CardanoEventConsumer.TX_TYPE.value)
+            event_type = blockchain_event.get(CardanoEventConsumer.TRANSACTION_DETAIL.value, {})\
+                                         .get(CardanoEventConsumer.TX_TYPE.value)
             tx_hash = blockchain_event.get(CardanoEventConsumer.TX_HASH.value)
         else:
-            raise InternalServerErrorException(error_code=ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value,
+                error_details=ErrorDetails[ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value].value)
 
         if not event_type or not tx_hash or not blockchain_network_id or not blockchain_event or not blockchain_detail:
             raise InternalServerErrorException(error_code=ErrorCode.CONSUMER_EVENT_EMPTY.value,
@@ -99,31 +103,43 @@ class ConsumerService:
         validate_consumer_event_against_transaction(event_type=event_type, transaction=transaction,
                                                     blockchain_name=db_blockchain_name)
 
-        if db_blockchain_name == BlockchainName.ETHEREUM.value.lower() and (
-                event_type == EthereumEventType.TOKEN_BURNT.value or event_type == EthereumEventType.TOKEN_MINTED.value):
-            json_str = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}).get(
-                EthereumEventConsumerEntities.JSON_STR.value)
+        if db_blockchain_name == BlockchainName.ETHEREUM.value.lower() and \
+                event_type in [EthereumEventType.TOKEN_BURNT.value, EthereumEventType.TOKEN_MINTED.value]:
+            json_str = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}) \
+                                       .get(EthereumEventConsumerEntities.JSON_STR.value)
             metadata = ast.literal_eval(json_str)
 
             tx_amount = metadata.get(EthereumEventConsumerEntities.AMOUNT.value)
             conversion_id = metadata.get(EthereumEventConsumerEntities.CONVERSION_ID.value).decode("utf-8")
             token_holder = metadata.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value)
 
-            conversion = self.process_ethereum_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
-                                                     conversion_id=conversion_id, transaction=transaction,
-                                                     token_holder=token_holder)
+            conversion = self.process_evm_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
+                                                conversion_id=conversion_id, transaction=transaction,
+                                                token_holder=token_holder)
+        elif db_blockchain_name == BlockchainName.BINANCE.value.lower() and \
+                event_type in [BinanceEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_MINTED.value]:
+            json_str = blockchain_event.get(BinanceEventConsumerEntities.DATA.value, {}) \
+                                       .get(BinanceEventConsumerEntities.JSON_STR.value)
+            metadata = ast.literal_eval(json_str)
+
+            tx_amount = metadata.get(EthereumEventConsumerEntities.AMOUNT.value)
+            conversion_id = metadata.get(EthereumEventConsumerEntities.CONVERSION_ID.value).decode("utf-8")
+            token_holder = metadata.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value)
+
+            conversion = self.process_evm_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
+                                                conversion_id=conversion_id, transaction=transaction,
+                                                token_holder=token_holder)
         elif db_blockchain_name == BlockchainName.CARDANO.value.lower():
             if event_type == CardanoEventType.TOKEN_RECEIVED.value:
                 conversion = self.process_cardano_token_received_event(blockchain_event=blockchain_event,
                                                                        transaction=transaction)
-            elif transaction and event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNT.value:
+            elif transaction and event_type in [CardanoEventType.TOKEN_MINTED.value, CardanoEventType.TOKEN_BURNT.value]:
                 conversion = self.conversion_service.get_conversion_detail_by_tx_id(
                     tx_id=transaction.get(TransactionEntities.ID.value))
             else:
                 logger.info(f"Invalid event type provided ={event_type}")
                 raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
-                                          error_details=ErrorDetails[
-                                              ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+                                          error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
         else:
             logger.info(f"Invalid event type provided ={event_type}")
             raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
@@ -169,21 +185,21 @@ class ConsumerService:
             if message_group:
                 self.pool_service.update_message_pool(id=message_group.get(MessagePoolEntities.ID.value))
         else:
-            conversion_transaction_id = conversion_complete_detail.get(ConversionDetailEntities.TRANSACTIONS.value,
-                                                                       {})[0].get(
-                TransactionEntities.CONVERSION_TRANSACTION_ID.value)
+            conversion_transaction_id = conversion_complete_detail \
+                .get(ConversionDetailEntities.TRANSACTIONS.value, {})[0] \
+                .get(TransactionEntities.CONVERSION_TRANSACTION_ID.value)
             self.conversion_service.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                                   status=ConversionTransactionStatus.SUCCESS.value)
             self.conversion_service.update_conversion(conversion_id=conversion.get(ConversionEntities.ID.value),
                                                       status=ConversionStatus.SUCCESS.value)
             logger.info("Conversion is done")
 
-    def process_ethereum_event(self, event_type, tx_hash, tx_amount, conversion_id, transaction, token_holder):
+    def process_evm_event(self, event_type, tx_hash, tx_amount, conversion_id, transaction, token_holder):
 
         if not tx_hash or not tx_amount or not conversion_id:
-            raise InternalServerErrorException(error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
+                error_details=ErrorDetails[ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
         try:
             conversion_detail = self.conversion_service.get_conversion_complete_detail(conversion_id=conversion_id)
         except Exception as e:
@@ -201,17 +217,18 @@ class ConsumerService:
         deposit_amount = conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
 
-        if event_type == EthereumEventType.TOKEN_BURNT.value and wallet_pair.get(
-                WalletPairEntities.FROM_ADDRESS.value) != token_holder:
-            logger.info(f"Mismatch on address  from request and contract for {event_type} event")
-            raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
-                                               error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
-        elif event_type == EthereumEventType.TOKEN_MINTED.value and (
-                Decimal(float(claim_amount)) != Decimal(tx_amount) or
-                wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder):
-            logger.info(f"Mismatch on address and amount from request and contract for {event_type} event")
-            raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
-                                               error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
+        if event_type in [EthereumEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_BURNT.value]:
+            if wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value) != token_holder:
+                logger.info(f"Mismatch on address from request and contract for {event_type} event")
+                raise InternalServerErrorException(
+                    error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
+                    error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
+        elif event_type in [EthereumEventType.TOKEN_MINTED.value, BinanceEventType.TOKEN_MINTED.value]:
+            if Decimal(float(claim_amount)) != Decimal(tx_amount) or \
+               wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder:
+                logger.info(f"Mismatch on address and amount from request and contract for {event_type} event")
+                raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
+                                                   error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
 
         if event_type == EthereumEventType.TOKEN_BURNT.value and Decimal(float(deposit_amount)) != Decimal(tx_amount):
             token_pair_row_id = wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value)
@@ -219,10 +236,10 @@ class ConsumerService:
                                                                     token_pair_row_id=token_pair_row_id)
             fee_amount = Decimal(0)
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
-                fee_amount = calculate_fee_amount(amount=convert_str_to_decimal(value=tx_amount),
-                                                  percentage=token_pair.get(
-                                                      TokenPairEntities.CONVERSION_FEE.value).get(
-                                                      ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
+                fee_amount = calculate_fee_amount(
+                    amount=convert_str_to_decimal(value=tx_amount),
+                    percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
+                                         .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
             self.conversion_service.update_conversion(conversion_id=conversion_id, deposit_amount=tx_amount,
                                                       fee_amount=fee_amount,
                                                       claim_amount=convert_str_to_decimal(deposit_amount) - fee_amount)
@@ -333,9 +350,9 @@ class ConsumerService:
         self.conversion_service.update_transaction_by_id(tx_id=tx_id, confirmation=current_block_confirmation)
 
         if current_block_confirmation < required_block_confirmation:
-            raise BlockConfirmationNotEnoughException(error_code=ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value,
-                                                      error_details=ErrorDetails[
-                                                          ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
+            raise BlockConfirmationNotEnoughException(
+                error_code=ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value,
+                error_details=ErrorDetails[ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
 
     @bridge_exception_handler(SLACK_HOOK=SLACK_HOOK, logger=logger)
     def converter_bridge(self, payload):

@@ -32,8 +32,13 @@ def convert_consumer_event(event) -> list:
                     message = parsed_body.get(CardanoEventConsumer.MESSAGE.value)
                     if message:
                         parsed_message = json.loads(message)
-                        new_format.append(consumer_required_format(blockchain_name=BlockchainName.CARDANO.value,
-                                                                   blockchain_event=parsed_message))
+                        blockchain_name = parsed_message.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value, "")
+                        blockchain_event = parsed_message.get(ConverterBridgeEntities.BLOCKCHAIN_EVENT.value, "")
+                        if blockchain_name.lower() == BlockchainName.BINANCE.value.lower() and blockchain_event:
+                            new_format.append(parsed_message)
+                        else:
+                            new_format.append(consumer_required_format(blockchain_name=BlockchainName.CARDANO.value,
+                                                                       blockchain_event=parsed_message))
                     else:
                         new_format.append(parsed_body)
 

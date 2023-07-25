@@ -23,7 +23,7 @@ from infrastructure.repositories.conversion_repository import ConversionReposito
 from utils.blockchain import validate_address, validate_conversion_claim_request_signature, \
     calculate_fee_amount, \
     validate_conversion_request_amount, convert_str_to_decimal, get_next_activity_event_on_conversion, \
-    check_existing_transaction_state, validate_ethereum_transaction_details_against_conversion, \
+    check_existing_transaction_state, validate_evm_transaction_details_against_conversion, \
     validate_cardano_transaction_details_against_conversion
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
@@ -147,9 +147,8 @@ class ConversionService:
         return update_conversion_response(conversion.to_dict())
 
     def update_conversion_transaction(self, conversion_transaction_id, status):
-        logger.info(
-            f"Updating the conversion transaction for the conversion_transaction_id={conversion_transaction_id}, "
-            f"status={status}")
+        logger.info(f"Updating the conversion transaction for the conversion_transaction_id={conversion_transaction_id}"
+                    f", status={status}")
         self.conversion_repo.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                            status=status)
 
@@ -259,14 +258,14 @@ class ConversionService:
         transactions = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
         conversion = conversion_detail.get(ConversionDetailEntities.CONVERSION.value)
 
-        from_blockchain = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
-            TokenEntities.BLOCKCHAIN.value, {})
-        to_blockchain = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
-            TokenEntities.BLOCKCHAIN.value, {})
+        from_blockchain = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}) \
+                                           .get(TokenEntities.BLOCKCHAIN.value, {})
+        to_blockchain = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}) \
+                                         .get(TokenEntities.BLOCKCHAIN.value, {})
 
         if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
-            logger.exception(
-                f"Unsupported network conversion detected from_blockchain={from_blockchain}, to_blockchain={to_blockchain}")
+            logger.exception(f"Unsupported network conversion detected from_blockchain={from_blockchain}, "
+                             f"to_blockchain={to_blockchain}")
             raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
                                                error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
@@ -275,8 +274,8 @@ class ConversionService:
             raise BadRequestException(error_code=ErrorCode.CONVERSION_ALREADY_DONE.value,
                                       error_details=ErrorDetails[ErrorCode.CONVERSION_ALREADY_DONE.value].value)
 
-        if next_activity.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value).lower() == from_blockchain.get(
-                BlockchainEntities.NAME.value).lower():
+        if next_activity.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value).lower() == \
+                from_blockchain.get(BlockchainEntities.NAME.value).lower():
             conversion_on = ConversionOn.FROM.value
             blockchain = from_blockchain
         else:
@@ -287,20 +286,20 @@ class ConversionService:
         chain_id = blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
         if created_by == CreatedBy.DAPP.value and blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
-            raise BadRequestException(error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
-                                      error_details=ErrorDetails[
-                                          ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
+            raise BadRequestException(
+                error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
+                error_details=ErrorDetails[ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
 
         check_existing_transaction_state(transactions=transactions, conversion_on=conversion_on)
 
         if blockchain_name == BlockchainName.ETHEREUM.value.lower():
             contract_address = self.get_token_contract_address_for_conversion_id(
                 conversion_id=conversion.get(ConversionEntities.ID.value))
-            validate_ethereum_transaction_details_against_conversion(chain_id=chain_id,
-                                                                     transaction_hash=transaction_hash,
-                                                                     conversion_on=conversion_on,
-                                                                     contract_address=contract_address,
-                                                                     conversion_detail=conversion_detail)
+            validate_evm_transaction_details_against_conversion(chain_id=chain_id,
+                                                                transaction_hash=transaction_hash,
+                                                                conversion_on=conversion_on,
+                                                                contract_address=contract_address,
+                                                                conversion_detail=conversion_detail)
         elif blockchain_name == BlockchainName.CARDANO.value.lower():
             validate_cardano_transaction_details_against_conversion(chain_id=chain_id,
                                                                     transaction_hash=transaction_hash,
@@ -417,28 +416,28 @@ class ConversionService:
 
     def process_transaction_creation(self, conversion_detail, transaction_hash, next_activity, created_by):
         transaction = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
-        conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-            ConversionEntities.ROW_ID.value)
-        conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-            ConversionEntities.ID.value)
+        conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                             .get(ConversionEntities.ROW_ID.value)
+        conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                         .get(ConversionEntities.ID.value)
 
-        transaction_operation = next_activity.get(EventConsumerEntity.BLOCKCHAIN_EVENT.value).get(
-            ConverterBridgeEntities.TX_OPERATION.value)
+        transaction_operation = next_activity.get(EventConsumerEntity.BLOCKCHAIN_EVENT.value) \
+                                             .get(ConverterBridgeEntities.TX_OPERATION.value)
 
         if not len(transaction):
-            token_id = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value).get(
-                TokenEntities.ROW_ID.value)
+            token_id = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value) \
+                                        .get(TokenEntities.ROW_ID.value)
             conversion_transaction = self.create_conversion_transaction(conversion_id=conversion_row_id,
                                                                         created_by=created_by)
             conversion_transaction_row_id = conversion_transaction.get(TransactionConversionEntities.ROW_ID.value)
-            transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-                ConversionEntities.DEPOSIT_AMOUNT.value)
+            transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                                  .get(ConversionEntities.DEPOSIT_AMOUNT.value)
         else:
-            token_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
-                TokenEntities.ROW_ID.value)
+            token_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value) \
+                                        .get(TokenEntities.ROW_ID.value)
             conversion_transaction_row_id = transaction[0].get(TransactionEntities.CONVERSION_TRANSACTION_ID.value)
-            transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-                ConversionEntities.CLAIM_AMOUNT.value)
+            transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                                  .get(ConversionEntities.CLAIM_AMOUNT.value)
 
         if transaction_amount is None:
             raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
@@ -457,9 +456,9 @@ class ConversionService:
 
     def update_transaction_by_id(self, tx_id, tx_operation=None, tx_visibility=None, tx_amount=None, confirmation=None,
                                  tx_status=None, created_by=None):
-        logger.info(
-            f"Updating the transaction of tx_id={tx_id}, tx_operation={tx_operation}, tx_visibility={tx_visibility}, "
-            f"tx_amount={tx_amount}, confirmation={confirmation}, tx_status={tx_status}, created_by={created_by}")
+        logger.info(f"Updating the transaction of tx_id={tx_id}, tx_operation={tx_operation}, "
+                    f"tx_visibility={tx_visibility}, tx_amount={tx_amount}, confirmation={confirmation}, "
+                    f"tx_status={tx_status}, created_by={created_by}")
         self.conversion_repo.update_transaction_by_id(tx_id=tx_id, tx_operation=tx_operation,
                                                       tx_visibility=tx_visibility, tx_amount=tx_amount,
                                                       confirmation=confirmation, tx_status=tx_status,

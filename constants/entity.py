@@ -217,6 +217,25 @@ class EthereumEventType(Enum):
 EthereumAllowedEventType = [EthereumEventType.TOKEN_BURNT.value, EthereumEventType.TOKEN_MINTED.value]
 
 
+class BinanceEventConsumerEntities(Enum):
+    CONVERSION_ID = "conversionId"
+    TRANSACTION_HASH = "transactionHash"
+    NAME = "name"
+    JSON_STR = "json_str"
+    DATA = "data"
+    TOKEN_HOLDER = "tokenHolder"
+    AMOUNT = "amount"
+    ARGS = "args"
+
+
+class BinanceEventType(Enum):
+    TOKEN_BURNT = "ConversionOut"
+    TOKEN_MINTED = "ConversionIn"
+
+
+BinanceAllowedEventType = [BinanceEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_MINTED.value]
+
+
 class CardanoAPIEntities(Enum):
     HASH = "hash"
     PATH_PARAMETERS = "pathParameters"

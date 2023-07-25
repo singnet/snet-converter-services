@@ -78,8 +78,7 @@ def get_token_response(token):
         TokenEntities.NAME.value: token[TokenEntities.NAME.value],
         TokenEntities.SYMBOL.value: token[TokenEntities.SYMBOL.value],
         TokenEntities.ALLOWED_DECIMAL.value: token[TokenEntities.ALLOWED_DECIMAL.value],
-        TokenEntities.BLOCKCHAIN.value: get_blockchain_response(
-            token[TokenEntities.BLOCKCHAIN.value])
+        TokenEntities.BLOCKCHAIN.value: get_blockchain_response(token[TokenEntities.BLOCKCHAIN.value])
     }
 
 

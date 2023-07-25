@@ -6,6 +6,7 @@ MAX_ALLOWED_DECIMAL = 20
 class BlockchainName(Enum):
     ETHEREUM = "Ethereum"
     CARDANO = "Cardano"
+    BINANCE = "Binance"
 
 
 class CreatedBy(Enum):

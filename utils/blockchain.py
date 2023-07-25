@@ -9,19 +9,22 @@ from application.service.cardano_service import CardanoService
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
 from config import TOKEN_CONTRACT_PATH, MAX_RETRY, SLEEP_TIME
-from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities, EthereumBlockchainEntities
+from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities, EthereumBlockchainEntities, \
+    BinanceBlockchainEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
     ConversionEntities, CardanoEventType, CardanoAPIEntities, WalletPairEntities, \
-    EthereumAllowedEventType, CardanoAllowedEventType, EthereumEventConsumerEntities
+    EthereumAllowedEventType, CardanoAllowedEventType, EthereumEventConsumerEntities, BinanceAllowedEventType, \
+    BinanceEventConsumerEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, ConversionOn, MaxRetryEntities, SleepTimeEntities
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus, \
-    ConversionStatus
+    ConversionStatus, EthereumToBinanceEvent, BinanceToEthereumEvent
 from domain.entities.converter_bridge import ConverterBridge
 from utils.cardano_blockchain import CardanoBlockchainUtil
 from utils.exceptions import InternalServerErrorException, BadRequestException
 from utils.general import get_ethereum_network_url, get_cardano_network_url_and_project_id, \
-    check_existing_transaction_succeed, get_transactions_operation
+    check_existing_transaction_succeed, get_transactions_operation, get_binance_network_url, get_evm_network_url, \
+    get_evm_blockchain
 from utils.signature import validate_conversion_claim_signature
 
 logger = get_logger(__name__)
@@ -101,23 +104,20 @@ def calculate_fee_amount(amount: Decimal, percentage: str) -> Decimal:
     return amount * Decimal(float(percentage)) / 100
 
 
-def get_ethereum_transaction_details(web_object, transaction_hash):
+def get_evm_transaction_details(web3_object, transaction_hash):
     try:
-        blockchain_transaction = web_object.get_transaction_receipt_from_blockchain(
-            transaction_hash=transaction_hash)
+        blockchain_transaction = web3_object.get_transaction_receipt_from_blockchain(transaction_hash=transaction_hash)
     except TransactionNotFound as e:
         raise BadRequestException(error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
+                                  error_details=ErrorDetails[ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
     except ValueError as e:
         raise BadRequestException(error_code=ErrorCode.RANDOM_TRANSACTION_HASH.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.RANDOM_TRANSACTION_HASH.value].value)
+                                  error_details=ErrorDetails[ErrorCode.RANDOM_TRANSACTION_HASH.value].value)
     except Exception as e:
         logger.exception(e)
-        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS.value,
-                                           error_details=ErrorDetails[
-                                               ErrorCode.UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS.value].value)
+        raise InternalServerErrorException(
+            error_code=ErrorCode.UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS.value,
+            error_details=ErrorDetails[ErrorCode.UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS.value].value)
     return blockchain_transaction
 
 
@@ -130,13 +130,14 @@ def get_event_logs(contract_instance, receipt, conversion_on):
     return logs
 
 
-def validate_ethereum_transaction_details_against_conversion(chain_id, transaction_hash, conversion_on,
-                                                             contract_address, conversion_detail):
-    network_url = get_ethereum_network_url(chain_id=chain_id)
-    ethereum_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
+def validate_evm_transaction_details_against_conversion(chain_id, transaction_hash, conversion_on,
+                                                        contract_address, conversion_detail):
+    blockchain_name = get_evm_blockchain(chain_id=chain_id)
+    network_url = get_evm_network_url(chain_id=chain_id)
+    evm_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
 
-    blockchain_transaction = get_ethereum_transaction_details(web_object=ethereum_web3_object,
-                                                              transaction_hash=transaction_hash)
+    blockchain_transaction = get_evm_transaction_details(web3_object=evm_web3_object,
+                                                         transaction_hash=transaction_hash)
     if conversion_on == ConversionOn.FROM.value:
         token_symbol = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value).get(TokenEntities.SYMBOL.value)
     else:
@@ -144,34 +145,51 @@ def validate_ethereum_transaction_details_against_conversion(chain_id, transacti
 
     contract_abi_path = get_token_contract_path(token=token_symbol)
 
-    contract = ethereum_web3_object.load_contract(path=contract_abi_path)
-    contract_instance = ethereum_web3_object.contract_instance(contract_abi=contract, address=contract_address)
+    contract = evm_web3_object.load_contract(path=contract_abi_path)
+    contract_instance = evm_web3_object.contract_instance(contract_abi=contract, address=contract_address)
     logs = get_event_logs(contract_instance=contract_instance, receipt=blockchain_transaction,
                           conversion_on=conversion_on)
 
-    if not len(logs) or not logs[0].get(EthereumEventConsumerEntities.ARGS.value):
+    events = None
+    if len(logs):
+        if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
+            events = logs[0].get(EthereumEventConsumerEntities.ARGS.value)
+        elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
+            events = logs[0].get(BinanceEventConsumerEntities.ARGS.value)
+
+    if not len(logs) or not events:
         raise BadRequestException(error_code=ErrorCode.UNABLE_TO_FIND_EVENTS_FOR_HASH.value,
                                   error_details=ErrorDetails[ErrorCode.UNABLE_TO_FIND_EVENTS_FOR_HASH.value].value)
 
-    events = logs[0].get(EthereumEventConsumerEntities.ARGS.value)
-    if not validate_conversion_with_blockchain(conversion_on=conversion_on,
-                                               address=events.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value),
-                                               amount=events.get(EthereumEventConsumerEntities.AMOUNT.value),
-                                               conversion_id=events.get(
-                                                   EthereumEventConsumerEntities.CONVERSION_ID.value).decode("utf-8"),
-                                               conversion_detail=conversion_detail,
-                                               blockchain_name=BlockchainName.ETHEREUM.value):
-        raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value].value)
+    if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
+        token_holder = events.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value)
+        amount = events.get(EthereumEventConsumerEntities.AMOUNT.value)
+        conversion_id = events.get(EthereumEventConsumerEntities.CONVERSION_ID.value)
+    elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
+        token_holder = events.get(BinanceEventConsumerEntities.TOKEN_HOLDER.value)
+        amount = events.get(BinanceEventConsumerEntities.AMOUNT.value)
+        conversion_id = events.get(BinanceEventConsumerEntities.CONVERSION_ID.value)
+    else:
+        token_holder = amount = conversion_id = None
+
+    if not validate_conversion_with_blockchain(
+            conversion_on=conversion_on,
+            address=token_holder,
+            amount=amount,
+            conversion_id=conversion_id.decode("utf-8"),
+            conversion_detail=conversion_detail,
+            blockchain_name=blockchain_name):
+        raise BadRequestException(
+            error_code=ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value,
+            error_details=ErrorDetails[ErrorCode.BLOCKCHAIN_TRANSACTION_NOT_MATCHING_CONVERSION.value].value)
 
 
 def get_token_contract_path(token):
     token_contract_path = TOKEN_CONTRACT_PATH.get(token.lower())
     if not token_contract_path:
-        raise InternalServerErrorException(error_code=ErrorCode.TOKEN_CONTRACT_ADDRESS_EMPTY.value,
-                                           error_details=ErrorDetails[
-                                               ErrorCode.TOKEN_CONTRACT_ADDRESS_EMPTY.value].value)
+        raise InternalServerErrorException(
+            error_code=ErrorCode.TOKEN_CONTRACT_ADDRESS_EMPTY.value,
+            error_details=ErrorDetails[ErrorCode.TOKEN_CONTRACT_ADDRESS_EMPTY.value].value)
 
     return os.path.abspath(os.path.join(token_contract_path))
 
@@ -204,31 +222,39 @@ def validate_cardano_transaction_details_against_conversion(chain_id, transactio
 
 def check_existing_transaction_state(transactions, conversion_on):
     if not check_existing_transaction_succeed(transactions):
-        raise BadRequestException(error_code=ErrorCode.EXISTING_TRANSACTION_IS_NOT_SUCCEEDED.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.EXISTING_TRANSACTION_IS_NOT_SUCCEEDED.value].value)
+        raise BadRequestException(
+            error_code=ErrorCode.EXISTING_TRANSACTION_IS_NOT_SUCCEEDED.value,
+            error_details=ErrorDetails[ErrorCode.EXISTING_TRANSACTION_IS_NOT_SUCCEEDED.value].value)
 
     if len(transactions) and conversion_on == ConversionOn.TO.value:
         transactions_operation = get_transactions_operation(transactions=transactions)
         if TransactionOperation.TOKEN_MINTED.value in transactions_operation:
             raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CREATED.value,
-                                      error_details=ErrorDetails[
-                                          ErrorCode.TRANSACTION_ALREADY_CREATED.value].value)
+                                      error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_CREATED.value].value)
 
 
 def get_next_activity_event_on_conversion(conversion_complete_detail):
     logger.info("Getting the next activity event on conversion")
-    from_blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
-        TokenEntities.BLOCKCHAIN.value, {}).get(BlockchainEntities.NAME.value).lower()
-    to_blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
-        TokenEntities.BLOCKCHAIN.value, {}).get(BlockchainEntities.NAME.value).lower()
+    from_blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {})\
+                                                .get(TokenEntities.BLOCKCHAIN.value, {}) \
+                                                .get(BlockchainEntities.NAME.value).lower()
+    to_blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}) \
+                                              .get(TokenEntities.BLOCKCHAIN.value, {}) \
+                                              .get(BlockchainEntities.NAME.value).lower()
 
+    ethereum = BlockchainName.ETHEREUM.value.lower()
+    cardano = BlockchainName.CARDANO.value.lower()
+    binance = BlockchainName.BINANCE.value.lower()
     expected_events_flow = []
 
-    if from_blockchain.lower() == BlockchainName.ETHEREUM.value.lower() and to_blockchain.lower() == BlockchainName.CARDANO.value.lower():
+    if from_blockchain.lower() == ethereum and to_blockchain.lower() == cardano:
         expected_events_flow = EthereumToCardanoEvent
-    elif from_blockchain.lower() == BlockchainName.CARDANO.value.lower() and to_blockchain.lower() == BlockchainName.ETHEREUM.value.lower():
+    elif from_blockchain.lower() == cardano and to_blockchain.lower() == ethereum:
         expected_events_flow = CardanoToEthereumEvent
+    elif from_blockchain.lower() == ethereum and to_blockchain.lower() == binance:
+        expected_events_flow = EthereumToBinanceEvent
+    elif from_blockchain.lower() == binance and to_blockchain.lower() == ethereum:
+        expected_events_flow = BinanceToEthereumEvent
 
     return get_conversion_next_event(conversion_complete_detail=conversion_complete_detail,
                                      expected_events_flow=expected_events_flow)
@@ -247,9 +273,9 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
             if tx_list_index <= len(transactions) - 1:
                 transaction = transactions[tx_list_index]
                 if transaction.get(TransactionEntities.TRANSACTION_OPERATION.value) != expected_event:
-                    raise InternalServerErrorException(error_code=ErrorCode.TRANSACTION_WRONGLY_CREATED.value,
-                                                       error_details=ErrorDetails[
-                                                           ErrorCode.TRANSACTION_WRONGLY_CREATED.value].value)
+                    raise InternalServerErrorException(
+                        error_code=ErrorCode.TRANSACTION_WRONGLY_CREATED.value,
+                        error_details=ErrorDetails[ErrorCode.TRANSACTION_WRONGLY_CREATED.value].value)
             else:
                 next_event = expected_event
                 break
@@ -261,11 +287,11 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
 
     tx_amount = Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)))
     if conversion_side == ConversionOn.FROM.value:
-        blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
-            TokenEntities.BLOCKCHAIN.value, {})
+        blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}) \
+                                               .get(TokenEntities.BLOCKCHAIN.value, {})
     elif conversion_side == ConversionOn.TO.value:
-        blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
-            TokenEntities.BLOCKCHAIN.value, {})
+        blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}) \
+                                               .get(TokenEntities.BLOCKCHAIN.value, {})
         tx_amount = Decimal(conversion.get(ConversionEntities.CLAIM_AMOUNT.value))
     else:
         blockchain = None
@@ -283,14 +309,17 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
 
 
 def validate_tx_hash_presence_in_blockchain(blockchain_name, tx_hash, network_id):
-    logger.info(
-        f"Validating the transaction hash presence in blockchain for the blockchain_name={blockchain_name}, "
-        f"tx_hash={tx_hash}, network_id={network_id}")
+    logger.info(f"Validating the transaction hash presence in blockchain for the blockchain_name={blockchain_name}, "
+                f"tx_hash={tx_hash}, network_id={network_id}")
     try:
         if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
             network_url = get_ethereum_network_url(chain_id=network_id)
             ethereum_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
             transaction = ethereum_web3_object.get_transaction_receipt_from_blockchain(transaction_hash=tx_hash)
+        elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
+            network_url = get_binance_network_url(chain_id=network_id)
+            binance_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
+            transaction = binance_web3_object.get_transaction_receipt_from_blockchain(transaction_hash=tx_hash)
         else:
             url, project_id = get_cardano_network_url_and_project_id(chain_id=network_id)
             cardano_blockchain = CardanoBlockchainUtil(project_id=project_id, base_url=url)
@@ -303,14 +332,18 @@ def validate_tx_hash_presence_in_blockchain(blockchain_name, tx_hash, network_id
     except Exception as e:
         logger.error(f"Error occurred while checking for tx hash={tx_hash} presence in blockchain={blockchain_name}"
                      f" on the chain_id={network_id} because of {e}")
-        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value,
-                                           error_details=ErrorDetails[
-                                               ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value].value)
+        raise InternalServerErrorException(
+            error_code=ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value,
+            error_details=ErrorDetails[ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE.value].value)
 
 
 def validate_consumer_event_type(blockchain_name, event_type):
     logger.info(f"Validating the consumer event type for blockchain_name={blockchain_name}, event_type={event_type}")
     if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower() and event_type not in EthereumAllowedEventType:
+        logger.info(f"Invalid event_type={event_type} provided, so skipping it")
+        raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
+                                  error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+    elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower() and event_type not in BinanceAllowedEventType:
         logger.info(f"Invalid event_type={event_type} provided, so skipping it")
         raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
                                   error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
@@ -353,20 +386,24 @@ def get_block_confirmation(tx_hash, blockchain_network_id):
     return bc_block_confirmations
 
 
-def get_ethereum_block_confirmation(tx_hash, blockchain_network_id):
-    network_url = get_ethereum_network_url(chain_id=blockchain_network_id)
-    ethereum_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
+def get_evm_block_confirmation(tx_hash, blockchain_network_id):
+    blockchain_name = get_evm_blockchain(chain_id=blockchain_network_id)
+    network_url = get_evm_network_url(chain_id=blockchain_network_id)
+    evm_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
     try:
-        transaction = ethereum_web3_object.get_transaction_receipt_from_blockchain(transaction_hash=tx_hash)
-        bc_block_number = transaction.get(EthereumBlockchainEntities.BLOCK_NUMBER.value)
-        current_block_number = ethereum_web3_object.get_current_block_no()
-
+        transaction = evm_web3_object.get_transaction_receipt_from_blockchain(transaction_hash=tx_hash)
+        if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
+            bc_block_number = transaction.get(EthereumBlockchainEntities.BLOCK_NUMBER.value)
+        elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
+            bc_block_number = transaction.get(BinanceBlockchainEntities.BLOCK_NUMBER.value)
+        else:
+            raise ValueError(f"EVM chain id {blockchain_network_id} is not supported")
+        current_block_number = evm_web3_object.get_current_block_no()
         bc_block_confirmations = current_block_number - bc_block_number
-
     except Exception as e:
-        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_BLOCK_CONFIRMATION.value,
-                                           error_details=ErrorDetails[
-                                               ErrorCode.UNEXPECTED_ERROR_ON_BLOCK_CONFIRMATION.value].value)
+        raise InternalServerErrorException(
+            error_code=ErrorCode.UNEXPECTED_ERROR_ON_BLOCK_CONFIRMATION.value,
+            error_details=ErrorDetails[ErrorCode.UNEXPECTED_ERROR_ON_BLOCK_CONFIRMATION.value].value)
     return bc_block_confirmations
 
 
@@ -448,30 +485,29 @@ def validate_conversion_request_amount(amount: str, min_value: str, max_value: s
 
 def validate_conversion_with_blockchain(conversion_on, address, amount, conversion_id, conversion_detail,
                                         blockchain_name):
-    logger.info(
-        f"Validating the conversion with blockchain details conversion_on={conversion_on}, address={address}, "
-        f"amount={amount}, blockchain_name={blockchain_name}")
+    logger.info(f"Validating the conversion with blockchain details conversion_on={conversion_on}, address={address}, "
+                f"amount={amount}, blockchain_name={blockchain_name}")
     is_valid = True
 
-    from_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
-        WalletPairEntities.FROM_ADDRESS.value)
-    to_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
-        WalletPairEntities.TO_ADDRESS.value)
-    deposit_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-        ConversionEntities.DEPOSIT_AMOUNT.value)
-    claim_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-        ConversionEntities.CLAIM_AMOUNT.value)
-    db_conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-        ConversionEntities.ID.value)
+    from_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}) \
+                                    .get(WalletPairEntities.FROM_ADDRESS.value)
+    to_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}) \
+                                  .get(WalletPairEntities.TO_ADDRESS.value)
+    deposit_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                      .get(ConversionEntities.DEPOSIT_AMOUNT.value)
+    claim_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                    .get(ConversionEntities.CLAIM_AMOUNT.value)
+    db_conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                        .get(ConversionEntities.ID.value)
 
     if conversion_id != db_conversion_id:
         is_valid = False
 
-    if conversion_on == ConversionOn.FROM.value and (
-            address != from_address or convert_int_to_decimal(amount) != convert_str_to_decimal(deposit_amount)):
+    if conversion_on == ConversionOn.FROM.value and \
+            (address != from_address or convert_int_to_decimal(amount) != convert_str_to_decimal(deposit_amount)):
         is_valid = False
-    elif conversion_on == ConversionOn.TO.value and (
-            address != to_address or convert_int_to_decimal(amount) != convert_str_to_decimal(claim_amount)):
+    elif conversion_on == ConversionOn.TO.value and \
+            (address != to_address or convert_int_to_decimal(amount) != convert_str_to_decimal(claim_amount)):
         is_valid = False
 
     return is_valid
@@ -490,8 +526,8 @@ def get_current_block_confirmation(blockchain_name, tx_hash, network_id):
                 current_block_confirmation = get_block_confirmation(tx_hash=tx_hash,
                                                                     blockchain_network_id=network_id)
             else:
-                current_block_confirmation = get_ethereum_block_confirmation(tx_hash=tx_hash,
-                                                                             blockchain_network_id=network_id)
+                current_block_confirmation = get_evm_block_confirmation(tx_hash=tx_hash,
+                                                                        blockchain_network_id=network_id)
         except Exception as e:
             logger.info(f"Transaction mayn't be available={e}, we will retry it ")
 

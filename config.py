@@ -40,6 +40,24 @@ BLOCKCHAIN_DETAILS = {
             "kovan": {
                 "url": "https://kovan.infura.io/v3/",
                 "secret": {}
+            },
+            "goerli": {
+                "url": "https://goerli.infura.io/v3/6e7a47a6d92b4005b0edcdaba34b95ce",
+                "secret": {}
+            },
+            "sepolia": {
+                "url": "https://sepolia.infura.io/v3/",
+                "secret": {}
+            },
+        }
+    },
+    "binance": {
+        "network": {
+            "mainnet": {
+                "url": "https://bsc-dataseed1.binance.org:443"
+            },
+            "testnet": {
+                "url": "https://data-seed-prebsc-1-s1.binance.org:8545"
             }
         }
     },
