@@ -514,11 +514,13 @@ class ConversionService:
         current_datetime = datetime_in_utcnow()
         cardano_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("CARDANO", 0))
         ethereum_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("ETHEREUM", 0))
-        print(f"Expiring the conversion of ethereum and cardano  which is less than or  equal to "
-              f"{ethereum_expire_datetime} and {cardano_expire_datetime} respectively ")
+        binance_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("BINANCE", 0))
+        print(f"Expiring the conversion of ethereum and cardano which is less than or equal to "
+              f"{ethereum_expire_datetime}, {cardano_expire_datetime} or {binance_expire_datetime} respectively ")
         conversions = self.conversion_repo.get_expiring_conversion(
             ethereum_expire_datetime=ethereum_expire_datetime,
-            cardano_expire_datetime=cardano_expire_datetime)
+            cardano_expire_datetime=cardano_expire_datetime,
+            binance_expire_datetime=binance_expire_datetime)
         conversion_ids = get_expiring_conversion_response(get_response_from_entities(conversions))
         print(f"Expiring conversions total={len(conversion_ids)} conversion_ids={conversion_ids}")
         self.conversion_repo.set_conversions_to_expire(conversion_ids=conversion_ids)

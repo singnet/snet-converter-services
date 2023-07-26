@@ -103,5 +103,6 @@ MESSAGE_GROUP_ID = ""
 # In Hours
 EXPIRE_CONVERSION = {
     "CARDANO": 0,
-    "ETHEREUM": 0
+    "ETHEREUM": 0,
+    "BINANCE": 0
 }

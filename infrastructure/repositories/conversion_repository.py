@@ -328,7 +328,7 @@ class ConversionRepository(BaseRepository):
                                             updated_at=conversion.updated_at)
 
     @read_from_db()
-    def get_expiring_conversion(self, ethereum_expire_datetime, cardano_expire_datetime):
+    def get_expiring_conversion(self, ethereum_expire_datetime, cardano_expire_datetime, binance_expire_datetime):
         from_token = aliased(TokenDBModel)
         to_token = aliased(TokenDBModel)
         from_blockchain = aliased(BlockChainDBModel)
@@ -349,6 +349,8 @@ class ConversionRepository(BaseRepository):
             .filter(ConversionDBModel.status == ConversionStatus.USER_INITIATED.value,
                     or_(and_(func.lower(from_blockchain.name) == BlockchainName.ETHEREUM.value.lower(),
                              ConversionDBModel.created_at <= str(ethereum_expire_datetime)),
+                        and_(func.lower(from_blockchain.name) == BlockchainName.BINANCE.value.lower(),
+                             ConversionDBModel.created_at <= str(binance_expire_datetime)),
                         and_(func.lower(from_blockchain.name) == BlockchainName.CARDANO.value.lower(),
                              ConversionDBModel.created_at <= str(cardano_expire_datetime)))).all()
 
@@ -399,7 +401,7 @@ class ConversionRepository(BaseRepository):
         conversion_status_counts = conversion_status_counts_query.group_by(from_token.id, from_token.symbol,
                                                                            from_blockchain.symbol,
                                                                            to_blockchain.symbol,
-                                                                           ConversionDBModel.status)\
+                                                                           ConversionDBModel.status) \
             .order_by(from_token.symbol.asc()).all()
 
         return ConversionFactory.generate_conversion_report(conversion_status_counts=conversion_status_counts)
