@@ -38,18 +38,18 @@ def get_deposit_address_details(blockchain_name, token_name):
 
         data = deposit_response.get(CardanoAPIEntities.DATA.value)
         if not data:
-            raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
+                error_details=ErrorDetails[ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
 
         derived_address = data.get(CardanoAPIEntities.DERIVED_ADDRESS.value)
         derived_address_index = data.get(CardanoAPIEntities.INDEX.value)
         derived_address_role = data.get(CardanoAPIEntities.ROLE.value)
 
         if not derived_address or derived_address_index is None or derived_address_role is None:
-            raise InternalServerErrorException(error_code=ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value,
+                error_details=ErrorDetails[ErrorCode.DERIVED_ADDRESS_NOT_FOUND.value].value)
 
         deposit_address_details = get_deposit_address_details_format(derived_address=derived_address,
                                                                      index=derived_address_index,
@@ -85,8 +85,8 @@ def validate_cardano_address(address, chain_id):
 
 
 def validate_address(from_address, to_address, from_blockchain, to_blockchain):
-    logger.info(f"validating the input address from_address={from_address}, from_blockchain={from_blockchain}"
-                f", to_adress={to_address}, to_blockchain_name={to_blockchain}")
+    logger.info(f"validating the input address from_address={from_address}, from_blockchain={from_blockchain}, "
+                f"to_address={to_address}, to_blockchain_name={to_blockchain}")
     from_blockchain_name = from_blockchain.get(BlockchainEntities.NAME.value)
     from_blockchain_chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
