@@ -33,9 +33,7 @@ def datetime_to_str(timestamp):
 
 
 def get_valid_value(dict_name, key):
-    val = dict_name.get(key)
-    val = {} if val is None else val
-    return val
+    return dict_name.get(key, {})
 
 
 def validate_schema(filepath, schema_key, input_json):
