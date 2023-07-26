@@ -69,7 +69,7 @@ def convert_converter_bridge_event(event) -> list:
 
     except Exception as e:
         logger.info(f"Error while trying to parse the input={json.dumps(event)} with error of {e}")
-        raise InternalServerErrorException(error_code=ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value,
-                                           error_details=ErrorDetails[
-                                               ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value].value)
+        raise InternalServerErrorException(
+            error_code=ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value,
+            error_details=ErrorDetails[ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value].value)
     return new_format

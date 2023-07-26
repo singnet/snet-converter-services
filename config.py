@@ -42,7 +42,7 @@ BLOCKCHAIN_DETAILS = {
                 "secret": {}
             },
             "goerli": {
-                "url": "https://goerli.infura.io/v3/6e7a47a6d92b4005b0edcdaba34b95ce",
+                "url": "https://goerli.infura.io/v3/",
                 "secret": {}
             },
             "sepolia": {
