@@ -354,8 +354,8 @@ def validate_consumer_event_type(blockchain_name, event_type):
 
 
 def validate_consumer_event_against_transaction(event_type, transaction, blockchain_name):
-    logger.info(
-        f"Validating the consumer event against transaction for event_type={event_type}, blockchain_name={blockchain_name}")
+    logger.info(f"Validating the consumer event against transaction for event_type={event_type}, "
+                f"blockchain_name={blockchain_name}")
 
     if transaction and transaction.get(TransactionEntities.STATUS.value) == TransactionStatus.SUCCESS.value:
         raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value,
@@ -429,18 +429,16 @@ def validate_conversion_claim_request_signature(conversion_detail, amount, from_
 
     if not claim_amount or not conversion_status or not to_blockchain_name or not conversion_id:
         raise BadRequestException(error_code=ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value].value)
+                                  error_details=ErrorDetails[ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value].value)
 
-    if to_blockchain_name.lower() != BlockchainName.ETHEREUM.value.lower():
-        raise BadRequestException(error_code=ErrorCode.INVALID_CLAIM_OPERATION_ON_BLOCKCHAIN.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.INVALID_CLAIM_OPERATION_ON_BLOCKCHAIN.value].value)
+    if to_blockchain_name.lower() not in [BlockchainName.ETHEREUM.value.lower(), BlockchainName.BINANCE.value.lower()]:
+        raise BadRequestException(
+            error_code=ErrorCode.INVALID_CLAIM_OPERATION_ON_BLOCKCHAIN.value,
+            error_details=ErrorDetails[ErrorCode.INVALID_CLAIM_OPERATION_ON_BLOCKCHAIN.value].value)
 
     if conversion_status != ConversionStatus.WAITING_FOR_CLAIM.value:
         raise BadRequestException(error_code=ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value].value)
+                                  error_details=ErrorDetails[ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value].value)
 
     result = validate_conversion_claim_signature(conversion_id=conversion_id, amount=amount,
                                                  from_address=from_address, to_address=to_address,

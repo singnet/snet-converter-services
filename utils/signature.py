@@ -12,7 +12,7 @@ from constants.entity import SignatureMetadataEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import SIGNATURE_TYPES, ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH
 from utils.exceptions import InternalServerErrorException, BadRequestException
-from utils.general import get_ethereum_network_url, string_to_bytes_to_hex, get_evm_network_url
+from utils.general import string_to_bytes_to_hex, get_evm_network_url
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ def validate_conversion_signature(token_pair_id, amount, from_address, to_addres
     )
 
     hash_message = defunct_hash_message(message)
-    web3_object = Web3(web3.providers.HTTPProvider(get_ethereum_network_url(chain_id=chain_id)))
+    web3_object = Web3(web3.providers.HTTPProvider(get_evm_network_url(chain_id=chain_id)))
     signer_address = web3_object.eth.account.recoverHash(
         message_hash=hash_message, signature=signature
     )
@@ -48,7 +48,7 @@ def validate_conversion_claim_signature(conversion_id, amount, from_address, to_
         )
 
         hash_message = defunct_hash_message(message)
-        web3_object = Web3(web3.providers.HTTPProvider(get_ethereum_network_url(chain_id=chain_id)))
+        web3_object = Web3(web3.providers.HTTPProvider(get_evm_network_url(chain_id=chain_id)))
         signer_address = web3_object.eth.account.recoverHash(
             message_hash=hash_message, signature=signature
         )
@@ -58,9 +58,9 @@ def validate_conversion_claim_signature(conversion_id, amount, from_address, to_
                                   error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE_LENGTH.value].value)
     except Exception as e:
         logger.exception(e)
-        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION.value,
-                                           error_details=ErrorDetails[
-                                               ErrorCode.UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION.value].value)
+        raise InternalServerErrorException(
+            error_code=ErrorCode.UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION.value,
+            error_details=ErrorDetails[ErrorCode.UNEXPECTED_ERROR_ON_CLAIM_SIGNATURE_VALIDATION.value].value)
 
     return signer_address == to_address
 

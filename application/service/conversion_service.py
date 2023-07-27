@@ -297,7 +297,7 @@ class ConversionService:
 
         check_existing_transaction_state(transactions=transactions, conversion_on=conversion_on)
 
-        if blockchain_name == BlockchainName.ETHEREUM.value.lower():
+        if blockchain_name in [BlockchainName.ETHEREUM.value.lower(), BlockchainName.BINANCE.value.lower()]:
             contract_address = self.get_token_contract_address_for_conversion_id(
                 conversion_id=conversion.get(ConversionEntities.ID.value))
             validate_evm_transaction_details_against_conversion(chain_id=chain_id,
@@ -477,12 +477,12 @@ class ConversionService:
         return get_transaction_by_hash_response(transaction.to_dict()) if transaction else None
 
     def claim_conversion(self, conversion_id, amount, from_address, to_address, signature):
-        logger.info(
-            f"Claim the conversion for the conversion_id={conversion_id}, amount={amount}, from_address={from_address},"
-            f"to_address={to_address}, signature={signature}")
+        logger.info(f"Claim the conversion for the conversion_id={conversion_id}, amount={amount}, "
+                    f"from_address={from_address}, to_address={to_address}, signature={signature}")
         conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
-        chain_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
-            TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.CHAIN_ID.value)
+        chain_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value) \
+                                    .get(TokenEntities.BLOCKCHAIN.value) \
+                                    .get(BlockchainEntities.CHAIN_ID.value)
 
         # validate the request signature
         validate_conversion_claim_request_signature(conversion_detail=conversion_detail, amount=amount,
@@ -491,8 +491,8 @@ class ConversionService:
 
         conversion = conversion_detail.get(ConversionDetailEntities.CONVERSION.value)
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
-        user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value).get(
-            WalletPairEntities.TO_ADDRESS.value)
+        user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
+                                        .get(WalletPairEntities.TO_ADDRESS.value)
         contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
 
         # Generate claim signature

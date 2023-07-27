@@ -205,14 +205,13 @@ def get_binance_network_url(chain_id):
 
 def get_cardano_network_url_and_project_id(chain_id):
     network_name = CardanoNetwork(chain_id).name
-    network_config = BLOCKCHAIN_DETAILS.get(BlockchainName.CARDANO.value.lower(), {}).get("network", {}).get(
-        network_name.lower(), {})
+    network_config = BLOCKCHAIN_DETAILS.get(BlockchainName.CARDANO.value.lower(), {}) \
+                                       .get("network", {}) \
+                                       .get(network_name.lower(), {})
     url = network_config.get("url", None)
     project_id = network_config.get("secret", {}).get("project_id", None)
-
-    if url is None or project_id is None:
-        raise "Url not found from config"
-
+    assert url is not None, "Url not found from config"
+    assert project_id is not None, "Project ID not found"
     return url, project_id
 
 
