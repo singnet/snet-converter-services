@@ -1,7 +1,7 @@
 from sqlalchemy import or_, case, func, and_
 from sqlalchemy.orm import joinedload, aliased
 
-from constants.general import CreatedBy, BlockchainName
+from constants.general import CreatedBy, BlockchainName, ConversionOn
 from constants.status import ConversionStatus, ConversionTransactionStatus
 from domain.factory.conversion_factory import ConversionFactory
 from infrastructure.models import ConversionDBModel, WalletPairDBModel, TokenPairDBModel, TokenDBModel, \
@@ -189,11 +189,18 @@ class ConversionRepository(BaseRepository):
         self.session.commit()
 
     @read_from_db()
-    def get_token_contract_address_for_conversion_id(self, conversion_id):
-        contract_address = self.session.query(TokenPairDBModel.contract_address) \
-            .join(WalletPairDBModel, WalletPairDBModel.token_pair_id == TokenPairDBModel.row_id) \
-            .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
-            .filter(ConversionDBModel.id == conversion_id).first()
+    def get_token_contract_address_for_conversion_id(self, conversion_on, conversion_id):
+        query = self.session.query(TokenDBModel.contract_address)
+        if conversion_on == ConversionOn.FROM.value:
+            query = query.join(TokenPairDBModel, TokenPairDBModel.from_token_id == TokenDBModel.row_id)
+        elif conversion_on == ConversionOn.TO.value:
+            query = query.join(TokenPairDBModel, TokenPairDBModel.to_token_id == TokenDBModel.row_id)
+        else:
+            raise ValueError(f"Invalid conversion direction value conversion_on={conversion_on}")
+        query = query.join(WalletPairDBModel, WalletPairDBModel.token_pair_id == TokenPairDBModel.row_id) \
+                     .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
+                     .filter(ConversionDBModel.id == conversion_id)
+        contract_address = query.first()
 
         if not contract_address:
             return None

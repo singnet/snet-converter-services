@@ -173,6 +173,7 @@ class ConversionService:
 
         from_blockchain_name = from_blockchain.get(BlockchainEntities.NAME.value)
 
+        # TODO: Works only for Ethereum<->Cardano and Ethereum<->Binance pairs
         if from_blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
             is_signer_as_from_address = True
             chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
@@ -240,7 +241,9 @@ class ConversionService:
 
         if not deposit_address:
             user_address = wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value)
-            contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
+            contract_address = self.get_token_contract_address_for_conversion_id(
+                conversion_on=ConversionOn.FROM.value,
+                conversion_id=conversion_id)
             contract_signature = get_signature(
                 signature_type=SignatureTypeEntities.CONVERSION_OUT.value,
                 user_address=user_address, conversion_id=conversion_id,
@@ -299,6 +302,7 @@ class ConversionService:
 
         if blockchain_name in [BlockchainName.ETHEREUM.value.lower(), BlockchainName.BINANCE.value.lower()]:
             contract_address = self.get_token_contract_address_for_conversion_id(
+                conversion_on=conversion_on,
                 conversion_id=conversion.get(ConversionEntities.ID.value))
             validate_evm_transaction_details_against_conversion(chain_id=chain_id,
                                                                 transaction_hash=transaction_hash,
@@ -336,9 +340,16 @@ class ConversionService:
                                                 created_by=created_by)
         return conversion
 
-    def get_token_contract_address_for_conversion_id(self, conversion_id):
-        logger.info(f"Getting the token contract address for conversion_id={conversion_id}")
-        return self.conversion_repo.get_token_contract_address_for_conversion_id(conversion_id)
+    def get_token_contract_address_for_conversion_id(self, conversion_on, conversion_id):
+        logger.info(f"Getting the token contract address for conversion_on={conversion_on} "
+                    f"and conversion_id={conversion_id}")
+        try:
+            return self.conversion_repo.get_token_contract_address_for_conversion_id(conversion_on, conversion_id)
+        except ValueError as e:
+            logger.exception(f"Error getting contract address: {repr(e)}", exc_info=True)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.INVALID_CONVERSION_DIRECTION.value,
+                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_DIRECTION.value].value)
 
     def get_conversion_history(self, address, page_size, page_number):
         logger.info(f"Getting the conversion history for the given address={address}, page_size={page_size}, "
@@ -493,7 +504,9 @@ class ConversionService:
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
         user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
                                         .get(WalletPairEntities.TO_ADDRESS.value)
-        contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
+        contract_address = self.get_token_contract_address_for_conversion_id(
+            conversion_on=ConversionOn.TO.value,
+            conversion_id=conversion_id)
 
         # Generate claim signature
         claim_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_IN.value,

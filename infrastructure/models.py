@@ -37,6 +37,7 @@ class TokenDBModel(Base):
     blockchain_id = Column("blockchain_id", BIGINT, ForeignKey(BlockChainDBModel.row_id), nullable=False)
     allowed_decimal = Column("allowed_decimal", INTEGER)
     token_address = Column("token_address", VARCHAR(100), nullable=False)
+    contract_address = Column("contract_address", VARCHAR(250), nullable=True)
     created_by = Column("created_by", VARCHAR(50), nullable=False)
     created_at = Column("created_at", TIMESTAMP,
                         server_default=func.current_timestamp(), nullable=False)
@@ -73,7 +74,6 @@ class TokenPairDBModel(Base):
     is_enabled = Column("is_enabled", BOOLEAN, default=True)
     min_value = Column("min_value", DECIMAL(64, 0))
     max_value = Column("max_value", DECIMAL(64, 0))
-    contract_address = Column("contract_address", VARCHAR(250), nullable=False)
     created_by = Column("created_by", VARCHAR(50), nullable=False)
     created_at = Column("created_at", TIMESTAMP,
                         server_default=func.current_timestamp(), nullable=False)
