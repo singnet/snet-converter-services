@@ -87,8 +87,7 @@ def get_token_internal_response(token):
         TokenEntities.ROW_ID.value: token[TokenEntities.ROW_ID.value],
         TokenEntities.NAME.value: token[TokenEntities.NAME.value],
         TokenEntities.SYMBOL.value: token[TokenEntities.SYMBOL.value],
-        TokenEntities.BLOCKCHAIN.value: get_blockchain_response(
-            token[TokenEntities.BLOCKCHAIN.value])
+        TokenEntities.BLOCKCHAIN.value: get_blockchain_response(token[TokenEntities.BLOCKCHAIN.value])
     }
 
 

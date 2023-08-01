@@ -17,8 +17,7 @@ class ConversionRepository(BaseRepository):
     def get_conversion_count_by_status(self, address):
         status_counts = self.session.query(ConversionDBModel.status, func.count(ConversionDBModel.id).label("count")) \
             .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
-            .filter(
-            or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address)) \
+            .filter(or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address)) \
             .group_by(ConversionDBModel.status) \
             .all()
 
@@ -54,8 +53,8 @@ class ConversionRepository(BaseRepository):
             .join(TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id) \
             .filter(ConversionDBModel.id == conversion_id)
 
-        conversion_detail = conversion_detail_query.options(joinedload(ConversionDBModel.wallet_pair)).options(
-            joinedload(ConversionDBModel.wallet_pair).joinedload(WalletPairDBModel.token_pair)).first()
+        conversion_detail = conversion_detail_query.options(joinedload(ConversionDBModel.wallet_pair)) \
+            .options(joinedload(ConversionDBModel.wallet_pair).joinedload(WalletPairDBModel.token_pair)).first()
 
         if conversion_detail is None:
             return None
@@ -224,29 +223,28 @@ class ConversionRepository(BaseRepository):
             .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
             .join(TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id) \
             .order_by(case(
-            [
-                (
-                    ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value,
-                    1
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6
-                )
-            ],
-            else_=7
-        ).asc(), ConversionDBModel.created_at.desc())
+                [
+                    (
+                        ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value, 1
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6
+                    )
+                ],
+                else_=7
+            ).asc(), ConversionDBModel.created_at.desc())
 
         if address:
             conversions_detail_query = conversions_detail_query.filter(

@@ -424,8 +424,9 @@ def validate_conversion_claim_request_signature(conversion_detail, amount, from_
     claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
     claim_signature = conversion.get(ConversionEntities.CLAIM_SIGNATURE.value)
     conversion_status = conversion.get(ConversionEntities.STATUS.value)
-    to_blockchain_name = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
-        TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.NAME.value)
+    to_blockchain_name = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value) \
+                                          .get(TokenEntities.BLOCKCHAIN.value) \
+                                          .get(BlockchainEntities.NAME.value)
 
     if not claim_amount or not conversion_status or not to_blockchain_name or not conversion_id:
         raise BadRequestException(error_code=ErrorCode.CONVERSION_NOT_READY_FOR_CLAIM.value,

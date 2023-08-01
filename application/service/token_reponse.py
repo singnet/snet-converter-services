@@ -10,6 +10,7 @@ def get_token_response(token):
         TokenEntities.LOGO.value: token[TokenEntities.LOGO.value],
         TokenEntities.ALLOWED_DECIMAL.value: token[TokenEntities.ALLOWED_DECIMAL.value],
         TokenEntities.TOKEN_ADDRESS.value: token[TokenEntities.TOKEN_ADDRESS.value],
+        TokenEntities.CONTRACT_ADDRESS.value: token[TokenEntities.CONTRACT_ADDRESS.value],
         TokenEntities.UPDATED_AT.value: token[TokenEntities.UPDATED_AT.value],
         TokenEntities.BLOCKCHAIN.value: get_blockchain_for_token_response(token[TokenEntities.BLOCKCHAIN.value])
     }
