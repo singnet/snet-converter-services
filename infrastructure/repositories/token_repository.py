@@ -15,11 +15,11 @@ class TokenRepository(BaseRepository):
         token_pairs = self.session.query(TokenPairDBModel).filter(TokenPairDBModel.is_enabled.is_(True)) \
             .options(joinedload(TokenPairDBModel.from_token)).options(joinedload(TokenPairDBModel.to_token)) \
             .options(joinedload(TokenPairDBModel.conversion_fee)).all()
-        return [TokenFactory.token_pair(row_id=token_pair.row_id, id=token_pair.id, min_value=token_pair.min_value,
-                                        max_value=token_pair.max_value, contract_address=token_pair.contract_address,
-                                        created_by=token_pair.created_by, created_at=token_pair.created_at,
-                                        updated_at=token_pair.updated_at, from_token=token_pair.from_token,
-                                        to_token=token_pair.to_token, conversion_fee=token_pair.conversion_fee) for
+        return [TokenFactory.token_pair(row_id=token_pair.row_id, id_=token_pair.id, min_value=token_pair.min_value,
+                                        max_value=token_pair.max_value, created_by=token_pair.created_by,
+                                        created_at=token_pair.created_at, updated_at=token_pair.updated_at,
+                                        from_token=token_pair.from_token, to_token=token_pair.to_token,
+                                        conversion_fee=token_pair.conversion_fee) for
                 token_pair
                 in token_pairs]
 
@@ -40,8 +40,8 @@ class TokenRepository(BaseRepository):
             raise TokenPairIdNotExitsException(error_code=ErrorCode.TOKEN_PAIR_NOT_EXISTS.value,
                                                error_details=ErrorDetails[ErrorCode.TOKEN_PAIR_NOT_EXISTS.value].value)
 
-        return TokenFactory.token_pair(row_id=token_pair.row_id, id=token_pair.id, min_value=token_pair.min_value,
-                                       max_value=token_pair.max_value, contract_address=token_pair.contract_address,
-                                       created_by=token_pair.created_by, created_at=token_pair.created_at,
-                                       updated_at=token_pair.updated_at, from_token=token_pair.from_token,
-                                       to_token=token_pair.to_token, conversion_fee=token_pair.conversion_fee)
+        return TokenFactory.token_pair(row_id=token_pair.row_id, id_=token_pair.id, min_value=token_pair.min_value,
+                                       max_value=token_pair.max_value, created_by=token_pair.created_by,
+                                       created_at=token_pair.created_at, updated_at=token_pair.updated_at,
+                                       from_token=token_pair.from_token, to_token=token_pair.to_token,
+                                       conversion_fee=token_pair.conversion_fee)

@@ -20,7 +20,6 @@ def get_all_token_pair_response(token_pairs):
         TokenPairEntities.ID.value: token_pair[TokenPairEntities.ID.value],
         TokenPairEntities.MIN_VALUE.value: token_pair[TokenPairEntities.MIN_VALUE.value],
         TokenPairEntities.MAX_VALUE.value: token_pair[TokenPairEntities.MAX_VALUE.value],
-        TokenPairEntities.CONTRACT_ADDRESS.value: token_pair[TokenPairEntities.CONTRACT_ADDRESS.value],
         TokenPairEntities.FROM_TOKEN.value: get_token_response(token_pair[TokenPairEntities.FROM_TOKEN.value]),
         TokenPairEntities.TO_TOKEN.value: get_token_response(token_pair[TokenPairEntities.TO_TOKEN.value]),
         TokenPairEntities.CONVERSION_FEE.value: get_conversion_fee_response(
@@ -34,7 +33,6 @@ def get_token_pair_response(token_pair):
         TokenPairEntities.ID.value: token_pair[TokenPairEntities.ID.value],
         TokenPairEntities.MIN_VALUE.value: token_pair[TokenPairEntities.MIN_VALUE.value],
         TokenPairEntities.MAX_VALUE.value: token_pair[TokenPairEntities.MAX_VALUE.value],
-        TokenPairEntities.CONTRACT_ADDRESS.value: token_pair[TokenPairEntities.CONTRACT_ADDRESS.value],
         TokenPairEntities.FROM_TOKEN.value: get_token_response(token_pair[TokenPairEntities.FROM_TOKEN.value]),
         TokenPairEntities.TO_TOKEN.value: get_token_response(token_pair[TokenPairEntities.TO_TOKEN.value]),
         TokenPairEntities.CONVERSION_FEE.value: get_conversion_fee_response(
@@ -49,7 +47,6 @@ def get_token_pair_internal_response(token_pair):
         TokenPairEntities.ID.value: token_pair[TokenPairEntities.ID.value],
         TokenPairEntities.MIN_VALUE.value: token_pair[TokenPairEntities.MIN_VALUE.value],
         TokenPairEntities.MAX_VALUE.value: token_pair[TokenPairEntities.MAX_VALUE.value],
-        TokenPairEntities.CONTRACT_ADDRESS.value: token_pair[TokenPairEntities.CONTRACT_ADDRESS.value],
         TokenPairEntities.FROM_TOKEN.value: get_token_response(token_pair[TokenPairEntities.FROM_TOKEN.value]),
         TokenPairEntities.TO_TOKEN.value: get_token_response(token_pair[TokenPairEntities.TO_TOKEN.value]),
         TokenPairEntities.CONVERSION_FEE.value: get_conversion_fee_response(

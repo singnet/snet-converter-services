@@ -279,31 +279,33 @@ class ConsumerService:
                 raise BadRequestException(error_code=ErrorCode.WALLET_PAIR_NOT_EXISTS.value,
                                           error_details=ErrorDetails[ErrorCode.WALLET_PAIR_NOT_EXISTS.value].value)
 
-            token_pair = self.token_service.get_token_pair_internal(token_pair_id=None,
-                                                                    token_pair_row_id=wallet_pair.get(
-                                                                        WalletPairEntities.TOKEN_PAIR_ID.value))
+            token_pair = self.token_service.get_token_pair_internal(
+                token_pair_id=None,
+                token_pair_row_id=wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value))
 
             validate_conversion_request_amount(amount=tx_amount,
                                                min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                                max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
 
-            token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
-                TokenEntities.TOKEN_ADDRESS.value)
-            token_symbol = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
-                TokenEntities.SYMBOL.value)
+            token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}) \
+                                      .get(TokenEntities.TOKEN_ADDRESS.value)
+            token_symbol = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(TokenEntities.SYMBOL.value)
 
-            if policy_id is None or asset_name is None or policy_id != token_address or asset_name != token_symbol.encode(
-                    'utf-8').hex():
+            if policy_id is None or asset_name is None or policy_id != token_address or \
+                    asset_name != token_symbol.encode('utf-8').hex():
                 raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value,
                                           error_details=ErrorDetails[ErrorCode.INVALID_ASSET_TRANSFERRED.value].value)
 
             tx_amount = Decimal(float(tx_amount))
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
-                fee_amount = calculate_fee_amount(amount=tx_amount, percentage=token_pair.get(
-                    TokenPairEntities.CONVERSION_FEE.value).get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
+                fee_amount = calculate_fee_amount(
+                    amount=tx_amount,
+                    percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
+                                         .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
 
-            from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value).get(
-                TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.NAME.value)
+            from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                             .get(TokenEntities.BLOCKCHAIN.value) \
+                                             .get(BlockchainEntities.NAME.value)
 
             conversion = self.conversion_service.process_conversion_request(
                 wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value), deposit_amount=tx_amount,
@@ -313,11 +315,12 @@ class ConsumerService:
                     conversion_id=conversion.get(ConversionEntities.ID.value),
                     transaction_hash=tx_hash, created_by=created_by)
 
-                self.conversion_service.update_transaction_by_id(tx_id=transaction.get(TransactionEntities.ID.value),
-                                                                 tx_operation=TransactionOperation.TOKEN_RECEIVED.value,
-                                                                 tx_visibility=TransactionVisibility.EXTERNAL.value,
-                                                                 tx_amount=tx_amount,
-                                                                 tx_status=TransactionStatus.WAITING_FOR_CONFIRMATION.value)
+                self.conversion_service.update_transaction_by_id(
+                    tx_id=transaction.get(TransactionEntities.ID.value),
+                    tx_operation=TransactionOperation.TOKEN_RECEIVED.value,
+                    tx_visibility=TransactionVisibility.EXTERNAL.value,
+                    tx_amount=tx_amount,
+                    tx_status=TransactionStatus.WAITING_FOR_CONFIRMATION.value)
             except BadRequestException as e:
                 logger.info(f"Bad Request {e}")
                 raise BadRequestException(error_code=ErrorCode.BAD_REQUEST_ON_TRANSACTION_CREATION.value,

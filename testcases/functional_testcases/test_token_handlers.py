@@ -30,7 +30,6 @@ class TestToken(unittest.TestCase):
     def test_get_all_token_pair(self, mock_report_slack):
         success_response_1 = {'status': 'success', 'data': [
             {'id': '22477fd4ea994689a04646cbbaafd133', 'min_value': '1E+1', 'max_value': '1E+18',
-             'contract_address': '0xacontractaddress',
              'from_token': {'id': '53ceafdb42ad4f3d81eeb19c674437f9', 'symbol': 'AGIX',
                             'logo': 'www.findOurUrl.com/image.png', 'allowed_decimal': 5,
                             'token_address': '0xA1e841e8F770E5c9507E2f8cfd0aA6f73009715d',
@@ -46,7 +45,6 @@ class TestToken(unittest.TestCase):
              'conversion_fee': {'id': 'ccd10383bd434bd7b1690754f8b98df3', 'percentage_from_source': '1.5',
                                 'updated_at': '2022-01-12 04:10:54'}, 'updated_at': '2022-01-12 04:10:54'},
             {'id': 'fdd6a416d8414154bcdd95f82b6ab239', 'min_value': '1E+2', 'max_value': '1E+23',
-             'contract_address': '0xacontractaddress',
              'from_token': {'id': 'aa5763de861e4a52ab24464790a5c017', 'symbol': 'AGIX',
                             'logo': 'www.findOurUrl.com/image.png', 'allowed_decimal': 10,
                             'token_address': 'ae8a0b54484418a3db56f4e9b472d51cbc860667489366ba6e150c8a',
@@ -64,7 +62,6 @@ class TestToken(unittest.TestCase):
                               'error': {'code': None, 'message': None, 'details': None}}
         success_response_3 = {'status': 'success', 'data': [
             {'id': '22477fd4ea994689a04646cbbaafd133', 'min_value': '1E+1', 'max_value': '1E+18',
-             'contract_address': '0xacontractaddress',
              'from_token': {'id': '53ceafdb42ad4f3d81eeb19c674437f9', 'symbol': 'AGIX',
                             'logo': 'www.findOurUrl.com/image.png', 'allowed_decimal': 5,
                             'token_address': '0xA1e841e8F770E5c9507E2f8cfd0aA6f73009715d',

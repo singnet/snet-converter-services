@@ -1,5 +1,5 @@
 from constants.entity import ConversionEntities, WalletPairEntities, ConversionDetailEntities, TokenEntities, \
-    BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities, TokenPairEntities
+    BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities
 
 
 def conversion_response(conversion):
@@ -33,7 +33,7 @@ def create_conversion_request_response(conversion_id, deposit_address, signature
         ConversionEntities.DEPOSIT_AMOUNT.value: deposit_amount,
         WalletPairEntities.DEPOSIT_ADDRESS.value: deposit_address,
         SignatureMetadataEntities.SIGNATURE.value: signature,
-        TokenPairEntities.CONTRACT_ADDRESS.value: contract_address
+        TokenEntities.CONTRACT_ADDRESS.value: contract_address
     }
 
 
@@ -41,7 +41,7 @@ def claim_conversion_response(signature, claim_amount, contract_address):
     return {
         ConversionEntities.CLAIM_AMOUNT.value: claim_amount,
         SignatureMetadataEntities.SIGNATURE.value: signature,
-        TokenPairEntities.CONTRACT_ADDRESS.value: contract_address
+        TokenEntities.CONTRACT_ADDRESS.value: contract_address
     }
 
 

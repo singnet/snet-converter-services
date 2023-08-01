@@ -9,14 +9,12 @@ from decimal import Decimal
 
 class TokenPair:
 
-    def __init__(self, row_id: int, id: str, min_value: Decimal, max_value: Decimal, contract_address: str,
-                 created_by: str, created_at: date, updated_at: date, from_token_obj: Token, to_token_obj: Token,
-                 conversion_fee_obj: ConversionFee):
+    def __init__(self, row_id: int, id_: str, min_value: Decimal, max_value: Decimal, created_by: str, created_at: date,
+                 updated_at: date, from_token_obj: Token, to_token_obj: Token, conversion_fee_obj: ConversionFee):
         self.row_id = row_id
-        self.id = id
+        self.id = id_
         self.min_value = str(min_value.normalize())
         self.max_value = str(max_value.normalize())
-        self.contract_address = contract_address
         self.created_by = created_by
         self.from_token_obj = from_token_obj
         self.to_token_obj = to_token_obj
@@ -34,7 +32,6 @@ class TokenPair:
             TokenPairEntities.ID.value: self.id,
             TokenPairEntities.MIN_VALUE.value: self.min_value,
             TokenPairEntities.MAX_VALUE.value: self.max_value,
-            TokenPairEntities.CONTRACT_ADDRESS.value: self.contract_address,
             TokenPairEntities.FROM_TOKEN.value: from_token,
             TokenPairEntities.TO_TOKEN.value: to_token,
             TokenPairEntities.CONVERSION_FEE.value: conversion_fee,
