@@ -520,7 +520,8 @@ functions:
     warmup: true
     environment:
       CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH}
-      CONVERTER_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_SIGNER_PRIVATE_KEY_PATH}
+      CONVERTER_ETHEREUM_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_ETHEREUM_SIGNER_PRIVATE_KEY_PATH}
+      CONVERTER_BINANCE_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_BINANCE_SIGNER_PRIVATE_KEY_PATH}
     events:
       - http:
           path: /v1/conversion
@@ -668,7 +669,8 @@ functions:
     layers: ${self:custom.defaultLayers}
     warmup: true
     environment:
-      CONVERTER_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_SIGNER_PRIVATE_KEY_PATH}
+      CONVERTER_ETHEREUM_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_ETHEREUM_SIGNER_PRIVATE_KEY_PATH}
+      CONVERTER_BINANCE_SIGNER_PRIVATE_KEY_PATH: ${file(./config.${self:provider.stage}.json):CONVERTER_BINANCE_SIGNER_PRIVATE_KEY_PATH}
     events:
       - http:
           path: /v1/conversion/{conversion_id}/claim

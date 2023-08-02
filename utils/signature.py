@@ -12,7 +12,7 @@ from constants.entity import SignatureMetadataEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import SIGNATURE_TYPES, ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH
 from utils.exceptions import InternalServerErrorException, BadRequestException
-from utils.general import string_to_bytes_to_hex, get_evm_network_url
+from utils.general import string_to_bytes_to_hex, get_evm_network_url, get_evm_blockchain
 
 logger = get_logger(__name__)
 
@@ -109,8 +109,9 @@ def get_signature(signature_type, user_address, conversion_id, amount, contract_
         raise InternalServerErrorException(
             error_code=ErrorCode.INVALID_SIGNATURE_TYPE_PROVIDED.value,
             error_details=ErrorDetails[ErrorCode.INVALID_SIGNATURE_TYPE_PROVIDED.value].value)
+    blockchain_name = get_evm_blockchain(chain_id=chain_id)
     region_name = os.getenv('AWS_REGION', None)
-    secret_name = os.getenv(ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH, None)
+    secret_name = os.getenv(ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH[blockchain_name], None)
     if not region_name or not secret_name:
         raise InternalServerErrorException(
             error_code=ErrorCode.REQUIRED_SIGNING_ENVIRONMENT_FIELDS_NOT_FOUND.value,
