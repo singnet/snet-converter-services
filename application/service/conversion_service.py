@@ -27,7 +27,7 @@ from utils.blockchain import validate_address, validate_conversion_claim_request
     validate_cardano_transaction_details_against_conversion
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
-    is_supported_network_conversion, get_ethereum_network_url, get_offset, paginate_items_response_format, \
+    is_supported_network_conversion, get_evm_network_url, get_offset, paginate_items_response_format, \
     datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report
 from utils.signature import validate_conversion_signature, get_signature
 
@@ -173,16 +173,16 @@ class ConversionService:
 
         from_blockchain_name = from_blockchain.get(BlockchainEntities.NAME.value)
 
-        # TODO: Works only for Ethereum<->Cardano and Ethereum<->Binance pairs
-        if from_blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
+        evm_blockchains = [BlockchainName.ETHEREUM.value.lower(), BlockchainName.BINANCE.value.lower()]
+        if from_blockchain_name.lower() in evm_blockchains:
             is_signer_as_from_address = True
             chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
         else:
             chain_id = to_blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
-        network_url = get_ethereum_network_url(chain_id=chain_id)
-        ethereum_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
-        current_block_no = ethereum_web3_object.get_current_block_no()
+        network_url = get_evm_network_url(chain_id=chain_id)
+        evm_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
+        current_block_no = evm_web3_object.get_current_block_no()
         if not block_number <= current_block_no or block_number < (current_block_no - SIGNATURE_EXPIRY_BLOCK_NUMBER):
             raise BadRequestException(error_code=ErrorCode.SIGNATURE_EXPIRED.value,
                                       error_details=ErrorDetails[ErrorCode.SIGNATURE_EXPIRED.value].value)
