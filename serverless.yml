@@ -157,10 +157,10 @@ custom:
         contentType: "application/json"
         schema: ${file(documentation/models/conversion.json):GetConversionStatusCountOutput}
 
-      - name: "GetTransactionByConversionOutput"
-        description: "Get Transaction By Conversion Output"
-        contentType: "application/json"
-        schema: ${file(documentation/models/conversion.json):GetTransactionByConversionOutput}
+#      - name: "GetTransactionByConversionOutput"
+#        description: "Get Transaction By Conversion Output"
+#        contentType: "application/json"
+#        schema: ${file(documentation/models/conversion.json):GetTransactionByConversionOutput}
   apiGatewayCaching:
     enabled: true
     clusterSize: '0.5'
@@ -647,11 +647,11 @@ functions:
             tags:
               - "Transaction"
             methodResponses:
-              - statusCode: "200"
-                responseBody:
-                  description: "Getting the transactions"
-                responseModels:
-                  "application/json": "GetTransactionByConversionOutput"
+ #             - statusCode: "200"
+ #               responseBody:
+ #                 description: "Getting the transactions"
+ #               responseModels:
+ #                 "application/json": "GetTransactionByConversionOutput"
               - statusCode: "403"
                 responseModels:
                   "application/json": "ApiErrorMessage"
