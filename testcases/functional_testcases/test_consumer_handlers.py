@@ -69,7 +69,7 @@ class TestConsumer(unittest.TestCase):
     @patch("common.blockchain_util.BlockChainUtil.contract_instance")
     @patch("common.blockchain_util.BlockChainUtil.load_contract")
     @patch("utils.blockchain.get_token_contract_path")
-    @patch("utils.blockchain.get_ethereum_transaction_details")
+    @patch("utils.blockchain.get_evm_transaction_details")
     @patch("utils.sqs.SqsService.send_message_to_queue")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_block")
     @patch("utils.cardano_blockchain.CardanoBlockchainUtil.get_transaction")
@@ -79,7 +79,7 @@ class TestConsumer(unittest.TestCase):
     def test_converter_event_consumer(self, mock_report_slack, mock_validate_cardano_address,
                                       mock_send_message_to_queue, mock_get_transaction,
                                       mock_get_block, mock_send_message_to_sqs,
-                                      mock_get_ethereum_transaction_details, mock_get_token_contract_path,
+                                      mock_get_evm_transaction_details, mock_get_token_contract_path,
                                       mock_load_contract, mock_contract_instance, mock_get_event_logs,
                                       mock_get_cardano_transaction_details,
                                       mock_validate_tx_hash_presence_in_blockchain,
@@ -245,7 +245,7 @@ class TestConsumer(unittest.TestCase):
                           {})
 
         # Invalid address for transaction
-        mock_get_ethereum_transaction_details.return_value = {"from": "some address"}
+        mock_get_evm_transaction_details.return_value = {"from": "some address"}
         converter_event_consumer(prepare_consumer_ethereum_event_format({'blockchain_name': 'Ethereum',
                                                                          'blockchain_event': {'name': 'ConversionOut',
                                                                                               'data': {
@@ -260,7 +260,7 @@ class TestConsumer(unittest.TestCase):
         self.assertEqual(0, len(conversion_transaction_count))
 
         # valid event
-        mock_get_ethereum_transaction_details.return_value = {"from": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}
+        mock_get_evm_transaction_details.return_value = {"from": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}
         mock_get_event_logs.return_value = [{"args": {
             "tokenHolder": '0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1',
             "amount": 133305000,

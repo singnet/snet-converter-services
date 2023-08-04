@@ -61,21 +61,23 @@ class ConversionFactory:
         from_token = token_pair.from_token
         from_blockchain = from_token.blockchain_detail
 
-        from_token_obj = TokenFactory.token(row_id=from_token.row_id, id=from_token.id, name=from_token.name,
+        from_token_obj = TokenFactory.token(row_id=from_token.row_id, id_=from_token.id, name=from_token.name,
                                             description=from_token.description,
                                             symbol=from_token.symbol, logo=from_token.logo,
                                             allowed_decimal=from_token.allowed_decimal,
                                             token_address=from_token.token_address,
+                                            contract_address=from_token.contract_address,
                                             created_by=from_token.created_by, created_at=from_token.created_at,
                                             updated_at=from_token.updated_at, blockchain_detail=from_blockchain)
         to_token = token_pair.to_token
         to_blockchain = to_token.blockchain_detail
 
-        to_token_obj = TokenFactory.token(row_id=to_token.row_id, id=to_token.id, name=to_token.name,
+        to_token_obj = TokenFactory.token(row_id=to_token.row_id, id_=to_token.id, name=to_token.name,
                                           description=to_token.description,
                                           symbol=to_token.symbol, logo=to_token.logo,
                                           allowed_decimal=to_token.allowed_decimal,
                                           token_address=from_token.token_address,
+                                          contract_address=to_token.contract_address,
                                           created_by=to_token.created_by, created_at=to_token.created_at,
                                           updated_at=to_token.updated_at, blockchain_detail=to_blockchain)
 
@@ -95,11 +97,12 @@ class ConversionFactory:
             created_at=conversion_transaction_db_obj.created_at,
             updated_at=conversion_transaction_db_obj.updated_at)
 
-        token_obj = TokenFactory.token(row_id=token_db_obj.row_id, id=token_db_obj.id, name=token_db_obj.name,
+        token_obj = TokenFactory.token(row_id=token_db_obj.row_id, id_=token_db_obj.id, name=token_db_obj.name,
                                        description=token_db_obj.description,
                                        symbol=token_db_obj.symbol, logo=token_db_obj.logo,
                                        allowed_decimal=token_db_obj.allowed_decimal,
                                        token_address=token_db_obj.token_address,
+                                       contract_address=token_db_obj.contract_address,
                                        created_by=token_db_obj.created_by, created_at=token_db_obj.created_at,
                                        updated_at=token_db_obj.updated_at,
                                        blockchain_detail=token_db_obj.blockchain_detail)

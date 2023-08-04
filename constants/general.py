@@ -6,6 +6,7 @@ MAX_ALLOWED_DECIMAL = 20
 class BlockchainName(Enum):
     ETHEREUM = "Ethereum"
     CARDANO = "Cardano"
+    BINANCE = "Binance"
 
 
 class CreatedBy(Enum):
@@ -48,7 +49,10 @@ class SleepTimeEntities(Enum):
 
 SIGNATURE_TYPES = [SignatureTypeEntities.CONVERSION_IN.value, SignatureTypeEntities.CONVERSION_OUT.value]
 
-ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH = "CONVERTER_SIGNER_PRIVATE_KEY_PATH"
+ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH = {
+    BlockchainName.ETHEREUM.value: "CONVERTER_ETHEREUM_SIGNER_PRIVATE_KEY_PATH",
+    BlockchainName.BINANCE.value:  "CONVERTER_BINANCE_SIGNER_PRIVATE_KEY_PATH"
+}
 
 ETHEREUM_WALLET_ADDRESS_LENGTH = 42
 MAX_PAGE_SIZE = 20

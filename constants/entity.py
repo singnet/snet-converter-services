@@ -24,6 +24,7 @@ class TokenEntities(Enum):
     LOGO = "logo"
     ALLOWED_DECIMAL = "allowed_decimal"
     TOKEN_ADDRESS = "token_address"
+    CONTRACT_ADDRESS = "contract_address"
     BLOCKCHAIN = "blockchain"
     CREATED_BY = "created_by"
     CREATED_AT = "created_at"
@@ -35,7 +36,6 @@ class TokenPairEntities(Enum):
     ID = "id"
     MIN_VALUE = "min_value"
     MAX_VALUE = "max_value"
-    CONTRACT_ADDRESS = "contract_address"
     FROM_TOKEN = "from_token"
     TO_TOKEN = "to_token"
     CONVERSION_FEE = "conversion_fee"
@@ -215,6 +215,25 @@ class EthereumEventType(Enum):
 
 
 EthereumAllowedEventType = [EthereumEventType.TOKEN_BURNT.value, EthereumEventType.TOKEN_MINTED.value]
+
+
+class BinanceEventConsumerEntities(Enum):
+    CONVERSION_ID = "conversionId"
+    TRANSACTION_HASH = "transactionHash"
+    NAME = "name"
+    JSON_STR = "json_str"
+    DATA = "data"
+    TOKEN_HOLDER = "tokenHolder"
+    AMOUNT = "amount"
+    ARGS = "args"
+
+
+class BinanceEventType(Enum):
+    TOKEN_BURNT = "ConversionOut"
+    TOKEN_MINTED = "ConversionIn"
+
+
+BinanceAllowedEventType = [BinanceEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_MINTED.value]
 
 
 class CardanoAPIEntities(Enum):

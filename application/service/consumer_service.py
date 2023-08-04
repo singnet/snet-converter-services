@@ -14,7 +14,7 @@ from config import MESSAGE_GROUP_ID, SLACK_HOOK
 from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventConsumer, EventConsumerEntity, \
     WalletPairEntities, ConversionEntities, ConverterBridgeEntities, EthereumEventConsumerEntities, EthereumEventType, \
     TransactionEntities, TokenEntities, ConversionDetailEntities, CardanoAPIEntities, TokenPairEntities, \
-    ConversionFeeEntities, MessagePoolEntities
+    ConversionFeeEntities, MessagePoolEntities, BinanceEventConsumerEntities, BinanceEventType
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, QueueName
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
@@ -52,8 +52,7 @@ class ConsumerService:
         blockchain_event = payload.get(EventConsumerEntity.BLOCKCHAIN_EVENT.value)
 
         if not blockchain_name or not blockchain_event:
-            logger.info(
-                f"Either blockchain name={blockchain_name} or blockchain_event={blockchain_event}  is empty")
+            logger.info(f"Either blockchain name={blockchain_name} or blockchain_event={blockchain_event}  is empty")
             raise InternalServerErrorException(error_code=ErrorCode.CONSUMER_EVENT_EMPTY.value,
                                                error_details=ErrorDetails[ErrorCode.CONSUMER_EVENT_EMPTY.value].value)
 
@@ -61,23 +60,28 @@ class ConsumerService:
 
         if not blockchain_detail:
             logger.info("Not supported blockchain")
-            raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM.value,
+                error_details=ErrorDetails[ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM.value].value)
+
         blockchain_network_id = blockchain_detail.get(BlockchainEntities.CHAIN_ID.value)
 
         if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
             event_type = blockchain_event.get(EthereumEventConsumerEntities.NAME.value)
-            tx_hash = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}).get(
-                EthereumEventConsumerEntities.TRANSACTION_HASH.value)
+            tx_hash = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}) \
+                                      .get(EthereumEventConsumerEntities.TRANSACTION_HASH.value)
+        elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
+            event_type = blockchain_event.get(BinanceEventConsumerEntities.NAME.value)
+            tx_hash = blockchain_event.get(BinanceEventConsumerEntities.DATA.value, {}) \
+                                      .get(BinanceEventConsumerEntities.TRANSACTION_HASH.value)
         elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
-            event_type = blockchain_event.get(CardanoEventConsumer.TRANSACTION_DETAIL.value, {}).get(
-                CardanoEventConsumer.TX_TYPE.value)
+            event_type = blockchain_event.get(CardanoEventConsumer.TRANSACTION_DETAIL.value, {})\
+                                         .get(CardanoEventConsumer.TX_TYPE.value)
             tx_hash = blockchain_event.get(CardanoEventConsumer.TX_HASH.value)
         else:
-            raise InternalServerErrorException(error_code=ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value,
+                error_details=ErrorDetails[ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value].value)
 
         if not event_type or not tx_hash or not blockchain_network_id or not blockchain_event or not blockchain_detail:
             raise InternalServerErrorException(error_code=ErrorCode.CONSUMER_EVENT_EMPTY.value,
@@ -99,31 +103,43 @@ class ConsumerService:
         validate_consumer_event_against_transaction(event_type=event_type, transaction=transaction,
                                                     blockchain_name=db_blockchain_name)
 
-        if db_blockchain_name == BlockchainName.ETHEREUM.value.lower() and (
-                event_type == EthereumEventType.TOKEN_BURNT.value or event_type == EthereumEventType.TOKEN_MINTED.value):
-            json_str = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}).get(
-                EthereumEventConsumerEntities.JSON_STR.value)
+        if db_blockchain_name == BlockchainName.ETHEREUM.value.lower() and \
+                event_type in [EthereumEventType.TOKEN_BURNT.value, EthereumEventType.TOKEN_MINTED.value]:
+            json_str = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}) \
+                                       .get(EthereumEventConsumerEntities.JSON_STR.value)
             metadata = ast.literal_eval(json_str)
 
             tx_amount = metadata.get(EthereumEventConsumerEntities.AMOUNT.value)
             conversion_id = metadata.get(EthereumEventConsumerEntities.CONVERSION_ID.value).decode("utf-8")
             token_holder = metadata.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value)
 
-            conversion = self.process_ethereum_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
-                                                     conversion_id=conversion_id, transaction=transaction,
-                                                     token_holder=token_holder)
+            conversion = self.process_evm_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
+                                                conversion_id=conversion_id, transaction=transaction,
+                                                token_holder=token_holder)
+        elif db_blockchain_name == BlockchainName.BINANCE.value.lower() and \
+                event_type in [BinanceEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_MINTED.value]:
+            json_str = blockchain_event.get(BinanceEventConsumerEntities.DATA.value, {}) \
+                                       .get(BinanceEventConsumerEntities.JSON_STR.value)
+            metadata = ast.literal_eval(json_str)
+
+            tx_amount = metadata.get(EthereumEventConsumerEntities.AMOUNT.value)
+            conversion_id = metadata.get(EthereumEventConsumerEntities.CONVERSION_ID.value).decode("utf-8")
+            token_holder = metadata.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value)
+
+            conversion = self.process_evm_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
+                                                conversion_id=conversion_id, transaction=transaction,
+                                                token_holder=token_holder)
         elif db_blockchain_name == BlockchainName.CARDANO.value.lower():
             if event_type == CardanoEventType.TOKEN_RECEIVED.value:
                 conversion = self.process_cardano_token_received_event(blockchain_event=blockchain_event,
                                                                        transaction=transaction)
-            elif transaction and event_type == CardanoEventType.TOKEN_MINTED.value or event_type == CardanoEventType.TOKEN_BURNT.value:
+            elif transaction and event_type in [CardanoEventType.TOKEN_MINTED.value, CardanoEventType.TOKEN_BURNT.value]:
                 conversion = self.conversion_service.get_conversion_detail_by_tx_id(
                     tx_id=transaction.get(TransactionEntities.ID.value))
             else:
                 logger.info(f"Invalid event type provided ={event_type}")
                 raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
-                                          error_details=ErrorDetails[
-                                              ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
+                                          error_details=ErrorDetails[ErrorCode.UNEXPECTED_EVENT_TYPE.value].value)
         else:
             logger.info(f"Invalid event type provided ={event_type}")
             raise BadRequestException(error_code=ErrorCode.UNEXPECTED_EVENT_TYPE.value,
@@ -169,21 +185,21 @@ class ConsumerService:
             if message_group:
                 self.pool_service.update_message_pool(id=message_group.get(MessagePoolEntities.ID.value))
         else:
-            conversion_transaction_id = conversion_complete_detail.get(ConversionDetailEntities.TRANSACTIONS.value,
-                                                                       {})[0].get(
-                TransactionEntities.CONVERSION_TRANSACTION_ID.value)
+            conversion_transaction_id = conversion_complete_detail \
+                .get(ConversionDetailEntities.TRANSACTIONS.value, {})[0] \
+                .get(TransactionEntities.CONVERSION_TRANSACTION_ID.value)
             self.conversion_service.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                                   status=ConversionTransactionStatus.SUCCESS.value)
             self.conversion_service.update_conversion(conversion_id=conversion.get(ConversionEntities.ID.value),
                                                       status=ConversionStatus.SUCCESS.value)
             logger.info("Conversion is done")
 
-    def process_ethereum_event(self, event_type, tx_hash, tx_amount, conversion_id, transaction, token_holder):
+    def process_evm_event(self, event_type, tx_hash, tx_amount, conversion_id, transaction, token_holder):
 
         if not tx_hash or not tx_amount or not conversion_id:
-            raise InternalServerErrorException(error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
+                error_details=ErrorDetails[ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
         try:
             conversion_detail = self.conversion_service.get_conversion_complete_detail(conversion_id=conversion_id)
         except Exception as e:
@@ -201,17 +217,18 @@ class ConsumerService:
         deposit_amount = conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
 
-        if event_type == EthereumEventType.TOKEN_BURNT.value and wallet_pair.get(
-                WalletPairEntities.FROM_ADDRESS.value) != token_holder:
-            logger.info(f"Mismatch on address  from request and contract for {event_type} event")
-            raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
-                                               error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
-        elif event_type == EthereumEventType.TOKEN_MINTED.value and (
-                Decimal(float(claim_amount)) != Decimal(tx_amount) or
-                wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder):
-            logger.info(f"Mismatch on address and amount from request and contract for {event_type} event")
-            raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
-                                               error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
+        if event_type in [EthereumEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_BURNT.value]:
+            if wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value) != token_holder:
+                logger.info(f"Mismatch on address from request and contract for {event_type} event")
+                raise InternalServerErrorException(
+                    error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
+                    error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
+        elif event_type in [EthereumEventType.TOKEN_MINTED.value, BinanceEventType.TOKEN_MINTED.value]:
+            if Decimal(float(claim_amount)) != Decimal(tx_amount) or \
+               wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder:
+                logger.info(f"Mismatch on address and amount from request and contract for {event_type} event")
+                raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
+                                                   error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
 
         if event_type == EthereumEventType.TOKEN_BURNT.value and Decimal(float(deposit_amount)) != Decimal(tx_amount):
             token_pair_row_id = wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value)
@@ -219,10 +236,10 @@ class ConsumerService:
                                                                     token_pair_row_id=token_pair_row_id)
             fee_amount = Decimal(0)
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
-                fee_amount = calculate_fee_amount(amount=convert_str_to_decimal(value=tx_amount),
-                                                  percentage=token_pair.get(
-                                                      TokenPairEntities.CONVERSION_FEE.value).get(
-                                                      ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
+                fee_amount = calculate_fee_amount(
+                    amount=convert_str_to_decimal(value=tx_amount),
+                    percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
+                                         .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
             self.conversion_service.update_conversion(conversion_id=conversion_id, deposit_amount=tx_amount,
                                                       fee_amount=fee_amount,
                                                       claim_amount=convert_str_to_decimal(deposit_amount) - fee_amount)
@@ -262,31 +279,33 @@ class ConsumerService:
                 raise BadRequestException(error_code=ErrorCode.WALLET_PAIR_NOT_EXISTS.value,
                                           error_details=ErrorDetails[ErrorCode.WALLET_PAIR_NOT_EXISTS.value].value)
 
-            token_pair = self.token_service.get_token_pair_internal(token_pair_id=None,
-                                                                    token_pair_row_id=wallet_pair.get(
-                                                                        WalletPairEntities.TOKEN_PAIR_ID.value))
+            token_pair = self.token_service.get_token_pair_internal(
+                token_pair_id=None,
+                token_pair_row_id=wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value))
 
             validate_conversion_request_amount(amount=tx_amount,
                                                min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                                max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
 
-            token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
-                TokenEntities.TOKEN_ADDRESS.value)
-            token_symbol = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(
-                TokenEntities.SYMBOL.value)
+            token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}) \
+                                      .get(TokenEntities.TOKEN_ADDRESS.value)
+            token_symbol = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(TokenEntities.SYMBOL.value)
 
-            if policy_id is None or asset_name is None or policy_id != token_address or asset_name != token_symbol.encode(
-                    'utf-8').hex():
+            if policy_id is None or asset_name is None or policy_id != token_address or \
+                    asset_name != token_symbol.encode('utf-8').hex():
                 raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value,
                                           error_details=ErrorDetails[ErrorCode.INVALID_ASSET_TRANSFERRED.value].value)
 
             tx_amount = Decimal(float(tx_amount))
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
-                fee_amount = calculate_fee_amount(amount=tx_amount, percentage=token_pair.get(
-                    TokenPairEntities.CONVERSION_FEE.value).get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
+                fee_amount = calculate_fee_amount(
+                    amount=tx_amount,
+                    percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
+                                         .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
 
-            from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value).get(
-                TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.NAME.value)
+            from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                             .get(TokenEntities.BLOCKCHAIN.value) \
+                                             .get(BlockchainEntities.NAME.value)
 
             conversion = self.conversion_service.process_conversion_request(
                 wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value), deposit_amount=tx_amount,
@@ -296,11 +315,12 @@ class ConsumerService:
                     conversion_id=conversion.get(ConversionEntities.ID.value),
                     transaction_hash=tx_hash, created_by=created_by)
 
-                self.conversion_service.update_transaction_by_id(tx_id=transaction.get(TransactionEntities.ID.value),
-                                                                 tx_operation=TransactionOperation.TOKEN_RECEIVED.value,
-                                                                 tx_visibility=TransactionVisibility.EXTERNAL.value,
-                                                                 tx_amount=tx_amount,
-                                                                 tx_status=TransactionStatus.WAITING_FOR_CONFIRMATION.value)
+                self.conversion_service.update_transaction_by_id(
+                    tx_id=transaction.get(TransactionEntities.ID.value),
+                    tx_operation=TransactionOperation.TOKEN_RECEIVED.value,
+                    tx_visibility=TransactionVisibility.EXTERNAL.value,
+                    tx_amount=tx_amount,
+                    tx_status=TransactionStatus.WAITING_FOR_CONFIRMATION.value)
             except BadRequestException as e:
                 logger.info(f"Bad Request {e}")
                 raise BadRequestException(error_code=ErrorCode.BAD_REQUEST_ON_TRANSACTION_CREATION.value,
@@ -333,9 +353,9 @@ class ConsumerService:
         self.conversion_service.update_transaction_by_id(tx_id=tx_id, confirmation=current_block_confirmation)
 
         if current_block_confirmation < required_block_confirmation:
-            raise BlockConfirmationNotEnoughException(error_code=ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value,
-                                                      error_details=ErrorDetails[
-                                                          ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
+            raise BlockConfirmationNotEnoughException(
+                error_code=ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value,
+                error_details=ErrorDetails[ErrorCode.NOT_ENOUGH_BLOCK_CONFIRMATIONS.value].value)
 
     @bridge_exception_handler(SLACK_HOOK=SLACK_HOOK, logger=logger)
     def converter_bridge(self, payload):
@@ -349,12 +369,11 @@ class ConsumerService:
 
         if not blockchain_name or not conversion_id or not tx_amount or not tx_operation \
                 or tx_operation not in ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS:
-            logger.info(
-                f"Required field(s) blockchain_name={blockchain_name}, conversion_id={conversion_id}, tx_amount={tx_amount}, "
-                f"tx_operation={tx_operation} are missing or invalid values provided")
-            raise InternalServerErrorException(error_code=ErrorCode.MISSING_CONVERTER_BRIDGE_FIELDS.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.MISSING_CONVERTER_BRIDGE_FIELDS.value].value)
+            logger.info(f"Required field(s) blockchain_name={blockchain_name}, conversion_id={conversion_id}, "
+                        f"tx_amount={tx_amount}, tx_operation={tx_operation} are missing or invalid values provided")
+            raise InternalServerErrorException(
+                error_code=ErrorCode.MISSING_CONVERTER_BRIDGE_FIELDS.value,
+                error_details=ErrorDetails[ErrorCode.MISSING_CONVERTER_BRIDGE_FIELDS.value].value)
 
         conversion_complete_detail = self.conversion_service.get_conversion_complete_detail(conversion_id=conversion_id)
         if not conversion_complete_detail:
@@ -366,8 +385,9 @@ class ConsumerService:
 
         if payload == activity_event:
             self.process_converter_bridge_request(
-                conversion_complete_detail=conversion_complete_detail, payload=payload)
-            print("Successfully processed the request")
+                conversion_complete_detail=conversion_complete_detail,
+                payload=payload)
+            logger.info("Successfully processed the request")
         else:
             logger.info("Unable to match the request activity event")
             raise BadRequestException(error_code=ErrorCode.ACTIVITY_EVENT_NOT_MATCHING.value,
@@ -375,13 +395,14 @@ class ConsumerService:
 
     def process_converter_bridge_request(self, conversion_complete_detail, payload):
         logger.info("Processing the conversion bridge request")
-        db_from_blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
-            TokenEntities.BLOCKCHAIN.value, {})
+        db_from_blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}) \
+                                                       .get(TokenEntities.BLOCKCHAIN.value, {})
         db_from_blockchain_name = db_from_blockchain.get(BlockchainEntities.NAME.value).lower()
 
-        db_to_blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
-            TokenEntities.BLOCKCHAIN.value, {})
+        db_to_blockchain = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}) \
+                                                     .get(TokenEntities.BLOCKCHAIN.value, {})
         db_to_blockchain_name = db_to_blockchain.get(BlockchainEntities.NAME.value).lower()
+
         transactions = conversion_complete_detail.get(ConversionDetailEntities.TRANSACTIONS.value, [])
         payload_blockchain_name = payload.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value).lower()
 
@@ -403,11 +424,12 @@ class ConsumerService:
         tx_operation = blockchain_event.get(ConverterBridgeEntities.TX_OPERATION.value)
 
         tx_hash = None
-        conversion_id = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value).get(
-            ConversionEntities.ID.value)
+        conversion_id = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value) \
+                                                  .get(ConversionEntities.ID.value)
+
         if payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_BURNT.value:
-            address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
-                WalletPairEntities.FROM_ADDRESS.value)
+            address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}) \
+                                                .get(WalletPairEntities.FROM_ADDRESS.value)
             tx_details = CardanoService.generate_transaction_detail(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
                 environment=db_from_blockchain_name)
@@ -419,62 +441,72 @@ class ConsumerService:
                                                  address=address, deposit_address_details=deposit_address_details)
             data = response.get(CardanoAPIEntities.DATA.value)
             if not data:
-                raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
+                raise InternalServerErrorException(
+                    error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
+                    error_details=ErrorDetails[ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
 
             tx_id = data.get(CardanoAPIEntities.TRANSACTION_ID.value)
             if not tx_id or not tx_id.strip():
                 raise InternalServerErrorException(
                     error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
-                    error_details=ErrorDetails[
-                        ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
+                    error_details=ErrorDetails[ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
             tx_hash = tx_id.strip()
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
             tx_details = CardanoService.generate_transaction_detail(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
                 environment=db_from_blockchain_name)
-            address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
-                WalletPairEntities.TO_ADDRESS.value)
-            source_address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}).get(
-                WalletPairEntities.FROM_ADDRESS.value)
+            address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}) \
+                                                .get(WalletPairEntities.TO_ADDRESS.value)
+            source_address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}) \
+                                                       .get(WalletPairEntities.FROM_ADDRESS.value)
             response = CardanoService.mint_token(conversion_id=conversion_id,
                                                  token=target_token.get(TokenEntities.SYMBOL.value),
                                                  tx_amount=tx_amount, tx_details=tx_details, address=address,
                                                  source_address=source_address)
             data = response.get(CardanoAPIEntities.DATA.value)
             if not data:
-                raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
+                raise InternalServerErrorException(
+                    error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value,
+                    error_details=ErrorDetails[ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS.value].value)
 
             tx_id = data.get(CardanoAPIEntities.TRANSACTION_ID.value)
             if not tx_id or not tx_id.strip():
                 raise InternalServerErrorException(
                     error_code=ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value,
-                    error_details=ErrorDetails[
-                        ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
+                    error_details=ErrorDetails[ErrorCode.TRANSACTION_ID_NOT_PRESENT_IN_CARDANO_SERVICE_API.value].value)
             tx_hash = tx_id.strip()
         elif payload_blockchain_name == BlockchainName.ETHEREUM.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
-            status = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-                ConversionEntities.STATUS.value)
+            status = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                               .get(ConversionEntities.STATUS.value)
             if status != ConversionStatus.PROCESSING.value:
-                raise BadRequestException(error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
-                                          error_details=ErrorDetails[
-                                              ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
+                raise BadRequestException(
+                    error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
+                    error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
 
             self.conversion_service.update_conversion(
-                conversion_id=conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-                    ConversionEntities.ID.value),
+                conversion_id=conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {})
+                                                        .get(ConversionEntities.ID.value),
+                claim_amount=tx_amount, status=ConversionStatus.WAITING_FOR_CLAIM.value)
+        elif payload_blockchain_name == BlockchainName.BINANCE.value.lower() and tx_operation == TransactionOperation.TOKEN_MINTED.value:
+            status = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                               .get(ConversionEntities.STATUS.value)
+            if status != ConversionStatus.PROCESSING.value:
+                raise BadRequestException(
+                    error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
+                    error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
+
+            self.conversion_service.update_conversion(
+                conversion_id=conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {})
+                                                        .get(ConversionEntities.ID.value),
                 claim_amount=tx_amount, status=ConversionStatus.WAITING_FOR_CLAIM.value)
         else:
             logger.info("Invalid tx_operation provided")
-            raise InternalServerErrorException(error_code=ErrorCode.INVALID_TRANSACTION_OPERATION_PROVIDED.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.INVALID_TRANSACTION_OPERATION_PROVIDED.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.INVALID_TRANSACTION_OPERATION_PROVIDED.value,
+                error_details=ErrorDetails[ErrorCode.INVALID_TRANSACTION_OPERATION_PROVIDED.value].value)
 
         if payload_blockchain_name == BlockchainName.CARDANO.value.lower() \
-                and (tx_operation in TransactionOperation.TOKEN_BURNT.value or TransactionOperation.TOKEN_MINTED.value):
+                and (tx_operation in [TransactionOperation.TOKEN_BURNT.value, TransactionOperation.TOKEN_MINTED.value]):
             self.conversion_service.create_transaction(
                 conversion_transaction_id=transactions[0].get(TransactionEntities.CONVERSION_TRANSACTION_ID.value),
                 token_id=target_token.get(TokenEntities.ROW_ID.value),
