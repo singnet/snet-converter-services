@@ -391,8 +391,8 @@ class ConversionService:
     @staticmethod
     def add_transaction_detail_to_conversion_detail(conversion_details, transaction_details):
         for conversion_detail in conversion_details:
-            conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value).get(
-                ConversionEntities.ROW_ID.value)
+            conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value) \
+                                                 .get(ConversionEntities.ROW_ID.value)
             transaction_detail = transaction_details.get(conversion_row_id, {}).get("transactions", [])
             conversion_detail[ConversionDetailEntities.TRANSACTIONS.value] = transaction_detail
         return conversion_details
