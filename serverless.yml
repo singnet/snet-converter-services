@@ -173,7 +173,7 @@ custom:
       cleanFolder: false
       memorySize: 256
       name: warmer-default
-      role: ${file(./config.json):ROLE}
+      role: ${file(./config.${self:provider.stage}.json):ROLE}
       vpc: ${self:custom.defaultVpc}
       events:
         - schedule: rate(5 minutes) # Run WarmUp every 5 minutes
