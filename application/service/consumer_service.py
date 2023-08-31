@@ -83,7 +83,7 @@ class ConsumerService:
                 error_code=ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value,
                 error_details=ErrorDetails[ErrorCode.UNHANDLED_BLOCKCHAIN_OPERATION.value].value)
 
-        if not event_type or not tx_hash or not blockchain_network_id or not blockchain_event or not blockchain_detail:
+        if not event_type or not tx_hash or blockchain_network_id is None or not blockchain_event or not blockchain_detail:
             raise InternalServerErrorException(error_code=ErrorCode.CONSUMER_EVENT_EMPTY.value,
                                                error_details=ErrorDetails[ErrorCode.CONSUMER_EVENT_EMPTY.value].value)
 
