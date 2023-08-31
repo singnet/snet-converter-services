@@ -30,11 +30,13 @@ class BinanceEnvironment(Enum):
 class CardanoNetwork(Enum):
     MAINNET = 1
     TESTNET = 2
+    PREPROD = 0
 
 
 class CardanoEnvironment(Enum):
     MAINNET = "production"
     TESTNET = "test"
+    PREPROD = "test"
 
 
 EthereumSupportedNetwork = [EthereumNetwork.MAINNET.value, EthereumNetwork.ROPSTEN.value, EthereumNetwork.KOVAN.value,
@@ -42,7 +44,7 @@ EthereumSupportedNetwork = [EthereumNetwork.MAINNET.value, EthereumNetwork.ROPST
 
 BinanceSupportedNetwork = [BinanceNetwork.MAINNET.value, BinanceNetwork.TESTNET.value]
 
-CardanoSupportedNetwork = [CardanoNetwork.MAINNET.value, CardanoNetwork.TESTNET.value]
+CardanoSupportedNetwork = [CardanoNetwork.MAINNET.value, CardanoNetwork.TESTNET.value, CardanoNetwork.PREPROD.value]
 
 
 class CardanoTransactionEntities(Enum):

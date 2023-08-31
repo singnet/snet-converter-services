@@ -74,6 +74,12 @@ BLOCKCHAIN_DETAILS = {
                 "secret": {
                     "project_id": "project_id"
                 }
+            },
+            "preprod": {
+                "url": "https://cardano-preprod.blockfrost.io/api",
+                "secret": {
+                    "project_id": "project_id"
+                }
             }
         }
     }
