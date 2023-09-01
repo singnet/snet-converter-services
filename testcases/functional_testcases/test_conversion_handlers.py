@@ -598,9 +598,9 @@ class TestConversion(unittest.TestCase):
     @patch("common.blockchain_util.BlockChainUtil.load_contract")
     @patch("utils.blockchain.get_token_contract_path")
     @patch("utils.blockchain.get_cardano_transaction_details")
-    @patch("utils.blockchain.get_ethereum_transaction_details")
+    @patch("utils.blockchain.get_evm_transaction_details")
     @patch("common.utils.Utils.report_slack")
-    def test_create_transaction_for_conversion(self, mock_report_slack, mock_get_ethereum_transaction_details,
+    def test_create_transaction_for_conversion(self, mock_report_slack, mock_get_evm_transaction_details,
                                                mock_get_cardano_transaction_details, mock_get_token_contract_path,
                                                mock_load_contract, mock_contract_instance, mock_get_event_logs):
         mock_get_token_contract_path.return_value = "token.json"
@@ -667,7 +667,7 @@ class TestConversion(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_invalid_conversion_id)
 
-        mock_get_ethereum_transaction_details.side_effect = BadRequestException(
+        mock_get_evm_transaction_details.side_effect = BadRequestException(
             error_code=ErrorCode.RANDOM_TRANSACTION_HASH.value,
             error_details=ErrorDetails[ErrorCode.RANDOM_TRANSACTION_HASH.value].value)
         body_input = json.dumps({"conversion_id": "7298bce110974411b260cac758b37ee0",
@@ -677,14 +677,14 @@ class TestConversion(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_transaction_format_incorrect)
 
-        mock_get_ethereum_transaction_details.side_effect = BadRequestException(
+        mock_get_evm_transaction_details.side_effect = BadRequestException(
             error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
             error_details=ErrorDetails[ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
         response = create_transaction_for_conversion(event, {})
         body = json.loads(response["body"])
         self.assertEqual(body, bad_request_transaction_not_found)
 
-        mock_get_ethereum_transaction_details.side_effect = InternalServerErrorException(
+        mock_get_evm_transaction_details.side_effect = InternalServerErrorException(
             error_code=ErrorCode.UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS.value,
             error_details=ErrorDetails[
                 ErrorCode.UNEXPECTED_ERROR_ETHEREUM_TRANSACTION_DETAILS.value].value)
@@ -692,8 +692,8 @@ class TestConversion(unittest.TestCase):
         body = json.loads(response["body"])
         self.assertEqual(body, unexpected_error_ethereum_transaction_details)
 
-        mock_get_ethereum_transaction_details.side_effect = None
-        mock_get_ethereum_transaction_details.return_value = {"from": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}
+        mock_get_evm_transaction_details.side_effect = None
+        mock_get_evm_transaction_details.return_value = {"from": "0xa18b95A9371Ac18C233fB024cdAC5ef6300efDa1"}
         body_input = json.dumps({"conversion_id": "7298bce110974411b260cac758b37ee0",
                                  "transaction_hash": "0xe5bd9472b9d9931ca41bc3598f2ec15665b77ef32c088da5f2f8f3d2f72782a9"})
         event["body"] = body_input

@@ -1,7 +1,7 @@
 from sqlalchemy import or_, case, func, and_
 from sqlalchemy.orm import joinedload, aliased
 
-from constants.general import CreatedBy, BlockchainName
+from constants.general import CreatedBy, BlockchainName, ConversionOn
 from constants.status import ConversionStatus, ConversionTransactionStatus
 from domain.factory.conversion_factory import ConversionFactory
 from infrastructure.models import ConversionDBModel, WalletPairDBModel, TokenPairDBModel, TokenDBModel, \
@@ -17,8 +17,7 @@ class ConversionRepository(BaseRepository):
     def get_conversion_count_by_status(self, address):
         status_counts = self.session.query(ConversionDBModel.status, func.count(ConversionDBModel.id).label("count")) \
             .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
-            .filter(
-            or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address)) \
+            .filter(or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address)) \
             .group_by(ConversionDBModel.status) \
             .all()
 
@@ -54,8 +53,8 @@ class ConversionRepository(BaseRepository):
             .join(TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id) \
             .filter(ConversionDBModel.id == conversion_id)
 
-        conversion_detail = conversion_detail_query.options(joinedload(ConversionDBModel.wallet_pair)).options(
-            joinedload(ConversionDBModel.wallet_pair).joinedload(WalletPairDBModel.token_pair)).first()
+        conversion_detail = conversion_detail_query.options(joinedload(ConversionDBModel.wallet_pair)) \
+            .options(joinedload(ConversionDBModel.wallet_pair).joinedload(WalletPairDBModel.token_pair)).first()
 
         if conversion_detail is None:
             return None
@@ -189,11 +188,18 @@ class ConversionRepository(BaseRepository):
         self.session.commit()
 
     @read_from_db()
-    def get_token_contract_address_for_conversion_id(self, conversion_id):
-        contract_address = self.session.query(TokenPairDBModel.contract_address) \
-            .join(WalletPairDBModel, WalletPairDBModel.token_pair_id == TokenPairDBModel.row_id) \
-            .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
-            .filter(ConversionDBModel.id == conversion_id).first()
+    def get_token_contract_address_for_conversion_id(self, conversion_on, conversion_id):
+        query = self.session.query(TokenDBModel.contract_address)
+        if conversion_on == ConversionOn.FROM.value:
+            query = query.join(TokenPairDBModel, TokenPairDBModel.from_token_id == TokenDBModel.row_id)
+        elif conversion_on == ConversionOn.TO.value:
+            query = query.join(TokenPairDBModel, TokenPairDBModel.to_token_id == TokenDBModel.row_id)
+        else:
+            raise ValueError(f"Invalid conversion direction value conversion_on={conversion_on}")
+        query = query.join(WalletPairDBModel, WalletPairDBModel.token_pair_id == TokenPairDBModel.row_id) \
+                     .join(ConversionDBModel, ConversionDBModel.wallet_pair_id == WalletPairDBModel.row_id) \
+                     .filter(ConversionDBModel.id == conversion_id)
+        contract_address = query.first()
 
         if not contract_address:
             return None
@@ -217,29 +223,28 @@ class ConversionRepository(BaseRepository):
             .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
             .join(TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id) \
             .order_by(case(
-            [
-                (
-                    ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value,
-                    1
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5
-                ),
-                (
-                    ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6
-                )
-            ],
-            else_=7
-        ).asc(), ConversionDBModel.created_at.desc())
+                [
+                    (
+                        ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value, 1
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5
+                    ),
+                    (
+                        ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6
+                    )
+                ],
+                else_=7
+            ).asc(), ConversionDBModel.created_at.desc())
 
         if address:
             conversions_detail_query = conversions_detail_query.filter(
@@ -328,7 +333,7 @@ class ConversionRepository(BaseRepository):
                                             updated_at=conversion.updated_at)
 
     @read_from_db()
-    def get_expiring_conversion(self, ethereum_expire_datetime, cardano_expire_datetime):
+    def get_expiring_conversion(self, ethereum_expire_datetime, cardano_expire_datetime, binance_expire_datetime):
         from_token = aliased(TokenDBModel)
         to_token = aliased(TokenDBModel)
         from_blockchain = aliased(BlockChainDBModel)
@@ -349,6 +354,8 @@ class ConversionRepository(BaseRepository):
             .filter(ConversionDBModel.status == ConversionStatus.USER_INITIATED.value,
                     or_(and_(func.lower(from_blockchain.name) == BlockchainName.ETHEREUM.value.lower(),
                              ConversionDBModel.created_at <= str(ethereum_expire_datetime)),
+                        and_(func.lower(from_blockchain.name) == BlockchainName.BINANCE.value.lower(),
+                             ConversionDBModel.created_at <= str(binance_expire_datetime)),
                         and_(func.lower(from_blockchain.name) == BlockchainName.CARDANO.value.lower(),
                              ConversionDBModel.created_at <= str(cardano_expire_datetime)))).all()
 
@@ -399,7 +406,7 @@ class ConversionRepository(BaseRepository):
         conversion_status_counts = conversion_status_counts_query.group_by(from_token.id, from_token.symbol,
                                                                            from_blockchain.symbol,
                                                                            to_blockchain.symbol,
-                                                                           ConversionDBModel.status)\
+                                                                           ConversionDBModel.status) \
             .order_by(from_token.symbol.asc()).all()
 
         return ConversionFactory.generate_conversion_report(conversion_status_counts=conversion_status_counts)

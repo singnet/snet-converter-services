@@ -23,11 +23,11 @@ from infrastructure.repositories.conversion_repository import ConversionReposito
 from utils.blockchain import validate_address, validate_conversion_claim_request_signature, \
     calculate_fee_amount, \
     validate_conversion_request_amount, convert_str_to_decimal, get_next_activity_event_on_conversion, \
-    check_existing_transaction_state, validate_ethereum_transaction_details_against_conversion, \
+    check_existing_transaction_state, validate_evm_transaction_details_against_conversion, \
     validate_cardano_transaction_details_against_conversion
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
-    is_supported_network_conversion, get_ethereum_network_url, get_offset, paginate_items_response_format, \
+    is_supported_network_conversion, get_evm_network_url, get_offset, paginate_items_response_format, \
     datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report
 from utils.signature import validate_conversion_signature, get_signature
 
@@ -44,7 +44,7 @@ class ConversionService:
     def create_conversion(self, wallet_pair_id, deposit_amount, fee_amount, claim_amount,
                           created_by=CreatedBy.DAPP.value):
         logger.info(f"Creating the conversion with wallet_pair_id={wallet_pair_id}, deposit_amount={deposit_amount}, "
-                    f" fee_amount={fee_amount} claim_amount={claim_amount} created_by={created_by}")
+                    f"fee_amount={fee_amount} claim_amount={claim_amount} created_by={created_by}")
         conversion = self.conversion_repo.create_conversion(wallet_pair_id=wallet_pair_id,
                                                             deposit_amount=deposit_amount, fee_amount=fee_amount,
                                                             claim_amount=claim_amount, created_by=created_by)
@@ -127,8 +127,9 @@ class ConversionService:
         return get_conversion_detail_response(conversion_detail)
 
     def get_latest_user_pending_conversion_request(self, wallet_pair_id):
-        conversion = self.conversion_repo.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id,
-                                                                                     status=ConversionStatus.USER_INITIATED.value)
+        conversion = self.conversion_repo.get_latest_user_pending_conversion_request(
+            wallet_pair_id=wallet_pair_id,
+            status=ConversionStatus.USER_INITIATED.value)
         return get_latest_user_pending_conversion_request_response(conversion.to_dict()) if conversion else None
 
     def update_conversion_status(self, conversion_id, status):
@@ -147,9 +148,8 @@ class ConversionService:
         return update_conversion_response(conversion.to_dict())
 
     def update_conversion_transaction(self, conversion_transaction_id, status):
-        logger.info(
-            f"Updating the conversion transaction for the conversion_transaction_id={conversion_transaction_id}, "
-            f"status={status}")
+        logger.info(f"Updating the conversion transaction for the conversion_transaction_id={conversion_transaction_id}"
+                    f", status={status}")
         self.conversion_repo.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                            status=status)
 
@@ -158,29 +158,31 @@ class ConversionService:
                                              signature, token_pair):
         logger.info("Validating  the conversion request")
         is_signer_as_from_address = False
-        from_blockchain = get_blockchain_from_token_pair_details(token_pair=token_pair,
-                                                                 blockchain_conversion_type=TokenPairEntities.FROM_TOKEN.value)
-        to_blockchain = get_blockchain_from_token_pair_details(token_pair=token_pair,
-                                                               blockchain_conversion_type=TokenPairEntities.TO_TOKEN.value)
+        from_blockchain = get_blockchain_from_token_pair_details(
+            token_pair=token_pair,
+            blockchain_conversion_type=TokenPairEntities.FROM_TOKEN.value)
+        to_blockchain = get_blockchain_from_token_pair_details(
+            token_pair=token_pair,
+            blockchain_conversion_type=TokenPairEntities.TO_TOKEN.value)
 
         if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
-            logger.exception(
-                f"Unsupported network conversion detected from_blockchain={from_blockchain}, to_blockchain={to_blockchain}")
+            logger.exception(f"Unsupported network conversion detected from_blockchain={from_blockchain}, "
+                             f"to_blockchain={to_blockchain}")
             raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
+                                               error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
         from_blockchain_name = from_blockchain.get(BlockchainEntities.NAME.value)
 
-        if from_blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
+        evm_blockchains = [BlockchainName.ETHEREUM.value.lower(), BlockchainName.BINANCE.value.lower()]
+        if from_blockchain_name.lower() in evm_blockchains:
             is_signer_as_from_address = True
             chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
         else:
             chain_id = to_blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
-        network_url = get_ethereum_network_url(chain_id=chain_id)
-        ethereum_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
-        current_block_no = ethereum_web3_object.get_current_block_no()
+        network_url = get_evm_network_url(chain_id=chain_id)
+        evm_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
+        current_block_no = evm_web3_object.get_current_block_no()
         if not block_number <= current_block_no or block_number < (current_block_no - SIGNATURE_EXPIRY_BLOCK_NUMBER):
             raise BadRequestException(error_code=ErrorCode.SIGNATURE_EXPIRED.value,
                                       error_details=ErrorDetails[ErrorCode.SIGNATURE_EXPIRED.value].value)
@@ -221,11 +223,14 @@ class ConversionService:
         amount = convert_str_to_decimal(value=amount)
 
         if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
-            fee_amount = calculate_fee_amount(amount=amount, percentage=token_pair.get(
-                TokenPairEntities.CONVERSION_FEE.value).get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
+            fee_amount = calculate_fee_amount(
+                amount=amount,
+                percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
+                                     .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
 
-        from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value).get(
-            TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.NAME.value)
+        from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                         .get(TokenEntities.BLOCKCHAIN.value) \
+                                         .get(BlockchainEntities.NAME.value)
         conversion = self.process_conversion_request(wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
                                                      deposit_amount=amount, fee_amount=fee_amount,
                                                      from_blockchain_name=from_blockchain_name)
@@ -236,15 +241,17 @@ class ConversionService:
 
         if not deposit_address:
             user_address = wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value)
-            contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
-            contract_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_OUT.value,
-                                               user_address=user_address, conversion_id=conversion_id,
-                                               amount=convert_str_to_decimal(deposit_amount),
-                                               contract_address=contract_address,
-                                               chain_id=token_pair.get(
-                                                   TokenPairEntities.FROM_TOKEN.value).get(
-                                                   TokenEntities.BLOCKCHAIN.value).get(
-                                                   BlockchainEntities.CHAIN_ID.value))
+            contract_address = self.get_token_contract_address_for_conversion_id(
+                conversion_on=ConversionOn.FROM.value,
+                conversion_id=conversion_id)
+            contract_signature = get_signature(
+                signature_type=SignatureTypeEntities.CONVERSION_OUT.value,
+                user_address=user_address, conversion_id=conversion_id,
+                amount=convert_str_to_decimal(deposit_amount),
+                contract_address=contract_address,
+                chain_id=token_pair.get(TokenPairEntities.FROM_TOKEN.value)
+                                   .get(TokenEntities.BLOCKCHAIN.value)
+                                   .get(BlockchainEntities.CHAIN_ID.value))
         return create_conversion_request_response(conversion_id=conversion_id, deposit_address=deposit_address,
                                                   signature=contract_signature, deposit_amount=deposit_amount,
                                                   contract_address=contract_address)
@@ -259,14 +266,14 @@ class ConversionService:
         transactions = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
         conversion = conversion_detail.get(ConversionDetailEntities.CONVERSION.value)
 
-        from_blockchain = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}).get(
-            TokenEntities.BLOCKCHAIN.value, {})
-        to_blockchain = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}).get(
-            TokenEntities.BLOCKCHAIN.value, {})
+        from_blockchain = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}) \
+                                           .get(TokenEntities.BLOCKCHAIN.value, {})
+        to_blockchain = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}) \
+                                         .get(TokenEntities.BLOCKCHAIN.value, {})
 
         if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
-            logger.exception(
-                f"Unsupported network conversion detected from_blockchain={from_blockchain}, to_blockchain={to_blockchain}")
+            logger.exception(f"Unsupported network conversion detected from_blockchain={from_blockchain}, "
+                             f"to_blockchain={to_blockchain}")
             raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
                                                error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
@@ -275,8 +282,8 @@ class ConversionService:
             raise BadRequestException(error_code=ErrorCode.CONVERSION_ALREADY_DONE.value,
                                       error_details=ErrorDetails[ErrorCode.CONVERSION_ALREADY_DONE.value].value)
 
-        if next_activity.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value).lower() == from_blockchain.get(
-                BlockchainEntities.NAME.value).lower():
+        if next_activity.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value).lower() == \
+                from_blockchain.get(BlockchainEntities.NAME.value).lower():
             conversion_on = ConversionOn.FROM.value
             blockchain = from_blockchain
         else:
@@ -287,20 +294,21 @@ class ConversionService:
         chain_id = blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
         if created_by == CreatedBy.DAPP.value and blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
-            raise BadRequestException(error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
-                                      error_details=ErrorDetails[
-                                          ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
+            raise BadRequestException(
+                error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
+                error_details=ErrorDetails[ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
 
         check_existing_transaction_state(transactions=transactions, conversion_on=conversion_on)
 
-        if blockchain_name == BlockchainName.ETHEREUM.value.lower():
+        if blockchain_name in [BlockchainName.ETHEREUM.value.lower(), BlockchainName.BINANCE.value.lower()]:
             contract_address = self.get_token_contract_address_for_conversion_id(
+                conversion_on=conversion_on,
                 conversion_id=conversion.get(ConversionEntities.ID.value))
-            validate_ethereum_transaction_details_against_conversion(chain_id=chain_id,
-                                                                     transaction_hash=transaction_hash,
-                                                                     conversion_on=conversion_on,
-                                                                     contract_address=contract_address,
-                                                                     conversion_detail=conversion_detail)
+            validate_evm_transaction_details_against_conversion(chain_id=chain_id,
+                                                                transaction_hash=transaction_hash,
+                                                                conversion_on=conversion_on,
+                                                                contract_address=contract_address,
+                                                                conversion_detail=conversion_detail)
         elif blockchain_name == BlockchainName.CARDANO.value.lower():
             validate_cardano_transaction_details_against_conversion(chain_id=chain_id,
                                                                     transaction_hash=transaction_hash,
@@ -310,11 +318,13 @@ class ConversionService:
 
     def process_conversion_request(self, wallet_pair_id: str, deposit_amount: Decimal, fee_amount: Decimal,
                                    from_blockchain_name, created_by: str = CreatedBy.DAPP.value):
-        logger.info(f"Processing the conversion request with wallet_pair_id={wallet_pair_id},"
-                    f" deposit_amount={deposit_amount}, fee_amount={fee_amount}, "
+        logger.info(f"Processing the conversion request with wallet_pair_id={wallet_pair_id}, "
+                    f"deposit_amount={deposit_amount}, fee_amount={fee_amount}, "
                     f"from_blockchain_name={from_blockchain_name}")
         conversion = None
-        if from_blockchain_name != BlockchainName.ETHEREUM.value:
+        # TODO: investigate why we get latest USER_INITIATED conversion only for cardano
+        # changed from: from_blockchain_name != ETHEREUM
+        if from_blockchain_name == BlockchainName.CARDANO.value:
             conversion = self.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id)
 
         if conversion and (created_by == CreatedBy.DAPP.value or
@@ -330,9 +340,16 @@ class ConversionService:
                                                 created_by=created_by)
         return conversion
 
-    def get_token_contract_address_for_conversion_id(self, conversion_id):
-        logger.info(f"Getting the token contract address for conversion_id={conversion_id}")
-        return self.conversion_repo.get_token_contract_address_for_conversion_id(conversion_id)
+    def get_token_contract_address_for_conversion_id(self, conversion_on, conversion_id):
+        logger.info(f"Getting the token contract address for conversion_on={conversion_on} "
+                    f"and conversion_id={conversion_id}")
+        try:
+            return self.conversion_repo.get_token_contract_address_for_conversion_id(conversion_on, conversion_id)
+        except ValueError as e:
+            logger.exception(f"Error getting contract address: {repr(e)}", exc_info=True)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.INVALID_CONVERSION_DIRECTION.value,
+                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_DIRECTION.value].value)
 
     def get_conversion_history(self, address, page_size, page_number):
         logger.info(f"Getting the conversion history for the given address={address}, page_size={page_size}, "
@@ -374,8 +391,8 @@ class ConversionService:
     @staticmethod
     def add_transaction_detail_to_conversion_detail(conversion_details, transaction_details):
         for conversion_detail in conversion_details:
-            conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value).get(
-                ConversionEntities.ROW_ID.value)
+            conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value) \
+                                                 .get(ConversionEntities.ROW_ID.value)
             transaction_detail = transaction_details.get(conversion_row_id, {}).get("transactions", [])
             conversion_detail[ConversionDetailEntities.TRANSACTIONS.value] = transaction_detail
         return conversion_details
@@ -417,28 +434,28 @@ class ConversionService:
 
     def process_transaction_creation(self, conversion_detail, transaction_hash, next_activity, created_by):
         transaction = conversion_detail.get(ConversionDetailEntities.TRANSACTIONS.value)
-        conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-            ConversionEntities.ROW_ID.value)
-        conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-            ConversionEntities.ID.value)
+        conversion_row_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                             .get(ConversionEntities.ROW_ID.value)
+        conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                         .get(ConversionEntities.ID.value)
 
-        transaction_operation = next_activity.get(EventConsumerEntity.BLOCKCHAIN_EVENT.value).get(
-            ConverterBridgeEntities.TX_OPERATION.value)
+        transaction_operation = next_activity.get(EventConsumerEntity.BLOCKCHAIN_EVENT.value) \
+                                             .get(ConverterBridgeEntities.TX_OPERATION.value)
 
         if not len(transaction):
-            token_id = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value).get(
-                TokenEntities.ROW_ID.value)
+            token_id = conversion_detail.get(ConversionDetailEntities.FROM_TOKEN.value) \
+                                        .get(TokenEntities.ROW_ID.value)
             conversion_transaction = self.create_conversion_transaction(conversion_id=conversion_row_id,
                                                                         created_by=created_by)
             conversion_transaction_row_id = conversion_transaction.get(TransactionConversionEntities.ROW_ID.value)
-            transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-                ConversionEntities.DEPOSIT_AMOUNT.value)
+            transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                                  .get(ConversionEntities.DEPOSIT_AMOUNT.value)
         else:
-            token_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
-                TokenEntities.ROW_ID.value)
+            token_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value) \
+                                        .get(TokenEntities.ROW_ID.value)
             conversion_transaction_row_id = transaction[0].get(TransactionEntities.CONVERSION_TRANSACTION_ID.value)
-            transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}).get(
-                ConversionEntities.CLAIM_AMOUNT.value)
+            transaction_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                                  .get(ConversionEntities.CLAIM_AMOUNT.value)
 
         if transaction_amount is None:
             raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
@@ -457,9 +474,9 @@ class ConversionService:
 
     def update_transaction_by_id(self, tx_id, tx_operation=None, tx_visibility=None, tx_amount=None, confirmation=None,
                                  tx_status=None, created_by=None):
-        logger.info(
-            f"Updating the transaction of tx_id={tx_id}, tx_operation={tx_operation}, tx_visibility={tx_visibility}, "
-            f"tx_amount={tx_amount}, confirmation={confirmation}, tx_status={tx_status}, created_by={created_by}")
+        logger.info(f"Updating the transaction of tx_id={tx_id}, tx_operation={tx_operation}, "
+                    f"tx_visibility={tx_visibility}, tx_amount={tx_amount}, confirmation={confirmation}, "
+                    f"tx_status={tx_status}, created_by={created_by}")
         self.conversion_repo.update_transaction_by_id(tx_id=tx_id, tx_operation=tx_operation,
                                                       tx_visibility=tx_visibility, tx_amount=tx_amount,
                                                       confirmation=confirmation, tx_status=tx_status,
@@ -471,12 +488,12 @@ class ConversionService:
         return get_transaction_by_hash_response(transaction.to_dict()) if transaction else None
 
     def claim_conversion(self, conversion_id, amount, from_address, to_address, signature):
-        logger.info(
-            f"Claim the conversion for the conversion_id={conversion_id}, amount={amount}, from_address={from_address},"
-            f"to_address={to_address}, signature={signature}")
+        logger.info(f"Claim the conversion for the conversion_id={conversion_id}, amount={amount}, "
+                    f"from_address={from_address}, to_address={to_address}, signature={signature}")
         conversion_detail = self.get_conversion_detail(conversion_id=conversion_id)
-        chain_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value).get(
-            TokenEntities.BLOCKCHAIN.value).get(BlockchainEntities.CHAIN_ID.value)
+        chain_id = conversion_detail.get(ConversionDetailEntities.TO_TOKEN.value) \
+                                    .get(TokenEntities.BLOCKCHAIN.value) \
+                                    .get(BlockchainEntities.CHAIN_ID.value)
 
         # validate the request signature
         validate_conversion_claim_request_signature(conversion_detail=conversion_detail, amount=amount,
@@ -485,9 +502,11 @@ class ConversionService:
 
         conversion = conversion_detail.get(ConversionDetailEntities.CONVERSION.value)
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
-        user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value).get(
-            WalletPairEntities.TO_ADDRESS.value)
-        contract_address = self.get_token_contract_address_for_conversion_id(conversion_id=conversion_id)
+        user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
+                                        .get(WalletPairEntities.TO_ADDRESS.value)
+        contract_address = self.get_token_contract_address_for_conversion_id(
+            conversion_on=ConversionOn.TO.value,
+            conversion_id=conversion_id)
 
         # Generate claim signature
         claim_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_IN.value,
@@ -508,11 +527,13 @@ class ConversionService:
         current_datetime = datetime_in_utcnow()
         cardano_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("CARDANO", 0))
         ethereum_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("ETHEREUM", 0))
-        print(f"Expiring the conversion of ethereum and cardano  which is less than or  equal to "
-              f"{ethereum_expire_datetime} and {cardano_expire_datetime} respectively ")
+        binance_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("BINANCE", 0))
+        print(f"Expiring the conversion of ethereum and cardano which is less than or equal to "
+              f"{ethereum_expire_datetime}, {cardano_expire_datetime} or {binance_expire_datetime} respectively ")
         conversions = self.conversion_repo.get_expiring_conversion(
             ethereum_expire_datetime=ethereum_expire_datetime,
-            cardano_expire_datetime=cardano_expire_datetime)
+            cardano_expire_datetime=cardano_expire_datetime,
+            binance_expire_datetime=binance_expire_datetime)
         conversion_ids = get_expiring_conversion_response(get_response_from_entities(conversions))
         print(f"Expiring conversions total={len(conversion_ids)} conversion_ids={conversion_ids}")
         self.conversion_repo.set_conversions_to_expire(conversion_ids=conversion_ids)

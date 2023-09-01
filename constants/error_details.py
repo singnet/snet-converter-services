@@ -76,6 +76,7 @@ class ErrorCode(Enum):
     PAGE_SIZE_EXCEEDS_LIMIT = "E0072"
     INVALID_ASSET_TRANSFERRED = "E0073"
     UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE = "E0074"
+    INVALID_CONVERSION_DIRECTION = "E0075"
 
 
 class ErrorDetails(Enum):
@@ -153,3 +154,4 @@ class ErrorDetails(Enum):
     E0072 = "Page size exceeds the max limit"
     E0073 = "Invalid asset transferred to the deposit address"
     E0074 = "Unexpected error happened while checking the tx hash presence in the blockchain"
+    E0075 = "Invalid value of conversion direction"

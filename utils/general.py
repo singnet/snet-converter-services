@@ -10,7 +10,7 @@ from jsonschema.validators import validate
 from common.logger import get_logger
 from config import BLOCKCHAIN_DETAILS
 from constants.blockchain import EthereumSupportedNetwork, CardanoSupportedNetwork, EthereumNetwork, CardanoNetwork, \
-    EthereumEnvironment, CardanoEnvironment
+    EthereumEnvironment, CardanoEnvironment, BinanceSupportedNetwork, BinanceNetwork, BinanceEnvironment
 from constants.entity import TokenPairEntities, TokenEntities, BlockchainEntities, PaginationEntity, \
     TransactionEntities, ConversionReportingEntities
 from constants.error_details import ErrorCode, ErrorDetails
@@ -33,9 +33,7 @@ def datetime_to_str(timestamp):
 
 
 def get_valid_value(dict_name, key):
-    val = dict_name.get(key)
-    val = {} if val is None else val
-    return val
+    return dict_name.get(key, {})
 
 
 def validate_schema(filepath, schema_key, input_json):
@@ -75,11 +73,11 @@ def relative_date(date_time: datetime, hours: int = 0, days: int = 0) -> datetim
 
 def get_blockchain_from_token_pair_details(token_pair, blockchain_conversion_type):
     if blockchain_conversion_type == TokenPairEntities.FROM_TOKEN.value:
-        blockchain = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(TokenEntities.BLOCKCHAIN.value,
-                                                                                {})
+        blockchain = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}) \
+                               .get(TokenEntities.BLOCKCHAIN.value, {})
     elif blockchain_conversion_type == TokenPairEntities.TO_TOKEN.value:
-        blockchain = token_pair.get(TokenPairEntities.TO_TOKEN.value, {}).get(TokenEntities.BLOCKCHAIN.value,
-                                                                              {})
+        blockchain = token_pair.get(TokenPairEntities.TO_TOKEN.value, {}) \
+                               .get(TokenEntities.BLOCKCHAIN.value, {})
     else:
         blockchain = None
 
@@ -102,11 +100,11 @@ def paginate_items(items, page_number, page_size):
 
 def paginate_items_response_format(items, total_records, page_number, page_size):
     return {PaginationEntity.ITEMS.value: items,
-            PaginationEntity.META.value: {PaginationEntity.TOTAL_RECORDS.value: total_records,
-                                          PaginationEntity.PAGE_COUNT.value: math.ceil(
-                                              float(total_records) / page_size),
-                                          PaginationEntity.PAGE_NUMBER.value: page_number,
-                                          PaginationEntity.PAGE_SIZE.value: page_size}}
+            PaginationEntity.META.value: {
+                PaginationEntity.TOTAL_RECORDS.value: total_records,
+                PaginationEntity.PAGE_COUNT.value: math.ceil(float(total_records) / page_size),
+                PaginationEntity.PAGE_NUMBER.value: page_number,
+                PaginationEntity.PAGE_SIZE.value: page_size}}
 
 
 def check_existing_transaction_succeed(transactions):
@@ -131,6 +129,8 @@ def is_supported_chain_id(blockchain_name, chain_id):
 
     if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower() and chain_id in EthereumSupportedNetwork:
         is_supported = True
+    elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower() and chain_id in BinanceSupportedNetwork:
+        is_supported = True
     elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower() and chain_id in CardanoSupportedNetwork:
         is_supported = True
 
@@ -141,6 +141,8 @@ def get_chain_environment(blockchain_name, chain_id):
     environment = None
     if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
         environment = EthereumEnvironment[EthereumNetwork(chain_id).name].value
+    elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
+        environment = BinanceEnvironment[BinanceNetwork(chain_id).name].value
     elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
         environment = CardanoEnvironment[CardanoNetwork(chain_id).name].value
 
@@ -154,8 +156,8 @@ def is_supported_network_conversion(from_blockchain, to_blockchain):
     to_blockchain_name = to_blockchain.get(BlockchainEntities.NAME.value)
     to_chain_id = to_blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
-    if is_supported_chain_id(blockchain_name=from_blockchain_name, chain_id=from_chain_id) and is_supported_chain_id(
-            blockchain_name=to_blockchain_name, chain_id=to_chain_id) and \
+    if is_supported_chain_id(blockchain_name=from_blockchain_name, chain_id=from_chain_id) and \
+            is_supported_chain_id(blockchain_name=to_blockchain_name, chain_id=to_chain_id) and \
             get_chain_environment(blockchain_name=from_blockchain_name, chain_id=from_chain_id) == \
             get_chain_environment(blockchain_name=to_blockchain_name, chain_id=to_chain_id):
         is_supported = True
@@ -163,26 +165,53 @@ def is_supported_network_conversion(from_blockchain, to_blockchain):
     return is_supported
 
 
+def get_evm_blockchain(chain_id):
+    if chain_id in [network.value for network in EthereumNetwork]:
+        return BlockchainName.ETHEREUM.value
+    elif chain_id in [network.value for network in BinanceNetwork]:
+        return BlockchainName.BINANCE.value
+    else:
+        raise ValueError(f"EVM chain id {chain_id} is not supported")
+
+
+def get_evm_network_url(chain_id):
+    if chain_id in [network.value for network in EthereumNetwork]:
+        return get_ethereum_network_url(chain_id)
+    elif chain_id in [network.value for network in BinanceNetwork]:
+        return get_binance_network_url(chain_id)
+    else:
+        raise ValueError(f"EVM chain id {chain_id} is not supported")
+
+
 def get_ethereum_network_url(chain_id):
     network_name = EthereumNetwork(chain_id).name
-    url = BLOCKCHAIN_DETAILS.get(BlockchainName.ETHEREUM.value.lower(), {}).get("network", {}).get(network_name.lower(),
-                                                                                                   {}).get("url", None)
-    if url is None:
-        raise "Url not found from config"
+    url = BLOCKCHAIN_DETAILS.get(BlockchainName.ETHEREUM.value.lower(), {}) \
+                            .get("network", {}) \
+                            .get(network_name.lower(), {}) \
+                            .get("url", None)
+    assert url is not None, "Url not found from config"
+    return url
 
+
+def get_binance_network_url(chain_id):
+    network_name = BinanceNetwork(chain_id).name
+    url = BLOCKCHAIN_DETAILS.get(BlockchainName.BINANCE.value.lower(), {}) \
+                            .get("network", {}) \
+                            .get(network_name.lower(), {}) \
+                            .get("url", None)
+    assert url is not None, "Url not found from config"
     return url
 
 
 def get_cardano_network_url_and_project_id(chain_id):
     network_name = CardanoNetwork(chain_id).name
-    network_config = BLOCKCHAIN_DETAILS.get(BlockchainName.CARDANO.value.lower(), {}).get("network", {}).get(
-        network_name.lower(), {})
+    network_config = BLOCKCHAIN_DETAILS.get(BlockchainName.CARDANO.value.lower(), {}) \
+                                       .get("network", {}) \
+                                       .get(network_name.lower(), {})
     url = network_config.get("url", None)
     project_id = network_config.get("secret", {}).get("project_id", None)
-
-    if url is None or project_id is None:
-        raise "Url not found from config"
-
+    assert url is not None, "Url not found from config"
+    assert project_id is not None, "Project ID not found"
     return url, project_id
 
 
