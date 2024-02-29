@@ -34,14 +34,13 @@ def convert_consumer_event(event) -> list:
                         parsed_message = json.loads(message)
                         blockchain_name = parsed_message.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value, "")
                         blockchain_event = parsed_message.get(ConverterBridgeEntities.BLOCKCHAIN_EVENT.value, "")
-                        if blockchain_name.lower() == BlockchainName.BINANCE.value.lower() and blockchain_event:
-                            new_format.append(parsed_message)
+                        if blockchain_name.lower() in [BlockchainName.ETHEREUM.value.lower(),
+                                                       BlockchainName.BINANCE.value.lower()]:
+                            if blockchain_event:
+                                new_format.append(parsed_message)
                         else:
                             new_format.append(consumer_required_format(blockchain_name=BlockchainName.CARDANO.value,
                                                                        blockchain_event=parsed_message))
-                    else:
-                        new_format.append(parsed_body)
-
     except Exception as e:
         logger.info(f"Error while trying to parse the input={json.dumps(event)} with error of {e}")
         raise InternalServerErrorException(error_code=ErrorCode.UNABLE_TO_PARSE_THE_INPUT_EVENT.value,
