@@ -12,10 +12,9 @@ from application.service.wallet_pair_service import WalletPairService
 from common.logger import get_logger
 from config import MESSAGE_GROUP_ID, SLACK_HOOK
 from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventConsumer, EventConsumerEntity, \
-    WalletPairEntities, ConversionEntities, ConverterBridgeEntities, EthereumEventConsumerEntities, EthereumEventType, \
+    WalletPairEntities, ConversionEntities, ConverterBridgeEntities, \
     TransactionEntities, TokenEntities, ConversionDetailEntities, CardanoAPIEntities, TokenPairEntities, \
-    ConversionFeeEntities, MessagePoolEntities, BinanceEventConsumerEntities, BinanceEventType, \
-    EVMEventConsumerEntities, EVMEventType
+    ConversionFeeEntities, MessagePoolEntities, EVMEventConsumerEntities, EVMEventType
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, QueueName
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
