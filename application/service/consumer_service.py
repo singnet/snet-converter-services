@@ -14,7 +14,8 @@ from config import MESSAGE_GROUP_ID, SLACK_HOOK
 from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventConsumer, EventConsumerEntity, \
     WalletPairEntities, ConversionEntities, ConverterBridgeEntities, EthereumEventConsumerEntities, EthereumEventType, \
     TransactionEntities, TokenEntities, ConversionDetailEntities, CardanoAPIEntities, TokenPairEntities, \
-    ConversionFeeEntities, MessagePoolEntities, BinanceEventConsumerEntities, BinanceEventType
+    ConversionFeeEntities, MessagePoolEntities, BinanceEventConsumerEntities, BinanceEventType, \
+    EVMEventConsumerEntities, EVMEventType
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, QueueName
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
@@ -66,14 +67,13 @@ class ConsumerService:
 
         blockchain_network_id = blockchain_detail.get(BlockchainEntities.CHAIN_ID.value)
 
-        if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower():
-            event_type = blockchain_event.get(EthereumEventConsumerEntities.NAME.value)
-            tx_hash = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}) \
-                                      .get(EthereumEventConsumerEntities.TRANSACTION_HASH.value)
-        elif blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
-            event_type = blockchain_event.get(BinanceEventConsumerEntities.NAME.value)
-            tx_hash = blockchain_event.get(BinanceEventConsumerEntities.DATA.value, {}) \
-                                      .get(BinanceEventConsumerEntities.TRANSACTION_HASH.value)
+        if blockchain_name.lower() == BlockchainName.ETHEREUM.value.lower() \
+                or blockchain_name.lower() == BlockchainName.BINANCE.value.lower():
+
+            event_type = blockchain_event.get(EVMEventConsumerEntities.NAME.value)
+            tx_hash = blockchain_event.get(EVMEventConsumerEntities.DATA.value, {}) \
+                                      .get(EVMEventConsumerEntities.TRANSACTION_HASH.value)
+
         elif blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
             event_type = blockchain_event.get(CardanoEventConsumer.TRANSACTION_DETAIL.value, {})\
                                          .get(CardanoEventConsumer.TX_TYPE.value)
@@ -103,32 +103,20 @@ class ConsumerService:
         validate_consumer_event_against_transaction(event_type=event_type, transaction=transaction,
                                                     blockchain_name=db_blockchain_name)
 
-        if db_blockchain_name == BlockchainName.ETHEREUM.value.lower() and \
-                event_type in [EthereumEventType.TOKEN_BURNT.value, EthereumEventType.TOKEN_MINTED.value]:
-            json_str = blockchain_event.get(EthereumEventConsumerEntities.DATA.value, {}) \
-                                       .get(EthereumEventConsumerEntities.JSON_STR.value)
+        if db_blockchain_name == BlockchainName.ETHEREUM.value.lower() or db_blockchain_name == BlockchainName.BINANCE.value.lower() \
+                and event_type in [EVMEventType.TOKEN_BURNT.value, EVMEventType.TOKEN_MINTED.value]:
+            json_str = blockchain_event.get(EVMEventConsumerEntities.DATA.value, {}) \
+                                       .get(EVMEventConsumerEntities.JSON_STR.value)
             metadata = ast.literal_eval(json_str)
 
-            tx_amount = metadata.get(EthereumEventConsumerEntities.AMOUNT.value)
-            conversion_id = metadata.get(EthereumEventConsumerEntities.CONVERSION_ID.value).decode("utf-8")
-            token_holder = metadata.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value)
+            tx_amount = metadata.get(EVMEventConsumerEntities.AMOUNT.value)
+            conversion_id = metadata.get(EVMEventConsumerEntities.CONVERSION_ID.value).decode("utf-8")
+            token_holder = metadata.get(EVMEventConsumerEntities.TOKEN_HOLDER.value)
 
             conversion = self.process_evm_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
                                                 conversion_id=conversion_id, transaction=transaction,
                                                 token_holder=token_holder)
-        elif db_blockchain_name == BlockchainName.BINANCE.value.lower() and \
-                event_type in [BinanceEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_MINTED.value]:
-            json_str = blockchain_event.get(BinanceEventConsumerEntities.DATA.value, {}) \
-                                       .get(BinanceEventConsumerEntities.JSON_STR.value)
-            metadata = ast.literal_eval(json_str)
 
-            tx_amount = metadata.get(EthereumEventConsumerEntities.AMOUNT.value)
-            conversion_id = metadata.get(EthereumEventConsumerEntities.CONVERSION_ID.value).decode("utf-8")
-            token_holder = metadata.get(EthereumEventConsumerEntities.TOKEN_HOLDER.value)
-
-            conversion = self.process_evm_event(event_type=event_type, tx_hash=tx_hash, tx_amount=tx_amount,
-                                                conversion_id=conversion_id, transaction=transaction,
-                                                token_holder=token_holder)
         elif db_blockchain_name == BlockchainName.CARDANO.value.lower():
             if event_type == CardanoEventType.TOKEN_RECEIVED.value:
                 conversion = self.process_cardano_token_received_event(blockchain_event=blockchain_event,
@@ -198,8 +186,8 @@ class ConsumerService:
 
         if not tx_hash or not tx_amount or not conversion_id:
             raise InternalServerErrorException(
-                error_code=ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value,
-                error_details=ErrorDetails[ErrorCode.MISSING_ETHEREUM_EVENT_FIELDS.value].value)
+                error_code=ErrorCode.MISSING_EVM_EVENT_FIELDS.value,
+                error_details=ErrorDetails[ErrorCode.MISSING_EVM_EVENT_FIELDS.value].value)
         try:
             conversion_detail = self.conversion_service.get_conversion_complete_detail(conversion_id=conversion_id)
         except Exception as e:
@@ -217,20 +205,20 @@ class ConsumerService:
         deposit_amount = conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
 
-        if event_type in [EthereumEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_BURNT.value]:
+        if event_type == EVMEventType.TOKEN_BURNT.value:
             if wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value) != token_holder:
                 logger.info(f"Mismatch on address from request and contract for {event_type} event")
                 raise InternalServerErrorException(
                     error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
                     error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
-        elif event_type in [EthereumEventType.TOKEN_MINTED.value, BinanceEventType.TOKEN_MINTED.value]:
+        elif event_type == EVMEventType.TOKEN_MINTED.value:
             if Decimal(float(claim_amount)) != Decimal(tx_amount) or \
                wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder:
                 logger.info(f"Mismatch on address and amount from request and contract for {event_type} event")
                 raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
                                                    error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
 
-        if event_type == EthereumEventType.TOKEN_BURNT.value and Decimal(float(deposit_amount)) != Decimal(tx_amount):
+        if event_type == EVMEventType.TOKEN_BURNT.value and Decimal(float(deposit_amount)) != Decimal(tx_amount):
             token_pair_row_id = wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value)
             token_pair = self.token_service.get_token_pair_internal(token_pair_id=None,
                                                                     token_pair_row_id=token_pair_row_id)

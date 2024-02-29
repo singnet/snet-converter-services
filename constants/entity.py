@@ -198,7 +198,7 @@ CardanoAllowedEventType = [CardanoEventType.TOKEN_RECEIVED.value, CardanoEventTy
                            CardanoEventType.TOKEN_MINTED.value]
 
 
-class EthereumEventConsumerEntities(Enum):
+class EVMEventConsumerEntities(Enum):
     CONVERSION_ID = "conversionId"
     TRANSACTION_HASH = "transactionHash"
     NAME = "name"
@@ -209,31 +209,11 @@ class EthereumEventConsumerEntities(Enum):
     ARGS = "args"
 
 
-class EthereumEventType(Enum):
+class EVMEventType(Enum):
     TOKEN_BURNT = "ConversionOut"
     TOKEN_MINTED = "ConversionIn"
 
-
-EthereumAllowedEventType = [EthereumEventType.TOKEN_BURNT.value, EthereumEventType.TOKEN_MINTED.value]
-
-
-class BinanceEventConsumerEntities(Enum):
-    CONVERSION_ID = "conversionId"
-    TRANSACTION_HASH = "transactionHash"
-    NAME = "name"
-    JSON_STR = "json_str"
-    DATA = "data"
-    TOKEN_HOLDER = "tokenHolder"
-    AMOUNT = "amount"
-    ARGS = "args"
-
-
-class BinanceEventType(Enum):
-    TOKEN_BURNT = "ConversionOut"
-    TOKEN_MINTED = "ConversionIn"
-
-
-BinanceAllowedEventType = [BinanceEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_MINTED.value]
+EVMAllowedEventType = [EVMEventType.TOKEN_BURNT.value, EVMEventType.TOKEN_MINTED.value]
 
 
 class CardanoAPIEntities(Enum):
