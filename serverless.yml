@@ -29,9 +29,7 @@ provider:
       key2: converter-event-consumer
       key3: converter-bridge
   deploymentPrefix: serverless
-  tracing:
-    lambda: true
-    apiGateway: true
+  tracing: true
   logs:
     restApi: true
   apiGateway:
