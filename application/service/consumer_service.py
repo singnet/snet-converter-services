@@ -459,23 +459,10 @@ class ConsumerService:
                                                 .get(WalletPairEntities.TO_ADDRESS.value)
             source_address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}) \
                                                        .get(WalletPairEntities.FROM_ADDRESS.value)
-
-            token_pair = self.token_service.get_token_pair_internal(
-                token_pair_id=None,
-                token_pair_row_id=conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value)
-                .get(WalletPairEntities.TOKEN_PAIR_ID.value))
-
-            fee_amount = Decimal(0)
-            if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
-                fee_amount = calculate_fee_amount(
-                    amount=tx_amount,
-                    percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
-                    .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
-
             response = CardanoService.mint_token(conversion_id=conversion_id,
                                                  token=target_token.get(TokenEntities.SYMBOL.value),
                                                  tx_amount=tx_amount, tx_details=tx_details, address=address,
-                                                 source_address=source_address, fee=fee_amount)
+                                                 source_address=source_address)
             data = response.get(CardanoAPIEntities.DATA.value)
             if not data:
                 raise InternalServerErrorException(
