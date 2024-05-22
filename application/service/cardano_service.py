@@ -77,7 +77,7 @@ class CardanoService:
         return response
 
     @staticmethod
-    def mint_token(conversion_id, address, token, tx_amount, tx_details, source_address):
+    def mint_token(conversion_id, address, token, tx_amount, tx_details, source_address, fee):
         logger.info(
             f"Calling the mint token service on cardano with inputs as conversion_id={conversion_id}, "
             f"address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, "
@@ -92,7 +92,7 @@ class CardanoService:
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
                                                              tx_amount=str(Decimal(float(tx_amount))),
-                                                             tx_details=tx_details)
+                                                             tx_details=tx_details, fee=str(fee))
             payload[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
             logger.info(f"Payload for minting = {json.dumps(payload)}")
 
@@ -121,9 +121,10 @@ class CardanoService:
         }
 
     @staticmethod
-    def generate_payload_format(conversion_id, address, tx_amount, tx_details):
+    def generate_payload_format(conversion_id, address, tx_amount, tx_details, fee):
         return {
             CardanoAPIEntities.CONVERSION_ID.value: conversion_id,
             CardanoAPIEntities.CARDANO_ADDRESS.value: address, CardanoAPIEntities.AMOUNT.value: tx_amount,
-            CardanoAPIEntities.TRANSACTION_DETAILS.value: tx_details
+            CardanoAPIEntities.TRANSACTION_DETAILS.value: tx_details,
+            CardanoAPIEntities.FEE.value: fee
         }

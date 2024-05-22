@@ -254,6 +254,7 @@ class CardanoAPIEntities(Enum):
     ROLE = "role"
     DATA = "data"
     CONVERSION_ID = "conversion_id"
+    FEE = "fee"
 
 
 class WalletPairResponseEntities(Enum):
