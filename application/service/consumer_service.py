@@ -461,7 +461,7 @@ class ConsumerService:
                                                        .get(WalletPairEntities.FROM_ADDRESS.value)
 
             conversion_fee_amount = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value) \
-                                                  .get(ConversionEntities.FEE_AMOUNT.value)
+                                                              .get(ConversionEntities.FEE_AMOUNT.value)
 
             response = CardanoService.mint_token(conversion_id=conversion_id,
                                                  token=target_token.get(TokenEntities.SYMBOL.value),

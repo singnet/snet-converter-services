@@ -90,9 +90,11 @@ class CardanoService:
                                                    ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
 
         try:
-            payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
+            payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
+                                                             address=address,
                                                              tx_amount=str(Decimal(float(tx_amount))),
-                                                             tx_details=tx_details, fee=str(fee))
+                                                             tx_details=tx_details,
+                                                             fee=str(Decimal(float(fee))))
             payload[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
             logger.info(f"Payload for minting = {json.dumps(payload)}")
 
