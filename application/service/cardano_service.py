@@ -121,10 +121,13 @@ class CardanoService:
         }
 
     @staticmethod
-    def generate_payload_format(conversion_id, address, tx_amount, tx_details, fee):
-        return {
+    def generate_payload_format(conversion_id, address, tx_amount, tx_details, fee=None):
+        payload = {
             CardanoAPIEntities.CONVERSION_ID.value: conversion_id,
-            CardanoAPIEntities.CARDANO_ADDRESS.value: address, CardanoAPIEntities.AMOUNT.value: tx_amount,
-            CardanoAPIEntities.TRANSACTION_DETAILS.value: tx_details,
-            CardanoAPIEntities.FEE.value: fee
+            CardanoAPIEntities.CARDANO_ADDRESS.value: address,
+            CardanoAPIEntities.AMOUNT.value: tx_amount,
+            CardanoAPIEntities.TRANSACTION_DETAILS.value: tx_details
         }
+        if fee is not None:
+            payload[CardanoAPIEntities.FEE.value] = fee
+        return payload
