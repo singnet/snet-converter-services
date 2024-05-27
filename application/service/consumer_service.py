@@ -216,6 +216,7 @@ class ConsumerService:
 
         deposit_amount = conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
+        fee_amount = conversion.get(ConversionEntities.FEE_AMOUNT.value)
 
         if event_type in [EthereumEventType.TOKEN_BURNT.value, BinanceEventType.TOKEN_BURNT.value]:
             if wallet_pair.get(WalletPairEntities.FROM_ADDRESS.value) != token_holder:
@@ -224,7 +225,8 @@ class ConsumerService:
                     error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
                     error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
         elif event_type in [EthereumEventType.TOKEN_MINTED.value, BinanceEventType.TOKEN_MINTED.value]:
-            if Decimal(float(claim_amount)) != Decimal(tx_amount) or \
+            conversion_claim_amount = convert_str_to_decimal(claim_amount) + convert_str_to_decimal(fee_amount)
+            if conversion_claim_amount != Decimal(tx_amount) or \
                wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder:
                 logger.info(f"Mismatch on address and amount from request and contract for {event_type} event")
                 raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,

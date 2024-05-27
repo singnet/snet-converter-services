@@ -499,6 +499,9 @@ def validate_conversion_with_blockchain(conversion_on, address, amount, conversi
                                       .get(ConversionEntities.DEPOSIT_AMOUNT.value)
     claim_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
                                     .get(ConversionEntities.CLAIM_AMOUNT.value)
+    fee_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                  .get(ConversionEntities.FEE_AMOUNT.value)
+    conversion_claim_amount = convert_str_to_decimal(claim_amount) + convert_str_to_decimal(fee_amount)
     db_conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
                                         .get(ConversionEntities.ID.value)
 
@@ -509,7 +512,7 @@ def validate_conversion_with_blockchain(conversion_on, address, amount, conversi
             (address != from_address or convert_int_to_decimal(amount) != convert_str_to_decimal(deposit_amount)):
         is_valid = False
     elif conversion_on == ConversionOn.TO.value and \
-            (address != to_address or convert_int_to_decimal(amount) != convert_str_to_decimal(claim_amount)):
+            (address != to_address or convert_int_to_decimal(amount) != conversion_claim_amount):
         is_valid = False
 
     return is_valid
