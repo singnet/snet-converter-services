@@ -502,6 +502,9 @@ class ConversionService:
 
         conversion = conversion_detail.get(ConversionDetailEntities.CONVERSION.value)
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
+        fee_amount = conversion.get(ConversionEntities.FEE_AMOUNT.value)
+        # We should return total amount of tokens because contract on the Ethereum side calculate fees by itself
+        claim_amount = str(Decimal(float(claim_amount)) + Decimal(float(fee_amount)))
         user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
                                         .get(WalletPairEntities.TO_ADDRESS.value)
         contract_address = self.get_token_contract_address_for_conversion_id(
