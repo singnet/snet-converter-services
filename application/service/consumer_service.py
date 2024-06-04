@@ -19,6 +19,7 @@ from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, QueueName
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
     ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS, ConversionStatus, ConversionTransactionStatus
+from utils.general import update_decimal_places, reset_decimal_places
 from utils.blockchain import get_next_activity_event_on_conversion, validate_consumer_event_against_transaction, \
     generate_deposit_address_details_for_cardano_operation, calculate_fee_amount, \
     validate_conversion_request_amount, validate_consumer_event_type, convert_str_to_decimal, \
@@ -225,6 +226,7 @@ class ConsumerService:
                     error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
                     error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
         elif event_type in [EthereumEventType.TOKEN_MINTED.value, BinanceEventType.TOKEN_MINTED.value]:
+            # TODO[BRIDGE-90] - DONE: Convert claim amount into right decimals | Already right decimals amount
             conversion_claim_amount = convert_str_to_decimal(claim_amount) + convert_str_to_decimal(fee_amount)
             if conversion_claim_amount != Decimal(tx_amount) or \
                wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder:
@@ -232,19 +234,34 @@ class ConsumerService:
                 raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
                                                    error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
 
+        # TODO[BRIDGE-90] - DONE: Check this condition to provide right deposit amount | Already right decimals amount
         if event_type == EthereumEventType.TOKEN_BURNT.value and Decimal(float(deposit_amount)) != Decimal(tx_amount):
             token_pair_row_id = wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value)
             token_pair = self.token_service.get_token_pair_internal(token_pair_id=None,
                                                                     token_pair_row_id=token_pair_row_id)
+
+            from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                            .get(TokenEntities.ALLOWED_DECIMAL.value)
+            to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
+                                          .get(TokenEntities.ALLOWED_DECIMAL.value)
+
             fee_amount = Decimal(0)
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
+                if from_token_decimals != to_token_decimals:
+                    # Conversion fee temporary not allowed for token pairs with different decimals amount
+                    raise BadRequestException(
+                        error_code=ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value,
+                        error_details=ErrorDetails[ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value].value)
                 fee_amount = calculate_fee_amount(
                     amount=convert_str_to_decimal(value=tx_amount),
                     percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
                                          .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
+            # TODO[BRIDGE-90] - DONE: Check this moment with calculation of conversion claim amount
+            claim_amount = update_decimal_places(Decimal(tx_amount) - fee_amount,
+                                                 from_decimals=from_token_decimals,
+                                                 to_decimals=to_token_decimals)
             self.conversion_service.update_conversion(conversion_id=conversion_id, deposit_amount=tx_amount,
-                                                      fee_amount=fee_amount,
-                                                      claim_amount=convert_str_to_decimal(deposit_amount) - fee_amount)
+                                                      fee_amount=fee_amount, claim_amount=claim_amount)
 
         if not transaction:
             transaction = self.conversion_service.create_transaction_for_conversion(conversion_id=conversion_id,
@@ -269,9 +286,9 @@ class ConsumerService:
             CardanoEventConsumer.ASSET_NAME.value)
 
         if deposit_address is None or tx_amount is None or tx_hash is None:
-            raise InternalServerErrorException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
+            raise InternalServerErrorException(
+                error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
+                error_details=ErrorDetails[ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
 
         if transaction is None:
 
@@ -284,6 +301,11 @@ class ConsumerService:
             token_pair = self.token_service.get_token_pair_internal(
                 token_pair_id=None,
                 token_pair_row_id=wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value))
+
+            from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                            .get(TokenEntities.ALLOWED_DECIMAL.value)
+            to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
+                                          .get(TokenEntities.ALLOWED_DECIMAL.value)
 
             validate_conversion_request_amount(amount=tx_amount,
                                                min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
@@ -298,8 +320,14 @@ class ConsumerService:
                 raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value,
                                           error_details=ErrorDetails[ErrorCode.INVALID_ASSET_TRANSFERRED.value].value)
 
+            # TODO[BRIDGE-90] - DONE: Calculation of fee amount based on tx_amount | Works only for equal decimals
             tx_amount = Decimal(float(tx_amount))
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
+                if from_token_decimals != to_token_decimals:
+                    # Conversion fee temporary not allowed for token pairs with different decimals amount
+                    raise BadRequestException(
+                        error_code=ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value,
+                        error_details=ErrorDetails[ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value].value)
                 fee_amount = calculate_fee_amount(
                     amount=tx_amount,
                     percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
@@ -309,9 +337,26 @@ class ConsumerService:
                                              .get(TokenEntities.BLOCKCHAIN.value) \
                                              .get(BlockchainEntities.NAME.value)
 
+            # TODO[BRIDGE-90] - DONE: Passing params to calculate claim
+
+            # Check that received amount can be converted to claim amount
+            if from_token_decimals != to_token_decimals:
+                corrected_tx_amount = reset_decimal_places(tx_amount,
+                                                           from_decimals=from_token_decimals,
+                                                           to_decimals=to_token_decimals)
+                if corrected_tx_amount != tx_amount:
+                    logger.error(f"Received token amount {tx_amount} cannot be converted for claim because of "
+                                 f"difference in tokens decimals {from_token_decimals} > {to_token_decimals}")
+                    raise BadRequestException(
+                        error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value,
+                        error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value].value)
+
             conversion = self.conversion_service.process_conversion_request(
-                wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value), deposit_amount=tx_amount,
-                fee_amount=fee_amount, from_blockchain_name=from_blockchain_name, created_by=created_by)
+                wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
+                deposit_amount=tx_amount, fee_amount=fee_amount,
+                from_blockchain_name=from_blockchain_name,
+                from_token_decimals=from_token_decimals, to_token_decimals=to_token_decimals,
+                created_by=created_by)
             try:
                 transaction = self.conversion_service.create_transaction_for_conversion(
                     conversion_id=conversion.get(ConversionEntities.ID.value),
@@ -408,6 +453,11 @@ class ConsumerService:
         transactions = conversion_complete_detail.get(ConversionDetailEntities.TRANSACTIONS.value, [])
         payload_blockchain_name = payload.get(ConverterBridgeEntities.BLOCKCHAIN_NAME.value).lower()
 
+        from_token_decimals = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}) \
+                                                        .get(TokenEntities.ALLOWED_DECIMAL.value)
+        to_token_decimals = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {}) \
+                                                      .get(TokenEntities.ALLOWED_DECIMAL.value)
+
         target_token = {}
         target_blockchain = {}
 
@@ -465,10 +515,13 @@ class ConsumerService:
             conversion_fee_amount = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value) \
                                                               .get(ConversionEntities.FEE_AMOUNT.value)
 
+            # TODO[BRIDGE-90] - DONE: Provide info about token decimals difference
+            decimals_difference = from_token_decimals - to_token_decimals
             response = CardanoService.mint_token(conversion_id=conversion_id,
                                                  token=target_token.get(TokenEntities.SYMBOL.value),
                                                  tx_amount=tx_amount, tx_details=tx_details, address=address,
-                                                 source_address=source_address, fee=conversion_fee_amount)
+                                                 source_address=source_address, fee=conversion_fee_amount,
+                                                 decimals_difference=decimals_difference)
             data = response.get(CardanoAPIEntities.DATA.value)
             if not data:
                 raise InternalServerErrorException(
@@ -489,6 +542,7 @@ class ConsumerService:
                     error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
                     error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
 
+            # TODO[BRIDGE-90] - DONE: Updating conversion with new claim amount | Already right claim amount
             self.conversion_service.update_conversion(
                 conversion_id=conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {})
                                                         .get(ConversionEntities.ID.value),
@@ -501,6 +555,7 @@ class ConsumerService:
                     error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
                     error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
 
+            # TODO[BRIDGE-90] - DONE: Updating conversion with new claim amount | Already right claim amount
             self.conversion_service.update_conversion(
                 conversion_id=conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {})
                                                         .get(ConversionEntities.ID.value),

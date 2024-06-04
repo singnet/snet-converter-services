@@ -77,6 +77,7 @@ class ErrorCode(Enum):
     INVALID_ASSET_TRANSFERRED = "E0073"
     UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE = "E0074"
     INVALID_CONVERSION_DIRECTION = "E0075"
+    CONVERSION_FEE_NOT_ALLOWED = "E0076"
 
 
 class ErrorDetails(Enum):
@@ -155,3 +156,4 @@ class ErrorDetails(Enum):
     E0073 = "Invalid asset transferred to the deposit address"
     E0074 = "Unexpected error happened while checking the tx hash presence in the blockchain"
     E0075 = "Invalid value of conversion direction"
+    E0076 = "Conversion fee not allowed for this type of conversions"
