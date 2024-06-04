@@ -221,7 +221,7 @@ class ConversionService:
                                                                            signature=signature,
                                                                            block_number=block_number,
                                                                            token_pair=token_pair)
-        # TODO[BRIDGE-90] - DONE: Reset to zero all decimal places above max decimals for this pair
+
         from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
                                         .get(TokenEntities.ALLOWED_DECIMAL.value)
         to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
@@ -349,7 +349,6 @@ class ConversionService:
             conversion = None
 
         if not conversion:
-            # TODO[BRIDGE-90] - DONE: Update decimal places for claim_amount
             claim_amount = update_decimal_places(deposit_amount - fee_amount,
                                                  from_decimals=from_token_decimals,
                                                  to_decimals=to_token_decimals)

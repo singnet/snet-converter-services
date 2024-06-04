@@ -226,7 +226,6 @@ class ConsumerService:
                     error_code=ErrorCode.MISMATCH_TOKEN_HOLDER.value,
                     error_details=ErrorDetails[ErrorCode.MISMATCH_TOKEN_HOLDER.value].value)
         elif event_type in [EthereumEventType.TOKEN_MINTED.value, BinanceEventType.TOKEN_MINTED.value]:
-            # TODO[BRIDGE-90] - DONE: Convert claim amount into right decimals | Already right decimals amount
             conversion_claim_amount = convert_str_to_decimal(claim_amount) + convert_str_to_decimal(fee_amount)
             if conversion_claim_amount != Decimal(tx_amount) or \
                wallet_pair.get(WalletPairEntities.TO_ADDRESS.value) != token_holder:
@@ -234,7 +233,6 @@ class ConsumerService:
                 raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
                                                    error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
 
-        # TODO[BRIDGE-90] - DONE: Check this condition to provide right deposit amount | Already right decimals amount
         if event_type == EthereumEventType.TOKEN_BURNT.value and Decimal(float(deposit_amount)) != Decimal(tx_amount):
             token_pair_row_id = wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value)
             token_pair = self.token_service.get_token_pair_internal(token_pair_id=None,
@@ -256,7 +254,6 @@ class ConsumerService:
                     amount=convert_str_to_decimal(value=tx_amount),
                     percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
                                          .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
-            # TODO[BRIDGE-90] - DONE: Check this moment with calculation of conversion claim amount
             claim_amount = update_decimal_places(Decimal(tx_amount) - fee_amount,
                                                  from_decimals=from_token_decimals,
                                                  to_decimals=to_token_decimals)
@@ -320,7 +317,6 @@ class ConsumerService:
                 raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value,
                                           error_details=ErrorDetails[ErrorCode.INVALID_ASSET_TRANSFERRED.value].value)
 
-            # TODO[BRIDGE-90] - DONE: Calculation of fee amount based on tx_amount | Works only for equal decimals
             tx_amount = Decimal(float(tx_amount))
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
                 if from_token_decimals != to_token_decimals:
@@ -336,8 +332,6 @@ class ConsumerService:
             from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
                                              .get(TokenEntities.BLOCKCHAIN.value) \
                                              .get(BlockchainEntities.NAME.value)
-
-            # TODO[BRIDGE-90] - DONE: Passing params to calculate claim
 
             # Check that received amount can be converted to claim amount
             if from_token_decimals != to_token_decimals:
@@ -515,7 +509,6 @@ class ConsumerService:
             conversion_fee_amount = conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value) \
                                                               .get(ConversionEntities.FEE_AMOUNT.value)
 
-            # TODO[BRIDGE-90] - DONE: Provide info about token decimals difference
             decimals_difference = from_token_decimals - to_token_decimals
             response = CardanoService.mint_token(conversion_id=conversion_id,
                                                  token=target_token.get(TokenEntities.SYMBOL.value),
@@ -542,7 +535,6 @@ class ConsumerService:
                     error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
                     error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
 
-            # TODO[BRIDGE-90] - DONE: Updating conversion with new claim amount | Already right claim amount
             self.conversion_service.update_conversion(
                 conversion_id=conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {})
                                                         .get(ConversionEntities.ID.value),
@@ -555,7 +547,6 @@ class ConsumerService:
                     error_code=ErrorCode.TRANSACTION_ALREADY_PROCESSED.value,
                     error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_PROCESSED.value].value)
 
-            # TODO[BRIDGE-90] - DONE: Updating conversion with new claim amount | Already right claim amount
             self.conversion_service.update_conversion(
                 conversion_id=conversion_complete_detail.get(ConversionDetailEntities.CONVERSION.value, {})
                                                         .get(ConversionEntities.ID.value),
