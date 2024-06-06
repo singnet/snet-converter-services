@@ -28,7 +28,8 @@ from utils.blockchain import validate_address, validate_conversion_claim_request
 from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
     is_supported_network_conversion, get_evm_network_url, get_offset, paginate_items_response_format, \
-    datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report
+    datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report, \
+    reset_decimal_places, update_decimal_places
 from utils.signature import validate_conversion_signature, get_signature
 
 logger = get_logger(__name__)
@@ -220,9 +221,19 @@ class ConversionService:
                                                                            signature=signature,
                                                                            block_number=block_number,
                                                                            token_pair=token_pair)
-        amount = convert_str_to_decimal(value=amount)
+
+        from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                        .get(TokenEntities.ALLOWED_DECIMAL.value)
+        to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
+                                      .get(TokenEntities.ALLOWED_DECIMAL.value)
+        amount = reset_decimal_places(convert_str_to_decimal(value=amount), from_token_decimals, to_token_decimals)
 
         if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
+            if from_token_decimals != to_token_decimals:
+                # Conversion fee temporary not allowed for token pairs with different decimals amount
+                raise BadRequestException(
+                    error_code=ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value,
+                    error_details=ErrorDetails[ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value].value)
             fee_amount = calculate_fee_amount(
                 amount=amount,
                 percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
@@ -233,7 +244,9 @@ class ConversionService:
                                          .get(BlockchainEntities.NAME.value)
         conversion = self.process_conversion_request(wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
                                                      deposit_amount=amount, fee_amount=fee_amount,
-                                                     from_blockchain_name=from_blockchain_name)
+                                                     from_blockchain_name=from_blockchain_name,
+                                                     from_token_decimals=from_token_decimals,
+                                                     to_token_decimals=to_token_decimals)
 
         conversion_id = conversion[ConversionEntities.ID.value]
         deposit_address = wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
@@ -317,7 +330,8 @@ class ConversionService:
         return next_activity
 
     def process_conversion_request(self, wallet_pair_id: str, deposit_amount: Decimal, fee_amount: Decimal,
-                                   from_blockchain_name, created_by: str = CreatedBy.DAPP.value):
+                                   from_blockchain_name, from_token_decimals, to_token_decimals,
+                                   created_by: str = CreatedBy.DAPP.value):
         logger.info(f"Processing the conversion request with wallet_pair_id={wallet_pair_id}, "
                     f"deposit_amount={deposit_amount}, fee_amount={fee_amount}, "
                     f"from_blockchain_name={from_blockchain_name}")
@@ -335,8 +349,11 @@ class ConversionService:
             conversion = None
 
         if not conversion:
+            claim_amount = update_decimal_places(deposit_amount - fee_amount,
+                                                 from_decimals=from_token_decimals,
+                                                 to_decimals=to_token_decimals)
             conversion = self.create_conversion(wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,
-                                                fee_amount=fee_amount, claim_amount=deposit_amount - fee_amount,
+                                                fee_amount=fee_amount, claim_amount=claim_amount,
                                                 created_by=created_by)
         return conversion
 
