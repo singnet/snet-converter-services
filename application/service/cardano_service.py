@@ -77,11 +77,10 @@ class CardanoService:
         return response
 
     @staticmethod
-    def mint_token(conversion_id, address, token, tx_amount, tx_details, source_address):
-        logger.info(
-            f"Calling the mint token service on cardano with inputs as conversion_id={conversion_id}, "
-            f"address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, "
-            f"source_address={source_address}")
+    def mint_token(conversion_id, address, token, tx_amount, tx_details, source_address, fee, decimals_difference):
+        logger.info(f"Calling the mint token service on cardano with inputs as conversion_id={conversion_id}, "
+                    f"address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, "
+                    f"source_address={source_address}")
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
@@ -90,9 +89,12 @@ class CardanoService:
                                                    ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
 
         try:
-            payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
+            payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
+                                                             address=address,
                                                              tx_amount=str(Decimal(float(tx_amount))),
-                                                             tx_details=tx_details)
+                                                             tx_details=tx_details,
+                                                             fee=str(Decimal(float(fee))),
+                                                             decimals_difference=decimals_difference)
             payload[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
             logger.info(f"Payload for minting = {json.dumps(payload)}")
 
@@ -121,9 +123,15 @@ class CardanoService:
         }
 
     @staticmethod
-    def generate_payload_format(conversion_id, address, tx_amount, tx_details):
-        return {
+    def generate_payload_format(conversion_id, address, tx_amount, tx_details, fee=None, decimals_difference=None):
+        payload = {
             CardanoAPIEntities.CONVERSION_ID.value: conversion_id,
-            CardanoAPIEntities.CARDANO_ADDRESS.value: address, CardanoAPIEntities.AMOUNT.value: tx_amount,
+            CardanoAPIEntities.CARDANO_ADDRESS.value: address,
+            CardanoAPIEntities.AMOUNT.value: tx_amount,
             CardanoAPIEntities.TRANSACTION_DETAILS.value: tx_details
         }
+        if fee is not None:
+            payload[CardanoAPIEntities.FEE.value] = fee
+        if decimals_difference is not None:
+            payload[CardanoAPIEntities.DECIMALS_DIFFERENCE.value] = decimals_difference
+        return payload

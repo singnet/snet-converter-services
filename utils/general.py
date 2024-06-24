@@ -3,6 +3,7 @@ import math
 import uuid
 from datetime import datetime
 from datetime import timedelta
+from decimal import Decimal
 
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
@@ -69,6 +70,29 @@ def datetime_in_utcnow():
 
 def relative_date(date_time: datetime, hours: int = 0, days: int = 0) -> datetime:
     return date_time - timedelta(hours=int(hours), days=int(days))
+
+
+def reset_decimal_places(amount: Decimal, from_decimals: int, to_decimals: int) -> Decimal:
+    """
+    Resets to zero redundant decimal places of the amount when from_decimals exceeds to_decimals
+    """
+    if from_decimals > to_decimals:
+        factor = 10 ** (from_decimals - to_decimals)
+        return amount // factor * factor
+    return amount
+
+
+def update_decimal_places(amount: Decimal, from_decimals: int, to_decimals: int) -> Decimal:
+    """
+    Updates number of decimal places of the amount depending on difference of the from_decimals and to_decimals
+    """
+    if to_decimals > from_decimals:
+        factor = 10 ** (to_decimals - from_decimals)
+        return amount * factor
+    if from_decimals > to_decimals:
+        factor = 10 ** (from_decimals - to_decimals)
+        return amount // factor
+    return amount
 
 
 def get_blockchain_from_token_pair_details(token_pair, blockchain_conversion_type):

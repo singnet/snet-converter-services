@@ -1,6 +1,6 @@
 import os
 import time
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 from http import HTTPStatus
 
 from web3.exceptions import TransactionNotFound
@@ -101,7 +101,10 @@ def validate_address(from_address, to_address, from_blockchain, to_blockchain):
 
 
 def calculate_fee_amount(amount: Decimal, percentage: str) -> Decimal:
-    return amount * Decimal(float(percentage)) / 100
+    percentage_decimal = Decimal(percentage) / 100
+    fee_amount = amount * percentage_decimal
+    fee_amount = fee_amount.quantize(Decimal('1.'), rounding=ROUND_DOWN)
+    return fee_amount
 
 
 def get_evm_transaction_details(web3_object, transaction_hash):
@@ -496,6 +499,9 @@ def validate_conversion_with_blockchain(conversion_on, address, amount, conversi
                                       .get(ConversionEntities.DEPOSIT_AMOUNT.value)
     claim_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
                                     .get(ConversionEntities.CLAIM_AMOUNT.value)
+    fee_amount = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
+                                  .get(ConversionEntities.FEE_AMOUNT.value)
+    conversion_claim_amount = convert_str_to_decimal(claim_amount) + convert_str_to_decimal(fee_amount)
     db_conversion_id = conversion_detail.get(ConversionDetailEntities.CONVERSION.value, {}) \
                                         .get(ConversionEntities.ID.value)
 
@@ -506,7 +512,7 @@ def validate_conversion_with_blockchain(conversion_on, address, amount, conversi
             (address != from_address or convert_int_to_decimal(amount) != convert_str_to_decimal(deposit_amount)):
         is_valid = False
     elif conversion_on == ConversionOn.TO.value and \
-            (address != to_address or convert_int_to_decimal(amount) != convert_str_to_decimal(claim_amount)):
+            (address != to_address or convert_int_to_decimal(amount) != conversion_claim_amount):
         is_valid = False
 
     return is_valid

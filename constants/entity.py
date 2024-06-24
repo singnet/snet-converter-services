@@ -200,7 +200,7 @@ CardanoAllowedEventType = [CardanoEventType.TOKEN_RECEIVED.value, CardanoEventTy
 
 class EthereumEventConsumerEntities(Enum):
     CONVERSION_ID = "conversionId"
-    TRANSACTION_HASH = "transactionHash"
+    TRANSACTION_HASH = "transaction_hash"
     NAME = "name"
     JSON_STR = "json_str"
     DATA = "data"
@@ -219,7 +219,7 @@ EthereumAllowedEventType = [EthereumEventType.TOKEN_BURNT.value, EthereumEventTy
 
 class BinanceEventConsumerEntities(Enum):
     CONVERSION_ID = "conversionId"
-    TRANSACTION_HASH = "transactionHash"
+    TRANSACTION_HASH = "transaction_hash"
     NAME = "name"
     JSON_STR = "json_str"
     DATA = "data"
@@ -254,6 +254,8 @@ class CardanoAPIEntities(Enum):
     ROLE = "role"
     DATA = "data"
     CONVERSION_ID = "conversion_id"
+    FEE = "fee"
+    DECIMALS_DIFFERENCE = "decimals_difference"
 
 
 class WalletPairResponseEntities(Enum):
