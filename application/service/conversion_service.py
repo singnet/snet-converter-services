@@ -12,7 +12,7 @@ from application.service.wallet_pair_service import WalletPairService
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
 from common.utils import Utils
-from config import SIGNATURE_EXPIRY_BLOCK_NUMBER, EXPIRE_CONVERSION, CONVERTER_REPORTING_SLACK_HOOK
+from config import SIGNATURE_EXPIRY_BLOCKS, EXPIRE_CONVERSION, CONVERTER_REPORTING_SLACK_HOOK
 from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity
@@ -29,8 +29,9 @@ from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
     is_supported_network_conversion, get_evm_network_url, get_offset, paginate_items_response_format, \
     datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report, \
-    reset_decimal_places, update_decimal_places
-from utils.signature import validate_conversion_signature, get_signature
+    reset_decimal_places, update_decimal_places, get_cardano_network_url_and_project_id
+from utils.signature import validate_conversion_signature, validate_cardano_conversion_signature, get_signature
+from utils.cardano_blockchain import CardanoBlockchainUtil
 
 logger = get_logger(__name__)
 
@@ -156,9 +157,9 @@ class ConversionService:
 
     @staticmethod
     def create_conversion_request_validation(token_pair_id, amount, from_address, to_address, block_number,
-                                             signature, token_pair):
+                                             signature, key, token_pair):
         logger.info("Validating  the conversion request")
-        is_signer_as_from_address = False
+
         from_blockchain = get_blockchain_from_token_pair_details(
             token_pair=token_pair,
             blockchain_conversion_type=TokenPairEntities.FROM_TOKEN.value)
@@ -172,33 +173,54 @@ class ConversionService:
             raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
                                                error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
-        from_blockchain_name = from_blockchain.get(BlockchainEntities.NAME.value)
+        from_blockchain_name = BlockchainName(from_blockchain.get(BlockchainEntities.NAME.value).capitalize())
+        to_blockchain_name = BlockchainName(to_blockchain.get(BlockchainEntities.NAME.value).capitalize())
+        evm_blockchains = [BlockchainName.ETHEREUM, BlockchainName.BINANCE]
 
-        evm_blockchains = [BlockchainName.ETHEREUM.value.lower(), BlockchainName.BINANCE.value.lower()]
-        if from_blockchain_name.lower() in evm_blockchains:
-            is_signer_as_from_address = True
-            chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
-        else:
+        is_signer_as_from_address = True
+        signer_blockchain = from_blockchain_name
+        chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
+        if from_blockchain_name == BlockchainName.CARDANO and to_blockchain_name in evm_blockchains:
+            is_signer_as_from_address = False
+            signer_blockchain = to_blockchain_name
             chain_id = to_blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
-        network_url = get_evm_network_url(chain_id=chain_id)
-        evm_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
-        current_block_no = evm_web3_object.get_current_block_no()
-        if not block_number <= current_block_no or block_number < (current_block_no - SIGNATURE_EXPIRY_BLOCK_NUMBER):
+        if signer_blockchain in evm_blockchains:
+            network_url = get_evm_network_url(chain_id=chain_id)
+            evm_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
+            current_block_no = evm_web3_object.get_current_block_no()
+            last_valid_block_no = current_block_no - SIGNATURE_EXPIRY_BLOCKS[signer_blockchain.name]
+            is_block_number_valid = (last_valid_block_no <= block_number <= current_block_no)
+            is_signature_valid = validate_conversion_signature(token_pair_id=token_pair_id, amount=amount,
+                                                               from_address=from_address, to_address=to_address,
+                                                               block_number=block_number, signature=signature,
+                                                               is_signer_as_from_address=is_signer_as_from_address,
+                                                               chain_id=chain_id)
+        elif signer_blockchain == BlockchainName.CARDANO:
+            url, project_id = get_cardano_network_url_and_project_id(chain_id=chain_id)
+            cardano_blockchain = CardanoBlockchainUtil(project_id=project_id, base_url=url)
+            current_block_no = cardano_blockchain.get_latest_block().height
+            last_valid_block_no = current_block_no - SIGNATURE_EXPIRY_BLOCKS[signer_blockchain.name]
+            is_block_number_valid = (last_valid_block_no <= block_number <= current_block_no)
+            is_signature_valid = validate_cardano_conversion_signature(token_pair_id, amount, from_address, to_address,
+                                                                       block_number, signature, key,
+                                                                       is_signer_as_from_address)
+        else:
+            logger.error(f"Unsupported signer blockchain provided: {signer_blockchain}")
+            raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM)
+        
+        if not is_block_number_valid:
             raise BadRequestException(error_code=ErrorCode.SIGNATURE_EXPIRED.value,
                                       error_details=ErrorDetails[ErrorCode.SIGNATURE_EXPIRED.value].value)
 
-        result = validate_conversion_signature(token_pair_id=token_pair_id, amount=amount, from_address=from_address,
-                                               to_address=to_address, block_number=block_number, signature=signature,
-                                               is_signer_as_from_address=is_signer_as_from_address, chain_id=chain_id)
-        if result is False:
+        if not is_signature_valid:
             raise BadRequestException(error_code=ErrorCode.INCORRECT_SIGNATURE.value,
                                       error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE.value].value)
 
         validate_address(from_address=from_address, to_address=to_address, from_blockchain=from_blockchain,
                          to_blockchain=to_blockchain)
 
-    def create_conversion_request(self, token_pair_id, amount, from_address, to_address, block_number, signature):
+    def create_conversion_request(self, token_pair_id, amount, from_address, to_address, block_number, signature, key):
         logger.info(f"Creating the conversion request for token_pair_id={token_pair_id}, amount={amount}, "
                     f"from_address={from_address}, to_address={to_address}, block_number={block_number}, "
                     f"signature={signature}")
@@ -215,7 +237,7 @@ class ConversionService:
         ConversionService.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
                                                                from_address=from_address, to_address=to_address,
                                                                block_number=block_number, signature=signature,
-                                                               token_pair=token_pair)
+                                                               key=key, token_pair=token_pair)
         wallet_pair = self.wallet_pair_service.persist_wallet_pair_details(from_address=from_address,
                                                                            to_address=to_address, amount=amount,
                                                                            signature=signature,

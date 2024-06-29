@@ -46,6 +46,7 @@ def create_conversion_request(event, context):
     to_address = body.get(ApiParameters.TO_ADDRESS.value)
     block_number = body.get(ApiParameters.BLOCK_NUMBER.value)
     signature = body.get(ApiParameters.SIGNATURE.value)
+    key = body.get(ApiParameters.KEY.value)
 
     if not token_pair_id or not amount or not from_address or not to_address or not block_number or not signature:
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
@@ -53,7 +54,7 @@ def create_conversion_request(event, context):
 
     response = conversion_service.create_conversion_request(token_pair_id=token_pair_id, amount=amount,
                                                             from_address=from_address, to_address=to_address,
-                                                            block_number=block_number, signature=signature)
+                                                            block_number=block_number, signature=signature, key=key)
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
