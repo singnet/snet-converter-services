@@ -135,9 +135,9 @@ def check_existing_transaction_succeed(transactions):
     is_check_existing_transaction_succeed = True
     for transaction in transactions:
         status = transaction.get(TransactionEntities.STATUS.value)
-        id = transaction.get(TransactionEntities.ID.value)
+        id_ = transaction.get(TransactionEntities.ID.value)
         if status != TransactionStatus.SUCCESS.value:
-            logger.info(f"Transaction is not success for the transaction_id={id} having a status={status}")
+            logger.info(f"Transaction is not success for the transaction_id={id_} having a status={status}")
             is_check_existing_transaction_succeed = False
             break
 

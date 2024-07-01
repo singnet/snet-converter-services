@@ -40,6 +40,8 @@ EthereumToBinanceEvent = {"ethereum": [TransactionOperation.TOKEN_BURNT.value],
 BinanceToEthereumEvent = {"binance": [TransactionOperation.TOKEN_BURNT.value],
                           "ethereum": [TransactionOperation.TOKEN_MINTED.value]}
 
+# TODO[C2C]: add CardanoToCardanoEvent
+
 
 class TransactionStatus(Enum):
     WAITING_FOR_CONFIRMATION = "WAITING_FOR_CONFIRMATION"

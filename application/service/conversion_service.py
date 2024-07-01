@@ -328,6 +328,7 @@ class ConversionService:
         blockchain_name = blockchain.get(BlockchainEntities.NAME.value).lower()
         chain_id = blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
+        # TODO[LP]: remove for creation cardano transaction
         if created_by == CreatedBy.DAPP.value and blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
             raise BadRequestException(
                 error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
