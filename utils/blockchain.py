@@ -133,6 +133,17 @@ def get_event_logs(contract_instance, receipt, conversion_on):
     return logs
 
 
+def get_converter_contract_balance(chain_id, token_symbol, contract_address) -> int:
+    provider_url = get_evm_network_url(chain_id=chain_id)
+    web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=provider_url)
+    contract_abi_path = get_token_contract_path(token=token_symbol)
+    abi = web3_object.load_contract(path=contract_abi_path)
+    contract_instance = web3_object.contract_instance(contract_abi=abi, address=contract_address)
+
+    balance = contract_instance.functions.getConverterBalance().call()
+    return balance
+
+
 def validate_evm_transaction_details_against_conversion(chain_id, transaction_hash, conversion_on,
                                                         contract_address, conversion_detail):
     blockchain_name = get_evm_blockchain(chain_id=chain_id)
