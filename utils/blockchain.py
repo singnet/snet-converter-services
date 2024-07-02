@@ -217,10 +217,9 @@ def validate_cardano_transaction_details_against_conversion(chain_id, transactio
         f"conversion_on={conversion_on}")
     blockchain_transaction = get_cardano_transaction_details(chain_id=chain_id, transaction_hash=transaction_hash)
 
-    if blockchain_transaction is None:
+    if blockchain_transaction is None or "error" in blockchain_transaction.to_dict():
         raise BadRequestException(error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND.value,
-                                  error_details=ErrorDetails[
-                                      ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
+                                  error_details=ErrorDetails[ErrorCode.TRANSACTION_HASH_NOT_FOUND.value].value)
 
 
 def check_existing_transaction_state(transactions, conversion_on):
