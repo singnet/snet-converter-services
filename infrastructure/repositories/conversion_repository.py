@@ -11,6 +11,7 @@ from utils.database import read_from_db, update_in_db
 from utils.general import get_uuid, datetime_in_utcnow
 from datetime import datetime, timedelta
 
+
 class ConversionRepository(BaseRepository):
 
     @read_from_db()
@@ -63,12 +64,18 @@ class ConversionRepository(BaseRepository):
 
     @read_from_db()
     def get_processing_claim_amount_for_token_pair(self, target_token_pair_id: int):
+        statuses = [
+            ConversionStatus.PROCESSING.value,
+            ConversionStatus.WAITING_FOR_CLAIM.value,
+            ConversionStatus.CLAIM_INITIATED.value
+        ]
+
         total_claim_amount_query = self.session.query(
             func.sum(ConversionDBModel.claim_amount)
         ).join(
             WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id
         ).filter(
-            (ConversionDBModel.status == 'PROCESSING') | (ConversionDBModel.status == 'WAITING_FOR_CLAIM'),
+            ConversionDBModel.status.in_(statuses),
             WalletPairDBModel.token_pair_id == target_token_pair_id
         )
 
@@ -85,7 +92,7 @@ class ConversionRepository(BaseRepository):
         ).join(
             WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id
         ).filter(
-            ConversionDBModel.status == 'USER_INITIATED',
+            ConversionDBModel.status == ConversionStatus.USER_INITIATED.value,
             ConversionDBModel.created_at.between(five_minutes_ago, date_now),
             WalletPairDBModel.token_pair_id == target_token_pair_id
         )
