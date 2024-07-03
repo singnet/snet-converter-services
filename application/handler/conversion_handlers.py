@@ -21,6 +21,7 @@ from utils.lambdas import make_error_format
 from constants.lambdas import HttpRequestParamType, LambdaResponseStatus, PaginationDefaults
 from utils.exceptions import BadRequestException, EXCEPTIONS
 from utils.general import get_valid_value, validate_schema
+from utils.blockchain import is_valid_ethereum_address, is_valid_cardano_address
 
 logger = get_logger(__name__)
 
@@ -102,9 +103,9 @@ def get_conversion_history(event, context):
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
                                   error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
 
-    if len(address) != ETHEREUM_WALLET_ADDRESS_LENGTH:
-        raise BadRequestException(error_code=ErrorCode.INVALID_ETHEREUM_ADDRESS.value,
-                                  error_details=ErrorDetails[ErrorCode.INVALID_ETHEREUM_ADDRESS.value].value)
+    if not is_valid_ethereum_address(address) and not is_valid_cardano_address(address):
+        raise BadRequestException(error_code=ErrorCode.INVALID_ADDRESS.value,
+                                  error_details=ErrorDetails[ErrorCode.INVALID_ADDRESS.value].value)
 
     page_size = int(query_param.get(ApiParameters.PAGE_SIZE.value, PaginationDefaults.PAGE_SIZE.value))
     page_number = int(query_param.get(ApiParameters.PAGE_NUMBER.value, PaginationDefaults.PAGE_NUMBER.value))
@@ -179,9 +180,9 @@ def get_conversion_count_by_status(event, context):
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
                                   error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
 
-    if len(address) != ETHEREUM_WALLET_ADDRESS_LENGTH:
-        raise BadRequestException(error_code=ErrorCode.INVALID_ETHEREUM_ADDRESS.value,
-                                  error_details=ErrorDetails[ErrorCode.INVALID_ETHEREUM_ADDRESS.value].value)
+    if not is_valid_ethereum_address(address) and not is_valid_cardano_address(address):
+        raise BadRequestException(error_code=ErrorCode.INVALID_ADDRESS.value,
+                                  error_details=ErrorDetails[ErrorCode.INVALID_ADDRESS.value].value)
 
     response = conversion_service.get_conversion_count_by_status(address=address)
 
