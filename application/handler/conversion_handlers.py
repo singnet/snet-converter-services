@@ -2,9 +2,11 @@ import json
 import os
 import sys
 
+from web3 import Web3
+
 sys.path.append('/opt')
 
-from constants.general import MAX_PAGE_SIZE, ETHEREUM_WALLET_ADDRESS_LENGTH
+from constants.general import MAX_PAGE_SIZE
 
 from config import SLACK_HOOK
 from constants.error_details import ErrorCode, ErrorDetails
@@ -103,7 +105,7 @@ def get_conversion_history(event, context):
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
                                   error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
 
-    if not is_valid_ethereum_address(address) and not is_valid_cardano_address(address):
+    if not Web3.isAddress(address) and not is_valid_cardano_address(address):
         raise BadRequestException(error_code=ErrorCode.INVALID_ADDRESS.value,
                                   error_details=ErrorDetails[ErrorCode.INVALID_ADDRESS.value].value)
 
@@ -180,7 +182,7 @@ def get_conversion_count_by_status(event, context):
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
                                   error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value)
 
-    if not is_valid_ethereum_address(address) and not is_valid_cardano_address(address):
+    if not Web3.isAddress(address) and not is_valid_cardano_address(address):
         raise BadRequestException(error_code=ErrorCode.INVALID_ADDRESS.value,
                                   error_details=ErrorDetails[ErrorCode.INVALID_ADDRESS.value].value)
 

@@ -12,7 +12,6 @@ from common.logger import get_logger
 from config import TOKEN_CONTRACT_PATH, MAX_RETRY, SLEEP_TIME
 from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntities, EthereumBlockchainEntities, \
     BinanceBlockchainEntities
-from constants.general import ETHEREUM_WALLET_ADDRESS_LENGTH
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
     ConversionEntities, CardanoEventType, CardanoAPIEntities, WalletPairEntities, \
     EthereumAllowedEventType, CardanoAllowedEventType, EthereumEventConsumerEntities, BinanceAllowedEventType, \
@@ -579,14 +578,6 @@ def wait_until_transaction_hash_exists_in_blockchain(tx_hash, network_id):
             break
 
         i += 1
-
-
-def is_valid_ethereum_address(address: str) -> bool:
-    if len(address) != ETHEREUM_WALLET_ADDRESS_LENGTH:
-        return False
-    if not address.startswith('0x'):
-        return False
-    return True
 
 
 def is_valid_cardano_address(address: str) -> bool:
