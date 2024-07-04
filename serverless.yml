@@ -930,7 +930,7 @@ functions:
           enabled: true
 
     get_liquidity_data:
-      handler: application/handler/conversion.get_liquidity_converter_balance
+      handler: application/handler/conversion_handlers.get_liquidity_converter_balance
       role: ${file(./config.${self:provider.stage}.json):ROLE}
       vpc: ${self:custom.defaultVpc}
       layers: ${self:custom.defaultLayers}
