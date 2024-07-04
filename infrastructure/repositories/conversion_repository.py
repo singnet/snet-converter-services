@@ -63,7 +63,7 @@ class ConversionRepository(BaseRepository):
         return ConversionFactory.conversion_detail(conversion=conversion_detail)
 
     @read_from_db()
-    def get_processing_claim_amount_for_token_pair(self, target_token_pair_id: int):
+    def get_processing_claim_amount_for_token_pair(self, target_token_pair_id: str):
         statuses = [
             ConversionStatus.PROCESSING.value,
             ConversionStatus.WAITING_FOR_CLAIM.value,
@@ -74,16 +74,18 @@ class ConversionRepository(BaseRepository):
             func.sum(ConversionDBModel.claim_amount)
         ).join(
             WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id
+        ).join(
+            TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id
         ).filter(
             ConversionDBModel.status.in_(statuses),
-            WalletPairDBModel.token_pair_id == target_token_pair_id
+            TokenPairDBModel.id == target_token_pair_id
         )
 
         total_claim_amount = total_claim_amount_query.scalar()
         return total_claim_amount if total_claim_amount is not None else 0
 
     @read_from_db()
-    def get_initiated_claim_amount_for_token_pair(self, target_token_pair_id: int):
+    def get_initiated_claim_amount_for_token_pair(self, target_token_pair_id: str):
         date_now = datetime.utcnow()
         five_minutes_ago = date_now - timedelta(minutes=5)
 
@@ -91,10 +93,12 @@ class ConversionRepository(BaseRepository):
             func.sum(ConversionDBModel.claim_amount)
         ).join(
             WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id
+        ).join(
+            TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id
         ).filter(
             ConversionDBModel.status == ConversionStatus.USER_INITIATED.value,
             ConversionDBModel.created_at.between(five_minutes_ago, date_now),
-            WalletPairDBModel.token_pair_id == target_token_pair_id
+            TokenPairDBModel.id == target_token_pair_id
         )
 
         total_claim_amount = total_claim_amount_query.scalar()

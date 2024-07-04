@@ -26,8 +26,11 @@ from utils.general import get_ethereum_network_url, get_cardano_network_url_and_
     check_existing_transaction_succeed, get_transactions_operation, get_binance_network_url, get_evm_network_url, \
     get_evm_blockchain
 from utils.signature import validate_conversion_claim_signature
+from infrastructure.repositories.blockchain_repository import BlockchainRepository
 
 logger = get_logger(__name__)
+
+blockchain_repo = BlockchainRepository()
 
 
 def get_deposit_address_details(blockchain_name, token_name):
@@ -133,15 +136,40 @@ def get_event_logs(contract_instance, receipt, conversion_on):
     return logs
 
 
-def get_converter_contract_balance(chain_id, token_symbol, contract_address) -> int:
+def get_converter_contract_balance(token_pair_id: str):
+
+    blockchain_id, chain_id, token_symbol, contract_address = blockchain_repo.get_onchain_token_data_by_token_pair_id(
+        token_pair_id
+    )
+
+    if blockchain_id == BlockchainName.CARDANO.value:
+        raise BadRequestException(
+            error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
+            error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value
+        )
+
+    if not blockchain_id or not chain_id or not token_symbol or not contract_address:
+        raise BadRequestException(
+            error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
+            error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value
+        )
+
     provider_url = get_evm_network_url(chain_id=chain_id)
     web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=provider_url)
     contract_abi_path = get_token_contract_path(token=token_symbol)
     abi = web3_object.load_contract(path=contract_abi_path)
     contract_instance = web3_object.contract_instance(contract_abi=abi, address=contract_address)
 
-    balance = contract_instance.functions.getConverterBalance().call()
-    return balance
+    logger.info(f"Get liquidity balance for token pair id ::{token_pair_id}")
+
+    try:
+        balance = contract_instance.functions.getConverterBalance().call()
+        return balance
+    except Exception as e:
+        if ErrorDetails[ErrorCode.FUNCTION_NOT_FOUND_IN_ABI.value].value in str(e):
+            logger.error("Method not found in ABI")
+            raise BadRequestException(error_code=ErrorCode.FUNCTION_NOT_FOUND_IN_ABI.value,
+                                      error_details=ErrorDetails[ErrorCode.FUNCTION_NOT_FOUND_IN_ABI.value].value)
 
 
 def validate_evm_transaction_details_against_conversion(chain_id, transaction_hash, conversion_on,

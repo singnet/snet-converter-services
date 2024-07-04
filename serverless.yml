@@ -929,4 +929,21 @@ functions:
           description: 'Job for generating the conversion report'
           enabled: true
 
+    get_liquidity_data:
+      handler: application/handler/conversion.get_liquidity_converter_balance
+      role: ${file(./config.${self:provider.stage}.json):ROLE}
+      vpc: ${self:custom.defaultVpc}
+      layers: ${self:custom.defaultLayers}
+      warmup: true
+      events:
+        - http:
+            path: /v1/conversion
+            method: get
+            cors: ${self:custom.defaultCors}
+            reqValidatorName: onlyParams
+            request:
+              parameters:
+                querystrings:
+                  token_pair_id: true
+
 

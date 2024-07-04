@@ -32,6 +32,7 @@ from utils.general import get_blockchain_from_token_pair_details, get_response_f
     reset_decimal_places, update_decimal_places, get_cardano_network_url_and_project_id
 from utils.signature import validate_conversion_signature, validate_cardano_conversion_signature, get_signature
 from utils.cardano_blockchain import CardanoBlockchainUtil
+from utils.blockchain import get_converter_contract_balance
 
 logger = get_logger(__name__)
 
@@ -167,6 +168,23 @@ class ConversionService:
             token_pair=token_pair,
             blockchain_conversion_type=TokenPairEntities.TO_TOKEN.value)
 
+        balance = None
+
+        try:
+            balance = get_converter_contract_balance(token_pair_id=token_pair_id)
+        except BadRequestException as e:
+            if e.error_code == ErrorCode.FUNCTION_NOT_FOUND_IN_ABI.value:
+                balance = None
+
+        if balance is not None:
+            locked_tokens = ConversionRepository().get_processing_claim_amount_for_token_pair(token_pair_id)
+            frozen_tokens = ConversionRepository().get_initiated_claim_amount_for_token_pair(token_pair_id)
+
+            available_balance = balance - locked_tokens - frozen_tokens
+            if amount > available_balance:
+                raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY.value,
+                                          error_details=ErrorDetails[ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY.value].value)
+
         if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
             logger.exception(f"Unsupported network conversion detected from_blockchain={from_blockchain}, "
                              f"to_blockchain={to_blockchain}")
@@ -208,7 +226,7 @@ class ConversionService:
         else:
             logger.error(f"Unsupported signer blockchain provided: {signer_blockchain}")
             raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM)
-        
+
         if not is_block_number_valid:
             raise BadRequestException(error_code=ErrorCode.SIGNATURE_EXPIRED.value,
                                       error_details=ErrorDetails[ErrorCode.SIGNATURE_EXPIRED.value].value)
@@ -565,6 +583,27 @@ class ConversionService:
     def get_conversion_count_by_status(self, address):
         logger.info(f"Getting the conversion count by status for the address={address}")
         return self.conversion_repo.get_conversion_count_by_status(address=address)
+
+    def get_liquidity_balance_data_for_conversion(self, token_pair_id: str):
+        logger.info(f"Retrieving liquidity balance for token_pair_id:: {token_pair_id}")
+
+        locked_tokens = self.conversion_repo.get_processing_claim_amount_for_token_pair(token_pair_id)
+        frozen_tokens = self.conversion_repo.get_initiated_claim_amount_for_token_pair(token_pair_id)
+
+        current_liquidity_balance = get_converter_contract_balance(token_pair_id)
+
+        data = {}
+
+        if current_liquidity_balance is None:
+            raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT.value,
+                                      error_details=ErrorDetails[ErrorCode.NOT_LIQUID_CONTRACT.value].value)
+
+        data["available"] = current_liquidity_balance - locked_tokens - frozen_tokens
+        data["lp_balance"] = current_liquidity_balance
+        data["locked"] = locked_tokens
+        data["frozen"] = frozen_tokens
+
+        return data
 
     def expire_conversion(self):
         current_datetime = datetime_in_utcnow()
