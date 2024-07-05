@@ -971,5 +971,25 @@
     "type": "object",
     "properties": {},
     "required": []
+  },
+  "GetLiquidityInformationByConversionId": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "queryStringParameters": {
+        "type": "object",
+        "properties": {
+          "token_pair_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token_pair_id"
+        ]
+      }
+    },
+    "required": [
+      "queryStringParameters"
+    ]
   }
 }
