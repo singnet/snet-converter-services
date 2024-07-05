@@ -5,6 +5,7 @@ import web3
 from eth_account.messages import defunct_hash_message, encode_defunct
 from eth_utils import ValidationError
 from web3 import Web3
+from pycardano import cip8
 
 from common.boto_utils import BotoUtils
 from common.logger import get_logger
@@ -20,10 +21,8 @@ logger = get_logger(__name__)
 def validate_conversion_signature(token_pair_id, amount, from_address, to_address, block_number, signature,
                                   is_signer_as_from_address, chain_id):
     logger.info("Validating the conversion request signature")
-    if is_signer_as_from_address:
-        target_address = from_address
-    else:
-        target_address = to_address
+
+    target_address = from_address if is_signer_as_from_address else to_address
 
     message = web3.Web3.soliditySha3(
         ["string", "string", "string", "string", "uint256"],
@@ -32,11 +31,47 @@ def validate_conversion_signature(token_pair_id, amount, from_address, to_addres
 
     hash_message = defunct_hash_message(message)
     web3_object = Web3(web3.providers.HTTPProvider(get_evm_network_url(chain_id=chain_id)))
-    signer_address = web3_object.eth.account.recoverHash(
-        message_hash=hash_message, signature=signature
-    )
+    signer_address = web3_object.eth.account.recoverHash(message_hash=hash_message, signature=signature)
 
     return signer_address == target_address
+
+
+def validate_cardano_conversion_signature(token_pair_id, amount, from_address, to_address, block_number,
+                                          signature, key, is_signer_as_from_address=True):
+    logger.info("Validating Cardano signature")
+
+    target_address = from_address if is_signer_as_from_address else to_address
+
+    # Decode address and message from signature
+    signature_data = {"signature": signature, "key": key}
+    verified_data = cip8.verify(signature_data)
+    signed_message = verified_data.get('message')
+    signer_address = str(verified_data.get('signing_address'))
+
+    # Check address
+    is_address_matches = (signer_address == target_address)
+
+    # Check message
+    try:
+        signed_message_dict = json.loads(signed_message)
+        is_message_matches = all((
+            token_pair_id == signed_message_dict["token_pair_id"],
+            amount == signed_message_dict["amount"],
+            from_address == signed_message_dict["from_address"],
+            to_address == signed_message_dict["to_address"],
+            block_number == signed_message_dict["block_number"]
+        ))
+    except json.JSONDecodeError:
+        logger.exception(f"Failed to decode signed message: {signed_message}", exc_info=False)
+        return False
+    except KeyError as e:
+        logger.exception(f"Missing field {e} in signed message: {signed_message}", exc_info=False)
+        return False
+
+    logger.debug(f"Validation result: address matches: {is_address_matches}, message matches: {is_message_matches}, "
+                 f"signer address: {signer_address}, signed message: {signed_message}")
+
+    return is_address_matches and is_message_matches
 
 
 def validate_conversion_claim_signature(conversion_id, amount, from_address, to_address, signature, chain_id):
@@ -49,9 +84,7 @@ def validate_conversion_claim_signature(conversion_id, amount, from_address, to_
 
         hash_message = defunct_hash_message(message)
         web3_object = Web3(web3.providers.HTTPProvider(get_evm_network_url(chain_id=chain_id)))
-        signer_address = web3_object.eth.account.recoverHash(
-            message_hash=hash_message, signature=signature
-        )
+        signer_address = web3_object.eth.account.recoverHash(message_hash=hash_message, signature=signature)
     except ValidationError as e:
         logger.info(e)
         raise BadRequestException(error_code=ErrorCode.INCORRECT_SIGNATURE_LENGTH.value,

@@ -1,46 +1,45 @@
-class AccessDeniedException(Exception):
-    error_message = "ACCESS_DENIED"
-    status_code = 401
-
-    def __init__(self, error_code, error_details):
-        self.error_code = error_code
-        self.error_details = error_details
+from constants.error_details import ErrorCode, ErrorDetails
 
 
-class BadRequestException(Exception):
-    status_code = 400
-    error_message = "BAD_REQUEST"
-
-    def __init__(self, error_code, error_details):
-        self.error_code = error_code
-        self.error_details = error_details
-
-
-class InternalServerErrorException(Exception):
+class CustomConverterException(Exception):
+    status_code = 500
     error_message = "INTERNAL_SERVER_ERROR"
-    status_code = 500
 
-    def __init__(self, error_code, error_details):
+    def __init__(self, error_code, error_details=None):
+
         self.error_code = error_code
         self.error_details = error_details
 
+        # Simplify passing of standard error codes
+        if isinstance(error_code, ErrorCode):
+            self.error_code = error_code.value
+            if error_details is None:
+                self.error_details = ErrorDetails[self.error_code].value
 
-class TokenPairIdNotExitsException(Exception):
-    error_message = "BAD_REQUEST"
+
+class AccessDeniedException(CustomConverterException):
+    status_code = 401
+    error_message = "ACCESS_DENIED"
+
+
+class BadRequestException(CustomConverterException):
     status_code = 400
-
-    def __init__(self, error_code, error_details):
-        self.error_code = error_code
-        self.error_details = error_details
+    error_message = "BAD_REQUEST"
 
 
-class BlockConfirmationNotEnoughException(Exception):
-    error_message = "NOT_ENOUGH_BLOCK_CONFIRMATION"
+class InternalServerErrorException(CustomConverterException):
     status_code = 500
+    error_message = "INTERNAL_SERVER_ERROR"
 
-    def __init__(self, error_code, error_details):
-        self.error_code = error_code
-        self.error_details = error_details
+
+class TokenPairIdNotExitsException(CustomConverterException):
+    status_code = 400
+    error_message = "BAD_REQUEST"
+
+
+class BlockConfirmationNotEnoughException(CustomConverterException):
+    status_code = 500
+    error_message = "NOT_ENOUGH_BLOCK_CONFIRMATION"
 
 
 EXCEPTIONS = (AccessDeniedException, BadRequestException, InternalServerErrorException, TokenPairIdNotExitsException)

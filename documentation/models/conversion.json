@@ -20,6 +20,9 @@
       },
       "signature": {
         "type": "string"
+      },
+      "key": {
+        "type": "string"
       }
     },
     "required": [

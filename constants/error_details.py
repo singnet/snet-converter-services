@@ -78,6 +78,9 @@ class ErrorCode(Enum):
     UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE = "E0074"
     INVALID_CONVERSION_DIRECTION = "E0075"
     CONVERSION_FEE_NOT_ALLOWED = "E0076"
+    FUNCTION_NOT_FOUND_IN_ABI = "E0077"
+    NOT_LIQUID_CONTRACT = "E0078"
+    INSUFFICIENT_CONTRACT_LIQUIDITY = "E0079"
 
 
 class ErrorDetails(Enum):
@@ -157,3 +160,6 @@ class ErrorDetails(Enum):
     E0074 = "Unexpected error happened while checking the tx hash presence in the blockchain"
     E0075 = "Invalid value of conversion direction"
     E0076 = "Conversion fee not allowed for this type of conversions"
+    E0077 = "The function 'getConverterBalance' was not found in this contract's abi."
+    E0078 = "Сontract is not liquid"
+    E0079 = "Bridge contract liquidity is insufficient! At the moment conversion unavailable. Try again later."
