@@ -9,6 +9,7 @@ from infrastructure.models import ConversionDBModel, WalletPairDBModel, TokenPai
 from infrastructure.repositories.base_repository import BaseRepository
 from utils.database import read_from_db, update_in_db
 from utils.general import get_uuid, datetime_in_utcnow
+from datetime import datetime, timedelta
 
 
 class ConversionRepository(BaseRepository):
@@ -60,6 +61,48 @@ class ConversionRepository(BaseRepository):
             return None
 
         return ConversionFactory.conversion_detail(conversion=conversion_detail)
+
+    @read_from_db()
+    def get_processing_claim_amount_for_token_pair(self, target_token_pair_id: str):
+        statuses = [
+            ConversionStatus.PROCESSING.value,
+            ConversionStatus.WAITING_FOR_CLAIM.value,
+            ConversionStatus.CLAIM_INITIATED.value
+        ]
+
+        total_claim_amount_query = self.session.query(
+            func.sum(ConversionDBModel.claim_amount)
+        ).join(
+            WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id
+        ).join(
+            TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id
+        ).filter(
+            ConversionDBModel.status.in_(statuses),
+            TokenPairDBModel.id == target_token_pair_id
+        )
+
+        total_claim_amount = total_claim_amount_query.scalar()
+        return total_claim_amount if total_claim_amount is not None else 0
+
+    @read_from_db()
+    def get_initiated_claim_amount_for_token_pair(self, target_token_pair_id: str):
+        date_now = datetime.utcnow()
+        five_minutes_ago = date_now - timedelta(minutes=5)
+
+        total_claim_amount_query = self.session.query(
+            func.sum(ConversionDBModel.claim_amount)
+        ).join(
+            WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id
+        ).join(
+            TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id
+        ).filter(
+            ConversionDBModel.status == ConversionStatus.USER_INITIATED.value,
+            ConversionDBModel.created_at.between(five_minutes_ago, date_now),
+            TokenPairDBModel.id == target_token_pair_id
+        )
+
+        total_claim_amount = total_claim_amount_query.scalar()
+        return total_claim_amount if total_claim_amount is not None else 0
 
     def create_conversion(self, wallet_pair_id, deposit_amount, fee_amount, claim_amount, created_by):
         conversion_item = ConversionDBModel(id=get_uuid(), wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,

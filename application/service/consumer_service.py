@@ -287,6 +287,7 @@ class ConsumerService:
                 error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
                 error_details=ErrorDetails[ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
 
+        # TODO[LP]: As far as transaction can be created by DAPP we should do all checks even if it already exists
         if transaction is None:
 
             wallet_pair = self.wallet_pair_service.get_wallet_pair_by_deposit_address(deposit_address=deposit_address)
