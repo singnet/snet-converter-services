@@ -210,6 +210,20 @@ def get_transaction_by_conversion_id(event, context):
 
 
 @exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def get_liquidity_converter_balance(event, context):
+    logger.debug(f"Getting the liquid balance for the conversion event request={json.dumps(event)}")
+
+    query_param = get_valid_value(event, HttpRequestParamType.REQUEST_PARAM_QUERY_STRING.value)
+    token_pair_id = query_param.get(ApiParameters.TOKEN_PAIR_ID.value, None)
+
+    response = conversion_service.get_liquidity_balance_data_for_conversion(token_pair_id)
+
+    return generate_lambda_response(HTTPStatus.OK.value,
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
+                                                       error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
 def expire_conversion(event, context):
     logger.debug(f"Job for expiring the conversion request={json.dumps(event)}")
     conversion_service.expire_conversion()
@@ -221,4 +235,3 @@ def generate_conversion_report(event, context):
     logger.debug(f"Generating the conversion report request={json.dumps(event)}")
     conversion_service.generate_conversion_report()
     logger.info("Successfully")
-
