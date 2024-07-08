@@ -346,11 +346,11 @@ class ConversionService:
         blockchain_name = blockchain.get(BlockchainEntities.NAME.value).lower()
         chain_id = blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
-        # TODO[LP]: remove for creation cardano transaction
-        if created_by == CreatedBy.DAPP.value and blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
-            raise BadRequestException(
-                error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
-                error_details=ErrorDetails[ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
+        # Removed to be able to create cardano transactions from DAPP
+        # if created_by == CreatedBy.DAPP.value and blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
+        #     raise BadRequestException(
+        #         error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
+        #         error_details=ErrorDetails[ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
 
         check_existing_transaction_state(transactions=transactions, conversion_on=conversion_on)
 
@@ -610,7 +610,7 @@ class ConversionService:
         cardano_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("CARDANO", 0))
         ethereum_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("ETHEREUM", 0))
         binance_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("BINANCE", 0))
-        print(f"Expiring the conversion of ethereum and cardano which is less than or equal to "
+        print(f"Expiring the conversion of ethereum, cardano and binance which is less than or equal to "
               f"{ethereum_expire_datetime}, {cardano_expire_datetime} or {binance_expire_datetime} respectively ")
         conversions = self.conversion_repo.get_expiring_conversion(
             ethereum_expire_datetime=ethereum_expire_datetime,
