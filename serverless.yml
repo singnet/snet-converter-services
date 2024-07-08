@@ -930,14 +930,14 @@ functions:
           enabled: true
 
     get_liquidity_data:
-      handler: application/handler/conversion_handlers.get_liquidity_converter_balance
+      handler: application/handler/conversion_handlers.get_converter_liquidity_balance
       role: ${file(./config.${self:provider.stage}.json):ROLE}
       vpc: ${self:custom.defaultVpc}
       layers: ${self:custom.defaultLayers}
       warmup: true
       events:
         - http:
-            path: /v1/conversion
+            path: /v1/conversion/liquidity
             method: get
             cors: ${self:custom.defaultCors}
             reqValidatorName: onlyParams
@@ -965,5 +965,3 @@ functions:
                 - statusCode: "500"
                   responseModels:
                   "application/json": "LambdaErrorMessage"
-
-
