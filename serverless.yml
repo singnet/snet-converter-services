@@ -929,39 +929,39 @@ functions:
           description: 'Job for generating the conversion report'
           enabled: true
 
-    get_liquidity_data:
-      handler: application/handler/conversion_handlers.get_converter_liquidity_balance
-      role: ${file(./config.${self:provider.stage}.json):ROLE}
-      vpc: ${self:custom.defaultVpc}
-      layers: ${self:custom.defaultLayers}
-      warmup: true
-      events:
-        - http:
-            path: /v1/conversion/liquidity
-            method: get
-            cors: ${self:custom.defaultCors}
-            reqValidatorName: onlyParams
-            request:
-              parameters:
-                querystrings:
-                  token_pair_id: true
-            documentation:
-              summary: "Getting liquidity information by token pair id"
-              description: "Getting liquidity information by token pair id"
-              tags:
-                - "Conversion"
-              methodResponses:
-                - statusCode: "200"
-                  responseBody:
-                    description: "Get liquidity information by token pair id"
-                  responseModels:
-                    "application/json": "GetLiquidityInformationByConversionId"
-                - statusCode: "403"
-                  responseModels:
-                    "application/json": "ApiErrorMessage"
-                - statusCode: "404"
-                  responseModels:
-                    "application/json": "LambdaErrorMessage"
-                - statusCode: "500"
-                  responseModels:
+  get_liquidity_data:
+    handler: application/handler/conversion_handlers.get_converter_liquidity_balance
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    warmup: true
+    events:
+      - http:
+          path: /v1/conversion/liquidity
+          method: get
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyParams
+          request:
+            parameters:
+              querystrings:
+                token_pair_id: true
+          documentation:
+            summary: "Getting liquidity information by token pair id"
+            description: "Getting liquidity information by token pair id"
+            tags:
+              - "Conversion"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Get liquidity information by token pair id"
+                responseModels:
+                  "application/json": "GetLiquidityInformationByConversionId"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
                   "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                "application/json": "LambdaErrorMessage"
