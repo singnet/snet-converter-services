@@ -155,6 +155,11 @@ custom:
         contentType: "application/json"
         schema: ${file(documentation/models/conversion.json):GetConversionStatusCountOutput}
 
+      - name: "GetLiquidityDataOutput"
+        description: "Get Liquidity Data Output"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):GetLiquidityDataOutput}
+
 #      - name: "GetTransactionByConversionOutput"
 #        description: "Get Transaction By Conversion Output"
 #        contentType: "application/json"
@@ -955,7 +960,7 @@ functions:
                 responseBody:
                   description: "Get liquidity information by token pair id"
                 responseModels:
-                  "application/json": "GetLiquidityInformationByConversionId"
+                  "application/json": "GetLiquidityDataOutput"
               - statusCode: "403"
                 responseModels:
                   "application/json": "ApiErrorMessage"
