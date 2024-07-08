@@ -161,5 +161,5 @@ class ErrorDetails(Enum):
     E0075 = "Invalid value of conversion direction"
     E0076 = "Conversion fee not allowed for this type of conversions"
     E0077 = "The function 'getConverterBalance' was not found in this contract's abi."
-    E0078 = "Сontract is not liquid"
+    E0078 = "Contract is not liquid"
     E0079 = "Bridge contract liquidity is insufficient! At the moment conversion unavailable. Try again later."

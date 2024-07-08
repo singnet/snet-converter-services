@@ -584,7 +584,7 @@ class ConversionService:
         logger.info(f"Getting the conversion count by status for the address={address}")
         return self.conversion_repo.get_conversion_count_by_status(address=address)
 
-    def get_liquidity_balance_data_for_conversion(self, token_pair_id: str):
+    def get_liquidity_balance_data(self, token_pair_id: str):
         logger.info(f"Retrieving liquidity balance for token_pair_id:: {token_pair_id}")
 
         locked_tokens = self.conversion_repo.get_processing_claim_amount_for_token_pair(token_pair_id)
@@ -592,16 +592,15 @@ class ConversionService:
 
         current_liquidity_balance = get_converter_contract_balance(token_pair_id)
 
-        data = {}
-
         if current_liquidity_balance is None:
-            raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT.value,
-                                      error_details=ErrorDetails[ErrorCode.NOT_LIQUID_CONTRACT.value].value)
+            raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
 
-        data["available"] = current_liquidity_balance - locked_tokens - frozen_tokens
-        data["lp_balance"] = current_liquidity_balance
-        data["locked"] = locked_tokens
-        data["frozen"] = frozen_tokens
+        data = {
+            "available": current_liquidity_balance - locked_tokens - frozen_tokens,
+            "liquidity": current_liquidity_balance,
+            "locked": locked_tokens,
+            "frozen": frozen_tokens
+        }
 
         return data
 
