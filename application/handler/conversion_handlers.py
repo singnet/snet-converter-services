@@ -212,6 +212,8 @@ def get_transaction_by_conversion_id(event, context):
 @exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
 def get_converter_liquidity_balance(event, context):
     logger.debug(f"Getting the liquid balance for the conversion event request={json.dumps(event)}")
+    validate_schema(filepath=os.path.dirname(file_path) + "/../../documentation/models/conversion.json",
+                    schema_key="GetLiquidityDataInput", input_json=event)
 
     query_param = get_valid_value(event, HttpRequestParamType.REQUEST_PARAM_QUERY_STRING.value)
     token_pair_id = query_param.get(ApiParameters.TOKEN_PAIR_ID.value, None)

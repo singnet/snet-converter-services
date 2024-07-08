@@ -972,7 +972,7 @@
     "properties": {},
     "required": []
   },
-  "GetLiquidityInformationByConversionId": {
+  "GetLiquidityDataInput": {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
     "properties": {
@@ -990,6 +990,62 @@
     },
     "required": [
       "queryStringParameters"
+    ]
+  },
+  "GetLiquidityDataOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "integer"
+          },
+          "liquidity": {
+            "type": "integer"
+          },
+          "locked": {
+            "type": "integer"
+          },
+          "frozen": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "available",
+          "liquidity",
+          "locked",
+          "frozen"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
     ]
   }
 }
