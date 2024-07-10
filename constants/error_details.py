@@ -81,6 +81,7 @@ class ErrorCode(Enum):
     FUNCTION_NOT_FOUND_IN_ABI = "E0077"
     NOT_LIQUID_CONTRACT = "E0078"
     INSUFFICIENT_CONTRACT_LIQUIDITY = "E0079"
+    INVALID_TOKEN_DATA = "E0080"
 
 
 class ErrorDetails(Enum):
@@ -163,3 +164,4 @@ class ErrorDetails(Enum):
     E0077 = "The function 'getConverterBalance' was not found in this contract's abi."
     E0078 = "Contract is not liquid"
     E0079 = "Bridge contract liquidity is insufficient! At the moment conversion unavailable. Try again later."
+    E0080 = "Invalid token data provided"
