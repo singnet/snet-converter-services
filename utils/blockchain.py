@@ -3,7 +3,7 @@ import time
 from decimal import Decimal, ROUND_DOWN
 from http import HTTPStatus
 
-from web3.exceptions import TransactionNotFound
+from web3.exceptions import TransactionNotFound, ABIFunctionNotFound
 
 from application.service.cardano_service import CardanoService
 from common.blockchain_util import BlockChainUtil
@@ -160,11 +160,9 @@ def get_converter_contract_balance(token_pair_id: str):
     try:
         balance = contract_instance.functions.getConverterBalance().call()
         return balance
-    except Exception as e:
-        if ErrorDetails[ErrorCode.FUNCTION_NOT_FOUND_IN_ABI.value].value in str(e):
-            logger.error("Method not found in ABI")
-            raise BadRequestException(error_code=ErrorCode.FUNCTION_NOT_FOUND_IN_ABI.value,
-                                      error_details=ErrorDetails[ErrorCode.FUNCTION_NOT_FOUND_IN_ABI.value].value)
+    except ABIFunctionNotFound as e:
+        logger.error(f"Failed to get converter liquidity balance: {repr(e)}")
+        raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
 
 
 def validate_evm_transaction_details_against_conversion(chain_id, transaction_hash, conversion_on,
