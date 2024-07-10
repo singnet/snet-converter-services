@@ -139,30 +139,42 @@ def get_event_logs(contract_instance, receipt, conversion_on):
 def get_converter_contract_balance(token_pair_id: str):
     logger.info(f"Get liquidity balance for token pair id {token_pair_id}")
 
-    try:
-        to_token_data = blockchain_repo.get_to_token_data_by_token_pair_id(token_pair_id)
-        assert to_token_data is not None, "Token data not found"
-        blockchain_name, chain_id, token_symbol, contract_address = to_token_data
-        assert blockchain_name and chain_id is not None and token_symbol and contract_address, "Bad token data"
-    except AssertionError as e:
-        logger.error(f"Failed to get TO token data: {e}")
-        raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY)
+    to_token_data = blockchain_repo.get_to_token_data_by_token_pair_id(token_pair_id)
+
+    if not to_token_data:
+        raise BadRequestException(error_code=ErrorCode.TOKEN_PAIR_NOT_EXISTS)
+
+    blockchain_name, chain_id, token_symbol, contract_address = to_token_data
+
+    if not blockchain_name or chain_id is None or not token_symbol:
+        logger.error(f"Bad token data: blockchain_name={blockchain_name}, chain_id={chain_id}, "
+                     f"token_symbol={token_symbol}, contract_address={contract_address}")
+        raise InternalServerErrorException(error_code=ErrorCode.INVALID_TOKEN_DATA)
 
     if blockchain_name == BlockchainName.CARDANO.value:
-        raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID)
-
-    provider_url = get_evm_network_url(chain_id=chain_id)
-    web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=provider_url)
-    contract_abi_path = get_token_contract_path(token=token_symbol)
-    abi = web3_object.load_contract(path=contract_abi_path)
-    contract_instance = web3_object.contract_instance(contract_abi=abi, address=contract_address)
-
-    try:
-        balance = contract_instance.functions.getConverterBalance().call()
-        return balance
-    except ABIFunctionNotFound as e:
-        logger.error(f"Failed to get converter liquidity balance: {repr(e)}")
         raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
+
+    elif blockchain_name in [BlockchainName.ETHEREUM.value, BlockchainName.BINANCE.value]:
+
+        if not contract_address:
+            logger.error(f"Bad contract address: contract_address={contract_address}")
+            raise InternalServerErrorException(error_code=ErrorCode.INVALID_TOKEN_DATA)
+
+        provider_url = get_evm_network_url(chain_id=chain_id)
+        web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=provider_url)
+        contract_abi_path = get_token_contract_path(token=token_symbol)
+        abi = web3_object.load_contract(path=contract_abi_path)
+        contract_instance = web3_object.contract_instance(contract_abi=abi, address=contract_address)
+
+        try:
+            balance = contract_instance.functions.getConverterBalance().call()
+            return balance
+        except ABIFunctionNotFound as e:
+            logger.error(f"Failed to get converter liquidity balance: {repr(e)}")
+            raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
+
+    else:
+        raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID)
 
 
 def validate_evm_transaction_details_against_conversion(chain_id, transaction_hash, conversion_on,
