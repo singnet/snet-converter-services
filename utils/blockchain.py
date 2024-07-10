@@ -137,30 +137,25 @@ def get_event_logs(contract_instance, receipt, conversion_on):
 
 
 def get_converter_contract_balance(token_pair_id: str):
+    logger.info(f"Get liquidity balance for token pair id {token_pair_id}")
 
-    blockchain_id, chain_id, token_symbol, contract_address = blockchain_repo.get_onchain_token_data_by_token_pair_id(
-        token_pair_id
-    )
+    try:
+        to_token_data = blockchain_repo.get_to_token_data_by_token_pair_id(token_pair_id)
+        assert to_token_data is not None, "Token data not found"
+        blockchain_name, chain_id, token_symbol, contract_address = to_token_data
+        assert blockchain_name and chain_id is not None and token_symbol and contract_address, "Bad token data"
+    except AssertionError as e:
+        logger.error(f"Failed to get TO token data: {e}")
+        raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY)
 
-    if blockchain_id == BlockchainName.CARDANO.value:
-        raise BadRequestException(
-            error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
-            error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value
-        )
-
-    if not blockchain_id or not chain_id or not token_symbol or not contract_address:
-        raise BadRequestException(
-            error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
-            error_details=ErrorDetails[ErrorCode.PROPERTY_VALUES_EMPTY.value].value
-        )
+    if blockchain_name == BlockchainName.CARDANO.value:
+        raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID)
 
     provider_url = get_evm_network_url(chain_id=chain_id)
     web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=provider_url)
     contract_abi_path = get_token_contract_path(token=token_symbol)
     abi = web3_object.load_contract(path=contract_abi_path)
     contract_instance = web3_object.contract_instance(contract_abi=abi, address=contract_address)
-
-    logger.info(f"Get liquidity balance for token pair id ::{token_pair_id}")
 
     try:
         balance = contract_instance.functions.getConverterBalance().call()

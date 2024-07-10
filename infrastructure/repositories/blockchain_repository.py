@@ -41,7 +41,7 @@ class BlockchainRepository(BaseRepository):
                                             updated_at=blockchain.updated_at)
 
     @read_from_db()
-    def get_onchain_token_data_by_token_pair_id(self, token_pair_id):
+    def get_to_token_data_by_token_pair_id(self, token_pair_id):
         chain_data = self.session.query(
             BlockChainDBModel.name,
             BlockChainDBModel.chain_id,
