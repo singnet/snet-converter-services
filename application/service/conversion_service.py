@@ -156,8 +156,7 @@ class ConversionService:
         self.conversion_repo.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                            status=status)
 
-    @staticmethod
-    def create_conversion_request_validation(token_pair_id, amount, from_address, to_address, block_number,
+    def create_conversion_request_validation(self, token_pair_id, amount, from_address, to_address, block_number,
                                              signature, key, token_pair):
         logger.info("Validating  the conversion request")
 
@@ -168,22 +167,17 @@ class ConversionService:
             token_pair=token_pair,
             blockchain_conversion_type=TokenPairEntities.TO_TOKEN.value)
 
-        balance = None
-
+        # Liquidity check
         try:
-            balance = get_converter_contract_balance(token_pair_id=token_pair_id)
+            liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
+            if amount > liquidity_data["available"]:
+                raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY)
         except BadRequestException as e:
-            if e.error_code == ErrorCode.FUNCTION_NOT_FOUND_IN_ABI.value:
-                balance = None
-
-        if balance is not None:
-            locked_tokens = ConversionRepository().get_processing_claim_amount_for_token_pair(token_pair_id)
-            frozen_tokens = ConversionRepository().get_initiated_claim_amount_for_token_pair(token_pair_id)
-
-            available_balance = balance - locked_tokens - frozen_tokens
-            if amount > available_balance:
-                raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY.value,
-                                          error_details=ErrorDetails[ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY.value].value)
+            if e.error_code == ErrorCode.NOT_LIQUID_CONTRACT.value:
+                # Skipping liquidity check if contract is not liquidity contract
+                pass
+            else:
+                raise e
 
         if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
             logger.exception(f"Unsupported network conversion detected from_blockchain={from_blockchain}, "
@@ -252,10 +246,10 @@ class ConversionService:
                                            min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                            max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
 
-        ConversionService.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
-                                                               from_address=from_address, to_address=to_address,
-                                                               block_number=block_number, signature=signature,
-                                                               key=key, token_pair=token_pair)
+        self.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
+                                                  from_address=from_address, to_address=to_address,
+                                                  block_number=block_number, signature=signature,
+                                                  key=key, token_pair=token_pair)
         wallet_pair = self.wallet_pair_service.persist_wallet_pair_details(from_address=from_address,
                                                                            to_address=to_address, amount=amount,
                                                                            signature=signature,
@@ -585,7 +579,7 @@ class ConversionService:
         return self.conversion_repo.get_conversion_count_by_status(address=address)
 
     def get_liquidity_balance_data(self, token_pair_id: str):
-        logger.info(f"Retrieving liquidity balance for token_pair_id:: {token_pair_id}")
+        logger.info(f"Retrieving liquidity balance for token_pair_id {token_pair_id}")
 
         locked_tokens = self.conversion_repo.get_processing_claim_amount_for_token_pair(token_pair_id)
         frozen_tokens = self.conversion_repo.get_initiated_claim_amount_for_token_pair(token_pair_id)
