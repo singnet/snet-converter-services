@@ -246,7 +246,7 @@ class ConversionService:
                                            min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                            max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
 
-        self.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
+        self.create_conversion_request_validation(token_pair_id=token_pair_id, amount=int(amount),
                                                   from_address=from_address, to_address=to_address,
                                                   block_number=block_number, signature=signature,
                                                   key=key, token_pair=token_pair)
