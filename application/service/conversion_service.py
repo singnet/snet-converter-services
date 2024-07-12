@@ -170,7 +170,7 @@ class ConversionService:
         # Liquidity check
         try:
             liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
-            if amount > liquidity_data["available"]:
+            if int(amount) > liquidity_data["available"]:
                 raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY)
         except BadRequestException as e:
             if e.error_code == ErrorCode.NOT_LIQUID_CONTRACT.value:
@@ -246,7 +246,7 @@ class ConversionService:
                                            min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                            max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
 
-        self.create_conversion_request_validation(token_pair_id=token_pair_id, amount=int(amount),
+        self.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
                                                   from_address=from_address, to_address=to_address,
                                                   block_number=block_number, signature=signature,
                                                   key=key, token_pair=token_pair)
