@@ -27,6 +27,6 @@ class CardanoBlockchainUtil:
     def get_latest_block(self):
         return self.blockchain_api.block_latest()
 
-    def get_transaction(self, hash_):
-        logger.info(f"Getting the transaction detail for given hash={hash_}")
-        return self.blockchain_api.transaction(hash=hash_, return_type=JSON_RETURN_TYPE)
+    def get_transaction(self, hash):
+        logger.info(f"Getting the transaction detail for given hash={hash}")
+        return self.blockchain_api.transaction(hash=hash, return_type=JSON_RETURN_TYPE)
