@@ -82,7 +82,7 @@ class ConversionRepository(BaseRepository):
         )
 
         total_claim_amount = total_claim_amount_query.scalar()
-        return total_claim_amount if total_claim_amount is not None else 0
+        return int(total_claim_amount) if total_claim_amount is not None else 0
 
     @read_from_db()
     def get_initiated_claim_amount_for_token_pair(self, target_token_pair_id: str):
@@ -102,7 +102,7 @@ class ConversionRepository(BaseRepository):
         )
 
         total_claim_amount = total_claim_amount_query.scalar()
-        return total_claim_amount if total_claim_amount is not None else 0
+        return int(total_claim_amount) if total_claim_amount is not None else 0
 
     def create_conversion(self, wallet_pair_id, deposit_amount, fee_amount, claim_amount, created_by):
         conversion_item = ConversionDBModel(id=get_uuid(), wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,
