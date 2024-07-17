@@ -169,8 +169,15 @@ class ConversionService:
 
         # Liquidity check
         try:
+            from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                            .get(TokenEntities.ALLOWED_DECIMAL.value)
+            to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
+                                          .get(TokenEntities.ALLOWED_DECIMAL.value)
+            claim_amount = update_decimal_places(Decimal(amount),
+                                                 from_decimals=from_token_decimals,
+                                                 to_decimals=to_token_decimals)
             liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
-            if int(amount) > liquidity_data["available"]:
+            if int(claim_amount) > liquidity_data["available"]:
                 raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY)
         except BadRequestException as e:
             if e.error_code == ErrorCode.NOT_LIQUID_CONTRACT.value:
