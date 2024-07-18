@@ -384,8 +384,8 @@ class ConversionService:
             conversion = self.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id)
 
         if conversion and (created_by == CreatedBy.DAPP.value or
-                           Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value))) != deposit_amount
-                           or Decimal(float(conversion.get(ConversionEntities.FEE_AMOUNT.value))) != fee_amount):
+                           Decimal(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)) != deposit_amount
+                           or Decimal(conversion.get(ConversionEntities.FEE_AMOUNT.value)) != fee_amount):
             self.update_conversion(conversion_id=conversion[ConversionEntities.ID.value],
                                    status=ConversionStatus.EXPIRED.value)
             conversion = None
@@ -563,7 +563,7 @@ class ConversionService:
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
         fee_amount = conversion.get(ConversionEntities.FEE_AMOUNT.value)
         # We should return total amount of tokens because contract on the Ethereum side calculate fees by itself
-        claim_amount = str(Decimal(float(claim_amount)) + Decimal(float(fee_amount)))
+        claim_amount = str(Decimal(claim_amount) + Decimal(fee_amount))
         user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
                                         .get(WalletPairEntities.TO_ADDRESS.value)
         contract_address = self.get_token_contract_address_for_conversion_id(
@@ -573,7 +573,7 @@ class ConversionService:
         # Generate claim signature
         claim_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_IN.value,
                                         user_address=user_address, conversion_id=conversion_id,
-                                        amount=Decimal(float(claim_amount)),
+                                        amount=Decimal(claim_amount),
                                         contract_address=contract_address, chain_id=chain_id)
         # Update the signature and status
         self.update_conversion(conversion_id=conversion_id, claim_signature=claim_signature)

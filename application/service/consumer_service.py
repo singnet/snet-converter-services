@@ -233,7 +233,7 @@ class ConsumerService:
                 raise InternalServerErrorException(error_code=ErrorCode.MISMATCH_AMOUNT.value,
                                                    error_details=ErrorDetails[ErrorCode.MISMATCH_AMOUNT.value].value)
 
-        if event_type == EthereumEventType.TOKEN_BURNT.value and Decimal(float(deposit_amount)) != Decimal(tx_amount):
+        if event_type == EthereumEventType.TOKEN_BURNT.value and Decimal(deposit_amount) != Decimal(tx_amount):
             token_pair_row_id = wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value)
             token_pair = self.token_service.get_token_pair_internal(token_pair_id=None,
                                                                     token_pair_row_id=token_pair_row_id)
@@ -318,7 +318,7 @@ class ConsumerService:
                 raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value,
                                           error_details=ErrorDetails[ErrorCode.INVALID_ASSET_TRANSFERRED.value].value)
 
-            tx_amount = Decimal(float(tx_amount))
+            tx_amount = Decimal(tx_amount)
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
                 if from_token_decimals != to_token_decimals:
                     # Conversion fee temporary not allowed for token pairs with different decimals amount
