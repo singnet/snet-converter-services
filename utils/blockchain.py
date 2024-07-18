@@ -2,8 +2,11 @@ import os
 import time
 from decimal import Decimal, ROUND_DOWN
 from http import HTTPStatus
+import re
 
 from web3.exceptions import TransactionNotFound, ABIFunctionNotFound
+from pycardano import Address
+from pycardano.exception import DecodingException
 
 from application.service.cardano_service import CardanoService
 from common.blockchain_util import BlockChainUtil
@@ -620,3 +623,14 @@ def wait_until_transaction_hash_exists_in_blockchain(tx_hash, network_id):
             break
 
         i += 1
+
+
+def is_valid_cardano_address(address: str) -> bool:
+    if not re.match('^((Ae2)|(DdzFF)|(addr1)).+$', address):
+        return False
+    if address.startswith("addr1"):
+        try:
+            Address.decode(address)
+        except DecodingException:
+            return False
+    return True
