@@ -78,6 +78,7 @@ class ErrorCode(Enum):
     UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE = "E0074"
     INVALID_CONVERSION_DIRECTION = "E0075"
     CONVERSION_FEE_NOT_ALLOWED = "E0076"
+    INVALID_ADDRESS = "E0077"
 
 
 class ErrorDetails(Enum):
@@ -157,3 +158,4 @@ class ErrorDetails(Enum):
     E0074 = "Unexpected error happened while checking the tx hash presence in the blockchain"
     E0075 = "Invalid value of conversion direction"
     E0076 = "Conversion fee not allowed for this type of conversions"
+    E0077 = "The provided address is neither a valid Ethereum nor a Cardano address"
