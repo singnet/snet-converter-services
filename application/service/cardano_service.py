@@ -55,7 +55,7 @@ class CardanoService:
                                                    ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value].value)
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
-                                                             tx_amount=str(Decimal(float(tx_amount))),
+                                                             tx_amount=str(Decimal(tx_amount)),
                                                              tx_details=tx_details)
             payload[CardanoAPIEntities.DEPOSIT_ADDRESS_DETAILS.value] = deposit_address_details
             logger.info(f"Payload for burning ={json.dumps(payload)}")
@@ -91,9 +91,9 @@ class CardanoService:
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
                                                              address=address,
-                                                             tx_amount=str(Decimal(float(tx_amount))),
+                                                             tx_amount=str(Decimal(tx_amount)),
                                                              tx_details=tx_details,
-                                                             fee=str(Decimal(float(fee))),
+                                                             fee=str(Decimal(fee)),
                                                              decimals_difference=decimals_difference)
             payload[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
             logger.info(f"Payload for minting = {json.dumps(payload)}")
