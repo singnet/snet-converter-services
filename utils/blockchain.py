@@ -331,7 +331,7 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
             break
         conversion_side = ConversionOn.TO.value
 
-    tx_amount = Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)))
+    tx_amount = Decimal(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value))
     if conversion_side == ConversionOn.FROM.value:
         blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}) \
                                                .get(TokenEntities.BLOCKCHAIN.value, {})
@@ -496,7 +496,7 @@ def validate_conversion_claim_request_signature(conversion_detail, amount, from_
 
 
 def convert_str_to_decimal(value):
-    return Decimal(float(value))
+    return Decimal(value)
 
 
 def convert_int_to_decimal(value):
@@ -506,8 +506,8 @@ def convert_int_to_decimal(value):
 def validate_conversion_request_amount(amount: str, min_value: str, max_value: str) -> None:
     logger.info(f"Validating the conversion request amount limits where amount={amount}, min_value={min_value}, "
                 f"max_value={max_value}")
-    min_value = Decimal(float(min_value))
-    max_value = Decimal(float(max_value))
+    min_value = Decimal(min_value)
+    max_value = Decimal(max_value)
     amount = convert_str_to_decimal(value=amount)
 
     if (amount - int(amount)) > Decimal(0):
