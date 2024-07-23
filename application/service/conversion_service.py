@@ -21,7 +21,6 @@ from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities, 
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from utils.blockchain import validate_address, validate_conversion_claim_request_signature, \
-    calculate_fee_amount, \
     validate_conversion_request_amount, convert_str_to_decimal, get_next_activity_event_on_conversion, \
     check_existing_transaction_state, validate_evm_transaction_details_against_conversion, \
     validate_cardano_transaction_details_against_conversion
@@ -29,7 +28,8 @@ from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
     is_supported_network_conversion, get_evm_network_url, get_offset, paginate_items_response_format, \
     datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report, \
-    reset_decimal_places, update_decimal_places, get_cardano_network_url_and_project_id
+    reset_decimal_places, update_decimal_places, get_cardano_network_url_and_project_id, \
+    calculate_fee_amount, calculate_claim_amount_by_conversion_ratio
 from utils.signature import validate_conversion_signature, validate_cardano_conversion_signature, get_signature
 from utils.cardano_blockchain import CardanoBlockchainUtil
 from utils.blockchain import get_converter_contract_balance
@@ -169,6 +169,7 @@ class ConversionService:
 
         # Liquidity check
         try:
+            # Update decimal places for claim amount
             from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
                                             .get(TokenEntities.ALLOWED_DECIMAL.value)
             to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
@@ -176,6 +177,15 @@ class ConversionService:
             claim_amount = update_decimal_places(Decimal(amount),
                                                  from_decimals=from_token_decimals,
                                                  to_decimals=to_token_decimals)
+            # Recalculate claim amount by conversion ratio
+            conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
+            if conversion_ratio:
+                claim_amount = calculate_claim_amount_by_conversion_ratio(
+                    amount=claim_amount,
+                    conversion_ratio=Decimal(conversion_ratio)
+                )
+            # TODO[C2C]: Request Cardano liquidity from Cardano Services
+            # Check amount available for claim
             liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
             if int(claim_amount) > liquidity_data["available"]:
                 raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY)
@@ -283,11 +293,13 @@ class ConversionService:
         from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
                                          .get(TokenEntities.BLOCKCHAIN.value) \
                                          .get(BlockchainEntities.NAME.value)
+        conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
         conversion = self.process_conversion_request(wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
                                                      deposit_amount=amount, fee_amount=fee_amount,
                                                      from_blockchain_name=from_blockchain_name,
                                                      from_token_decimals=from_token_decimals,
-                                                     to_token_decimals=to_token_decimals)
+                                                     to_token_decimals=to_token_decimals,
+                                                     conversion_ratio=conversion_ratio)
 
         conversion_id = conversion[ConversionEntities.ID.value]
         deposit_address = wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
@@ -372,7 +384,7 @@ class ConversionService:
         return next_activity
 
     def process_conversion_request(self, wallet_pair_id: str, deposit_amount: Decimal, fee_amount: Decimal,
-                                   from_blockchain_name, from_token_decimals, to_token_decimals,
+                                   from_blockchain_name, from_token_decimals, to_token_decimals, conversion_ratio,
                                    created_by: str = CreatedBy.DAPP.value):
         logger.info(f"Processing the conversion request with wallet_pair_id={wallet_pair_id}, "
                     f"deposit_amount={deposit_amount}, fee_amount={fee_amount}, "
@@ -394,6 +406,11 @@ class ConversionService:
             claim_amount = update_decimal_places(deposit_amount - fee_amount,
                                                  from_decimals=from_token_decimals,
                                                  to_decimals=to_token_decimals)
+            if conversion_ratio:
+                claim_amount = calculate_claim_amount_by_conversion_ratio(
+                    amount=claim_amount,
+                    conversion_ratio=Decimal(conversion_ratio)
+                )
             conversion = self.create_conversion(wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,
                                                 fee_amount=fee_amount, claim_amount=claim_amount,
                                                 created_by=created_by)

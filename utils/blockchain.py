@@ -1,6 +1,6 @@
 import os
 import time
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal
 from http import HTTPStatus
 import re
 
@@ -104,13 +104,6 @@ def validate_address(from_address, to_address, from_blockchain, to_blockchain):
 
     if to_blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
         validate_cardano_address(address=to_address, chain_id=to_blockchain_chain_id)
-
-
-def calculate_fee_amount(amount: Decimal, percentage: str) -> Decimal:
-    percentage_decimal = Decimal(percentage) / 100
-    fee_amount = amount * percentage_decimal
-    fee_amount = fee_amount.quantize(Decimal('1.'), rounding=ROUND_DOWN)
-    return fee_amount
 
 
 def get_evm_transaction_details(web3_object, transaction_hash):
