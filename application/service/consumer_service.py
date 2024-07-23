@@ -19,9 +19,9 @@ from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, QueueName
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
     ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS, ConversionStatus, ConversionTransactionStatus
-from utils.general import update_decimal_places, reset_decimal_places
+from utils.general import update_decimal_places, reset_decimal_places, calculate_fee_amount
 from utils.blockchain import get_next_activity_event_on_conversion, validate_consumer_event_against_transaction, \
-    generate_deposit_address_details_for_cardano_operation, calculate_fee_amount, \
+    generate_deposit_address_details_for_cardano_operation, \
     validate_conversion_request_amount, validate_consumer_event_type, convert_str_to_decimal, \
     get_current_block_confirmation, wait_until_transaction_hash_exists_in_blockchain, \
     validate_tx_hash_presence_in_blockchain
@@ -333,6 +333,7 @@ class ConsumerService:
             from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
                                              .get(TokenEntities.BLOCKCHAIN.value) \
                                              .get(BlockchainEntities.NAME.value)
+            conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
 
             # Check that received amount can be converted to claim amount
             if from_token_decimals != to_token_decimals:
@@ -351,6 +352,7 @@ class ConsumerService:
                 deposit_amount=tx_amount, fee_amount=fee_amount,
                 from_blockchain_name=from_blockchain_name,
                 from_token_decimals=from_token_decimals, to_token_decimals=to_token_decimals,
+                conversion_ratio=conversion_ratio,
                 created_by=created_by)
             try:
                 transaction = self.conversion_service.create_transaction_for_conversion(
