@@ -20,9 +20,9 @@ class CardanoService:
         logger.info(f"Getting the deposit address for the token={token_name}")
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
         try:
             response = requests.get(f"{base_path}/address/derive?token={token_name}", data=json.dumps({}),
                                     headers={"Content-Type": "application/json"})
@@ -50,9 +50,9 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
                                                              tx_amount=str(int(Decimal(tx_amount))),
@@ -84,9 +84,9 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
 
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
@@ -125,9 +125,9 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
 
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
@@ -161,9 +161,9 @@ class CardanoService:
         logger.info(f"Getting the token liquidity for the token={token_name}")
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
         try:
             response = requests.get(f"{base_path}/{token_name}/liquidity")
 
