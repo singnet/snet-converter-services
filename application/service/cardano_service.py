@@ -20,24 +20,18 @@ class CardanoService:
         logger.info(f"Getting the deposit address for the token={token_name}")
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value)
         try:
             response = requests.get(f"{base_path}/address/derive?token={token_name}", data=json.dumps({}),
                                     headers={"Content-Type": "application/json"})
 
             if response.status_code != HTTPStatus.OK.value:
-                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
 
             response = json.loads(response.content.decode("utf-8"))
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano get deposit address={e}")
-            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
         logger.info(f"Response={response}")
         return response
 
@@ -50,9 +44,7 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value)
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
                                                              tx_amount=str(int(Decimal(tx_amount))),
@@ -63,15 +55,11 @@ class CardanoService:
                                      headers={"Content-Type": "application/json"})
 
             if response.status_code != HTTPStatus.OK.value:
-                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
             response = json.loads(response.content.decode("utf-8"))
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano burn service={e}")
-            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
         logger.info(f"Response={response}")
 
         return response
@@ -84,9 +72,7 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value)
 
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
@@ -102,16 +88,12 @@ class CardanoService:
                                      headers={"Content-Type": "application/json"})
 
             if response.status_code != HTTPStatus.OK.value:
-                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
 
             response = json.loads(response.content.decode("utf-8"))
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano mint service={e}")
-            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
         logger.info(f"Response={response}")
         return response
 
@@ -125,9 +107,7 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value)
 
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
@@ -143,16 +123,12 @@ class CardanoService:
                                      headers={"Content-Type": "application/json"})
 
             if response.status_code != HTTPStatus.OK.value:
-                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
 
             response = json.loads(response.content.decode("utf-8"))
         except Exception as e:
             logger.exception(f"Unexpected error while calling the liquidity token transfer service={e}")
-            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
         logger.info(f"Response={response}")
         return response
 
@@ -161,9 +137,7 @@ class CardanoService:
         logger.info(f"Getting the token liquidity for the token={token_name}")
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND.value)
         try:
             response = requests.get(f"{base_path}/{token_name}/liquidity")
 
@@ -171,16 +145,12 @@ class CardanoService:
                 raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT.value)
 
             if response.status_code != HTTPStatus.OK.value:
-                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
 
             response = json.loads(response.content.decode("utf-8"))
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano get token_liquidity={e}")
-            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
-                                               error_details=ErrorDetails[
-                                                   ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value)
         logger.info(f"Response={response}")
         return response
 
