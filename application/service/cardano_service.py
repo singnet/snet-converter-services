@@ -8,7 +8,7 @@ import requests
 from common.logger import get_logger
 from constants.entity import CardanoAPIEntities
 from constants.error_details import ErrorCode, ErrorDetails
-from utils.exceptions import InternalServerErrorException
+from utils.exceptions import InternalServerErrorException, BadRequestException
 
 logger = get_logger(__name__)
 
@@ -20,9 +20,9 @@ class CardanoService:
         logger.info(f"Getting the deposit address for the token={token_name}")
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
         try:
             response = requests.get(f"{base_path}/address/derive?token={token_name}", data=json.dumps({}),
                                     headers={"Content-Type": "application/json"})
@@ -50,9 +50,9 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.LAMBDA_ARN_BURN_NOT_FOUND.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id, address=address,
                                                              tx_amount=str(int(Decimal(tx_amount))),
@@ -84,9 +84,9 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
 
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
@@ -125,9 +125,9 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_LIQUIDITY_TRANSFER_NOT_FOUND.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.LAMBDA_ARN_LIQUIDITY_TRANSFER_NOT_FOUND.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
 
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
@@ -161,17 +161,14 @@ class CardanoService:
         logger.info(f"Getting the token liquidity for the token={token_name}")
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_GET_LIQUIDITY_NOT_FOUND.value,
+            raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.LAMBDA_ARN_GET_LIQUIDITY_NOT_FOUND.value].value)
+                                                   ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND_IN_CONFIG.value].value)
         try:
-            response = requests.get(f"{base_path}/{token_name}/liquidity", data=json.dumps({}),
-                                    headers={"Content-Type": "application/json"})
+            response = requests.get(f"{base_path}/{token_name}/liquidity")
 
             if response.status_code == HTTPStatus.NOT_FOUND.value:
-                raise InternalServerErrorException(error_code=ErrorCode.NOT_LIQUID_CONTRACT.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.NOT_LIQUID_CONTRACT.value].value)
+                raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT.value)
 
             if response.status_code != HTTPStatus.OK.value:
                 raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
