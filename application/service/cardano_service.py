@@ -139,7 +139,7 @@ class CardanoService:
 
             logger.info(f"Payload for liquidity token transfer = {json.dumps(payload)}")
 
-            response = requests.post(f"{base_path}/{token}/liquidity_transfer", data=json.dumps(payload),
+            response = requests.post(f"{base_path}/{token}/liquidity/transfer", data=json.dumps(payload),
                                      headers={"Content-Type": "application/json"})
 
             if response.status_code != HTTPStatus.OK.value:
