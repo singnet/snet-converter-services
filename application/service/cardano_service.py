@@ -116,6 +116,47 @@ class CardanoService:
         return response
 
     @staticmethod
+    def liquidity_token_transfer(conversion_id, address, token, tx_amount, tx_details, source_address,
+                                 conversion_ratio):
+        logger.info(f"Calling the liquidity token transfer service on cardano with inputs as conversion_id="
+                    f"{conversion_id}, "
+                    f"address={address}, token={token}, tx_amount={tx_amount}, tx_details={tx_details}, "
+                    f"source_address={source_address}")
+
+        base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
+        if not base_path:
+            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
+
+        try:
+            payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
+                                                             address=address,
+                                                             tx_amount=str(int(Decimal(tx_amount))),
+                                                             tx_details=tx_details,
+                                                             conversion_ratio=conversion_ratio)
+            payload[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
+
+            logger.info(f"Payload for liquidity token transfer = {json.dumps(payload)}")
+
+            response = requests.post(f"{base_path}/{token}/liquidity_transfer", data=json.dumps(payload),
+                                     headers={"Content-Type": "application/json"})
+
+            if response.status_code != HTTPStatus.OK.value:
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
+                                                   error_details=ErrorDetails[
+                                                       ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+
+            response = json.loads(response.content.decode("utf-8"))
+        except Exception as e:
+            logger.exception(f"Unexpected error while calling the liquidity token transfer service={e}")
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+        logger.info(f"Response={response}")
+        return response
+
+    @staticmethod
     def generate_transaction_detail(hash, environment):
         return {
             CardanoAPIEntities.HASH.value: hash,
@@ -123,7 +164,8 @@ class CardanoService:
         }
 
     @staticmethod
-    def generate_payload_format(conversion_id, address, tx_amount, tx_details, fee=None, decimals_difference=None):
+    def generate_payload_format(conversion_id, address, tx_amount, tx_details, fee=None, decimals_difference=None,
+                                conversion_ratio=None):
         payload = {
             CardanoAPIEntities.CONVERSION_ID.value: conversion_id,
             CardanoAPIEntities.CARDANO_ADDRESS.value: address,
@@ -134,4 +176,6 @@ class CardanoService:
             payload[CardanoAPIEntities.FEE.value] = fee
         if decimals_difference is not None:
             payload[CardanoAPIEntities.DECIMALS_DIFFERENCE.value] = decimals_difference
+        if conversion_ratio is not None:
+            payload[CardanoAPIEntities.CONVERSION_RATIO.value] = conversion_ratio
         return payload
