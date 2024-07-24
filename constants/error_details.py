@@ -168,4 +168,4 @@ class ErrorDetails(Enum):
     E0079 = "Bridge contract liquidity is insufficient! At the moment conversion unavailable. Try again later."
     E0080 = "Invalid token data provided"
     E0081 = "The provided address is not valid"
-    E0082 = "CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH variable not found in config"
+    E0082 = "CARDANO_SERVICE_BASE_PATH not found in environment variables"

@@ -938,6 +938,8 @@ functions:
     vpc: ${self:custom.defaultVpc}
     layers: ${self:custom.defaultLayers}
     warmup: true
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH}
     events:
       - http:
           path: /v1/conversion/liquidity
