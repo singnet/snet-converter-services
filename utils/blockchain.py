@@ -148,8 +148,9 @@ def get_converter_contract_balance(token_pair_id: str):
         raise InternalServerErrorException(error_code=ErrorCode.INVALID_TOKEN_DATA)
 
     if blockchain_name == BlockchainName.CARDANO.value:
-        raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
-
+        result = CardanoService.get_token_liquidity(token_name=token_symbol)
+        result = result["balance"]
+        return result
     elif blockchain_name in [BlockchainName.ETHEREUM.value, BlockchainName.BINANCE.value]:
 
         if not contract_address:
