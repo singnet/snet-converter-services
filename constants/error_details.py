@@ -83,6 +83,8 @@ class ErrorCode(Enum):
     INSUFFICIENT_CONTRACT_LIQUIDITY = "E0079"
     INVALID_TOKEN_DATA = "E0080"
     INVALID_ADDRESS = "E0081"
+    LAMBDA_ARN_LIQUIDITY_TRANSFER_NOT_FOUND = "E0082"
+    LAMBDA_ARN_GET_LIQUIDITY_NOT_FOUND = "E0083"
 
 
 class ErrorDetails(Enum):
@@ -148,7 +150,7 @@ class ErrorDetails(Enum):
     E0060 = "Data not available in the cardano derived address response"
     E0061 = "Amount is less than expected min value "
     E0062 = "Amount is greater than expected max value"
-    E0063 = "Conversion amount must be greater tha zero"
+    E0063 = "Conversion amount must be greater than zero"
     E0064 = "Not authorized to update the cardano transaction hash"
     E0065 = "Invalid conversion amount provided"
     E0066 = "Token holder address is mismatched from blockchain and conversion request"
@@ -167,3 +169,5 @@ class ErrorDetails(Enum):
     E0079 = "Bridge contract liquidity is insufficient! At the moment conversion unavailable. Try again later."
     E0080 = "Invalid token data provided"
     E0081 = "The provided address is not valid"
+    E0082 = "Config of lambda arn for liquidity transfer is empty"
+    E0083 = "Config of lambda arn for get liquidity is empty"

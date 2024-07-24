@@ -125,9 +125,9 @@ class CardanoService:
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
-            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value,
+            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_LIQUIDITY_TRANSFER_NOT_FOUND.value,
                                                error_details=ErrorDetails[
-                                                   ErrorCode.LAMBDA_ARN_MINT_NOT_FOUND.value].value)
+                                                   ErrorCode.LAMBDA_ARN_LIQUIDITY_TRANSFER_NOT_FOUND.value].value)
 
         try:
             payload = CardanoService.generate_payload_format(conversion_id=conversion_id,
@@ -150,6 +150,37 @@ class CardanoService:
             response = json.loads(response.content.decode("utf-8"))
         except Exception as e:
             logger.exception(f"Unexpected error while calling the liquidity token transfer service={e}")
+            raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+        logger.info(f"Response={response}")
+        return response
+
+    @staticmethod
+    def get_token_liquidity(token_name):
+        logger.info(f"Getting the token liquidity for the token={token_name}")
+        base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
+        if not base_path:
+            raise InternalServerErrorException(error_code=ErrorCode.LAMBDA_ARN_GET_LIQUIDITY_NOT_FOUND.value,
+                                               error_details=ErrorDetails[
+                                                   ErrorCode.LAMBDA_ARN_GET_LIQUIDITY_NOT_FOUND.value].value)
+        try:
+            response = requests.get(f"{base_path}/{token_name}/liquidity", data=json.dumps({}),
+                                    headers={"Content-Type": "application/json"})
+
+            if response.status_code == HTTPStatus.NOT_FOUND.value:
+                raise InternalServerErrorException(error_code=ErrorCode.NOT_LIQUID_CONTRACT.value,
+                                                   error_details=ErrorDetails[
+                                                       ErrorCode.NOT_LIQUID_CONTRACT.value].value)
+
+            if response.status_code != HTTPStatus.OK.value:
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
+                                                   error_details=ErrorDetails[
+                                                       ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
+
+            response = json.loads(response.content.decode("utf-8"))
+        except Exception as e:
+            logger.exception(f"Unexpected error while calling the cardano get token_liquidity={e}")
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value,
                                                error_details=ErrorDetails[
                                                    ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL.value].value)
