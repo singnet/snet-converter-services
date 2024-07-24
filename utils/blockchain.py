@@ -149,7 +149,7 @@ def get_converter_contract_balance(token_pair_id: str):
 
     if blockchain_name == BlockchainName.CARDANO.value:
         result = CardanoService.get_token_liquidity(token_name=token_symbol)
-        result = result["balance"]
+        result = result["data"]["balance"]
         return result
     elif blockchain_name in [BlockchainName.ETHEREUM.value, BlockchainName.BINANCE.value]:
 
