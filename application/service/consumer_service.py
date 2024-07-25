@@ -131,10 +131,15 @@ class ConsumerService:
                                                 conversion_id=conversion_id, transaction=transaction,
                                                 token_holder=token_holder)
         elif db_blockchain_name == BlockchainName.CARDANO.value.lower():
+            cardano_services_event_types = [
+                CardanoEventType.TOKEN_MINTED.value,
+                CardanoEventType.TOKEN_BURNT.value,
+                CardanoEventType.TOKEN_TRANSFERRED.value
+            ]
             if event_type == CardanoEventType.TOKEN_RECEIVED.value:
                 conversion = self.process_cardano_token_received_event(blockchain_event=blockchain_event,
                                                                        transaction=transaction)
-            elif transaction and event_type in [CardanoEventType.TOKEN_MINTED.value, CardanoEventType.TOKEN_BURNT.value]:
+            elif transaction and event_type in cardano_services_event_types:
                 conversion = self.conversion_service.get_conversion_detail_by_tx_id(
                     tx_id=transaction.get(TransactionEntities.ID.value))
             else:

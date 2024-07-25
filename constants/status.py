@@ -25,6 +25,7 @@ class TransactionOperation(Enum):
     TOKEN_RECEIVED = "TOKEN_RECEIVED"
     TOKEN_BURNT = "TOKEN_BURNT"
     TOKEN_MINTED = "TOKEN_MINTED"
+    TOKEN_TRANSFERRED = "TOKEN_TRANSFERRED"
 
 
 EthereumToCardanoEvent = {"ethereum": [TransactionOperation.TOKEN_BURNT.value],
@@ -40,7 +41,8 @@ EthereumToBinanceEvent = {"ethereum": [TransactionOperation.TOKEN_BURNT.value],
 BinanceToEthereumEvent = {"binance": [TransactionOperation.TOKEN_BURNT.value],
                           "ethereum": [TransactionOperation.TOKEN_MINTED.value]}
 
-# TODO[C2C]: add CardanoToCardanoEvent
+CardanoToCardanoEvent = {"cardano": [TransactionOperation.TOKEN_RECEIVED.value, TransactionOperation.TOKEN_BURNT.value],
+                         "cardano_": [TransactionOperation.TOKEN_TRANSFERRED.value]}
 
 
 class TransactionStatus(Enum):
