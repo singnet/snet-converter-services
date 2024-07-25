@@ -257,6 +257,7 @@ class CardanoAPIEntities(Enum):
     CONVERSION_ID = "conversion_id"
     FEE = "fee"
     DECIMALS_DIFFERENCE = "decimals_difference"
+    CONVERSION_RATIO = "conversion_ratio"
 
 
 class WalletPairResponseEntities(Enum):
