@@ -620,9 +620,9 @@ def wait_until_transaction_hash_exists_in_blockchain(tx_hash, network_id):
 
 
 def is_valid_cardano_address(address: str) -> bool:
-    if not re.match('^((Ae2)|(DdzFF)|(addr1)).+$', address):
+    if not re.match('^((Ae2)|(DdzFF)|(addr)).+$', address):
         return False
-    if address.startswith("addr1"):
+    if address.startswith("addr"):
         try:
             Address.decode(address)
         except DecodingException:
