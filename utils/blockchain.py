@@ -16,8 +16,8 @@ from constants.blockchain import CardanoTransactionEntities, CardanoBlockEntitie
     BinanceBlockchainEntities
 from constants.entity import BlockchainEntities, TokenEntities, ConversionDetailEntities, TransactionEntities, \
     ConversionEntities, CardanoEventType, CardanoAPIEntities, WalletPairEntities, \
-    EthereumAllowedEventType, CardanoAllowedEventType, EthereumEventConsumerEntities, BinanceAllowedEventType, \
-    BinanceEventConsumerEntities
+    EthereumAllowedEventType, CardanoAllowedEventType, CardanoServicesEventTypes, EthereumEventConsumerEntities, \
+    BinanceAllowedEventType, BinanceEventConsumerEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, ConversionOn, MaxRetryEntities, SleepTimeEntities
 from constants.status import TransactionOperation, EthereumToCardanoEvent, CardanoToEthereumEvent, TransactionStatus, \
@@ -401,12 +401,7 @@ def validate_consumer_event_against_transaction(event_type, transaction, blockch
                                   error_details=ErrorDetails[ErrorCode.TRANSACTION_ALREADY_CONFIRMED.value].value)
 
     if blockchain_name.lower() == BlockchainName.CARDANO.name.lower():
-        cardano_services_event_types = [
-            CardanoEventType.TOKEN_MINTED.value,
-            CardanoEventType.TOKEN_BURNT.value,
-            CardanoEventType.TOKEN_TRANSFERRED.value
-        ]
-        if event_type in cardano_services_event_types:
+        if event_type in CardanoServicesEventTypes:
             if transaction is None:
                 logger.info("Transaction is not available")
                 raise BadRequestException(error_code=ErrorCode.TRANSACTION_NOT_FOUND)

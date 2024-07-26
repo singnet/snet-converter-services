@@ -199,6 +199,9 @@ class CardanoEventType(Enum):
 CardanoAllowedEventType = [CardanoEventType.TOKEN_RECEIVED.value, CardanoEventType.TOKEN_BURNT.value,
                            CardanoEventType.TOKEN_MINTED.value, CardanoEventType.TOKEN_TRANSFERRED.value]
 
+CardanoServicesEventTypes = [CardanoEventType.TOKEN_BURNT.value, CardanoEventType.TOKEN_MINTED.value,
+                             CardanoEventType.TOKEN_TRANSFERRED.value]
+
 
 class EthereumEventConsumerEntities(Enum):
     CONVERSION_ID = "conversionId"
