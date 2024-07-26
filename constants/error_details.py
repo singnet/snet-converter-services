@@ -82,6 +82,7 @@ class ErrorCode(Enum):
     NOT_LIQUID_CONTRACT = "E0078"
     INSUFFICIENT_CONTRACT_LIQUIDITY = "E0079"
     INVALID_TOKEN_DATA = "E0080"
+    BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA = "E0082"
 
 
 class ErrorDetails(Enum):
@@ -165,3 +166,4 @@ class ErrorDetails(Enum):
     E0078 = "Contract is not liquid"
     E0079 = "Bridge contract liquidity is insufficient! At the moment conversion unavailable. Try again later."
     E0080 = "Invalid token data provided"
+    E0082 = "Data from the blockchain_event does not match the transaction or conversion data from the DB"
