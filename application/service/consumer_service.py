@@ -17,7 +17,7 @@ from constants.entity import CardanoEventType, BlockchainEntities, CardanoEventC
     ConversionFeeEntities, MessagePoolEntities, BinanceEventConsumerEntities, BinanceEventType, \
     CardanoServicesEventTypes
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, CreatedBy, QueueName
+from constants.general import BlockchainName, CreatedBy, QueueName, ConversionOn
 from constants.status import TransactionStatus, TransactionVisibility, TransactionOperation, \
     ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS, ConversionStatus, ConversionTransactionStatus
 from utils.general import update_decimal_places, reset_decimal_places, calculate_fee_amount
@@ -167,7 +167,7 @@ class ConsumerService:
             raise InternalServerErrorException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
                                                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
 
-        activity_event = get_next_activity_event_on_conversion(conversion_complete_detail=conversion_complete_detail)
+        activity_event = get_next_activity_event_on_conversion(conversion_complete_detail).to_dict()
 
         if activity_event:
             # Getting message pool id
@@ -424,18 +424,20 @@ class ConsumerService:
             raise InternalServerErrorException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
                                                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
 
-        activity_event = get_next_activity_event_on_conversion(conversion_complete_detail=conversion_complete_detail)
+        activity_event_obj = get_next_activity_event_on_conversion(conversion_complete_detail)
+        activity_event = activity_event_obj.to_dict()
 
         if payload == activity_event:
             self.process_converter_bridge_request(
                 conversion_complete_detail=conversion_complete_detail,
-                payload=payload)
+                payload=payload,
+                conversion_side=activity_event_obj.conversion_side)
             logger.info("Successfully processed the request")
         else:
             logger.info("Unable to match the request activity event")
             raise BadRequestException(error_code=ErrorCode.ACTIVITY_EVENT_NOT_MATCHING)
 
-    def process_converter_bridge_request(self, conversion_complete_detail, payload):
+    def process_converter_bridge_request(self, conversion_complete_detail, payload, conversion_side):
         logger.info("Processing the conversion bridge request")
         db_from_blockchain = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {}) \
                                                        .get(TokenEntities.BLOCKCHAIN.value, {})
@@ -457,11 +459,10 @@ class ConsumerService:
         target_blockchain = {}
 
         # Getting tx operation on which token side
-        # TODO[C2C]: We have now C2C, so required another way to detect from/to token
-        if payload_blockchain_name == db_from_blockchain_name:
+        if conversion_side == ConversionOn.FROM.value:
             target_token = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {})
             target_blockchain = db_from_blockchain
-        elif payload_blockchain_name == db_to_blockchain_name:
+        elif conversion_side == ConversionOn.TO.value:
             target_token = conversion_complete_detail.get(ConversionDetailEntities.TO_TOKEN.value, {})
             target_blockchain = db_to_blockchain
 

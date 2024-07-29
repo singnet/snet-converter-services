@@ -344,11 +344,11 @@ def get_conversion_next_event(conversion_complete_detail, expected_events_flow):
     if not next_event or not blockchain:
         logger.info("All conversions are done for this conversion")
     else:
-        conversion_bridge_obj = ConverterBridge(blockchain_name=blockchain.get(BlockchainEntities.NAME.value),
-                                                blockchain_network_id=blockchain.get(BlockchainEntities.CHAIN_ID.value),
-                                                conversion_id=conversion.get(ConversionEntities.ID.value),
-                                                tx_amount=tx_amount, tx_operation=next_event)
-        activity_event = conversion_bridge_obj.to_dict()
+        activity_event = ConverterBridge(blockchain_name=blockchain.get(BlockchainEntities.NAME.value),
+                                         blockchain_network_id=blockchain.get(BlockchainEntities.CHAIN_ID.value),
+                                         conversion_id=conversion.get(ConversionEntities.ID.value),
+                                         tx_amount=tx_amount, tx_operation=next_event,
+                                         conversion_side=conversion_side)
 
     return activity_event
 
