@@ -526,6 +526,8 @@ class ConsumerService:
             tx_hash = tx_id.strip()
         elif payload_blockchain_name == BlockchainName.CARDANO.value.lower() and tx_operation == TransactionOperation.TOKEN_TRANSFERRED.value:
             token = target_token.get(TokenEntities.SYMBOL.value)
+            burnt_token = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {})\
+                                                    .get(TokenEntities.SYMBOL.value)
             tx_details = CardanoService.generate_transaction_detail(
                 hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
                 environment=db_from_blockchain_name)
@@ -543,7 +545,8 @@ class ConsumerService:
                                                                address=address, token=token,
                                                                tx_amount=tx_amount, tx_details=tx_details,
                                                                source_address=source_address,
-                                                               conversion_ratio=conversion_ratio)
+                                                               conversion_ratio=conversion_ratio,
+                                                               burnt_token=burnt_token)
             data = response.get(CardanoAPIEntities.DATA.value)
             if not data:
                 raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS)

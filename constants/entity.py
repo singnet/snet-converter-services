@@ -262,6 +262,7 @@ class CardanoAPIEntities(Enum):
     FEE = "fee"
     DECIMALS_DIFFERENCE = "decimals_difference"
     CONVERSION_RATIO = "conversion_ratio"
+    BURNT_TOKEN = "burnt_token"
 
 
 class WalletPairResponseEntities(Enum):
