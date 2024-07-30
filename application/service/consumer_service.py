@@ -284,18 +284,14 @@ class ConsumerService:
             CardanoEventConsumer.ASSET_NAME.value)
 
         if deposit_address is None or tx_amount is None or tx_hash is None:
-            raise InternalServerErrorException(
-                error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value,
-                error_details=ErrorDetails[ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value].value)
+            raise InternalServerErrorException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS)
 
-        # TODO[LP]: As far as transaction can be created by DAPP we should do all checks even if it already exists
         if transaction is None:
 
             wallet_pair = self.wallet_pair_service.get_wallet_pair_by_deposit_address(deposit_address=deposit_address)
             if wallet_pair is None:
                 logger.info("Wallet pair doesn't exist")
-                raise BadRequestException(error_code=ErrorCode.WALLET_PAIR_NOT_EXISTS.value,
-                                          error_details=ErrorDetails[ErrorCode.WALLET_PAIR_NOT_EXISTS.value].value)
+                raise BadRequestException(error_code=ErrorCode.WALLET_PAIR_NOT_EXISTS)
 
             token_pair = self.token_service.get_token_pair_internal(
                 token_pair_id=None,
@@ -316,16 +312,13 @@ class ConsumerService:
 
             if policy_id is None or asset_name is None or policy_id != token_address or \
                     asset_name != token_symbol.encode('utf-8').hex():
-                raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value,
-                                          error_details=ErrorDetails[ErrorCode.INVALID_ASSET_TRANSFERRED.value].value)
+                raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED)
 
             tx_amount = Decimal(tx_amount)
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
                 if from_token_decimals != to_token_decimals:
                     # Conversion fee temporary not allowed for token pairs with different decimals amount
-                    raise BadRequestException(
-                        error_code=ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value,
-                        error_details=ErrorDetails[ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value].value)
+                    raise BadRequestException(error_code=ErrorCode.CONVERSION_FEE_NOT_ALLOWED)
                 fee_amount = calculate_fee_amount(
                     amount=tx_amount,
                     percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
@@ -344,9 +337,7 @@ class ConsumerService:
                 if corrected_tx_amount != tx_amount:
                     logger.error(f"Received token amount {tx_amount} cannot be converted for claim because of "
                                  f"difference in tokens decimals {from_token_decimals} > {to_token_decimals}")
-                    raise BadRequestException(
-                        error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value,
-                        error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value].value)
+                    raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED)
 
             conversion = self.conversion_service.process_conversion_request(
                 wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
@@ -368,17 +359,49 @@ class ConsumerService:
                     tx_status=TransactionStatus.WAITING_FOR_CONFIRMATION.value)
             except BadRequestException as e:
                 logger.info(f"Bad Request {e}")
-                raise BadRequestException(error_code=ErrorCode.BAD_REQUEST_ON_TRANSACTION_CREATION.value,
-                                          error_details=ErrorDetails[
-                                              ErrorCode.BAD_REQUEST_ON_TRANSACTION_CREATION.value].value)
+                raise BadRequestException(error_code=ErrorCode.BAD_REQUEST_ON_TRANSACTION_CREATION)
             except Exception as e:
                 logger.exception(f"Unexpected error occurred while creating the transaction={e} ")
-                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_TRANSACTION_CREATION.value,
-                                                   error_details=ErrorDetails[
-                                                       ErrorCode.UNEXPECTED_ERROR_TRANSACTION_CREATION.value].value)
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_TRANSACTION_CREATION)
+
+        # If the transaction was found in the DB, check it
         else:
             conversion = self.conversion_service.get_conversion_detail_by_tx_id(
                 tx_id=transaction.get(TransactionEntities.ID.value))
+
+            # Run checks on transaction
+            if tx_amount != transaction.get(TransactionEntities.TRANSACTION_AMOUNT.value):
+                logger.info("Transaction amounts don't match")
+                raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED)
+
+            # Run checks on conversion
+            wallet_pair = self.wallet_pair_service.get_wallet_pair_by_deposit_address(deposit_address=deposit_address)
+            if wallet_pair is None:
+                logger.info("Wallet pair doesn't exist")
+                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA)
+
+            if conversion.get(ConversionEntities.WALLET_PAIR_ID.value) != wallet_pair.get(WalletPairEntities.ROW_ID.value):
+                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA)
+
+            if tx_amount != conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value):
+                logger.info("tx_amount doesn't match the deposit_amount")
+                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA)
+
+            token_pair = self.token_service.get_token_pair_internal(
+                token_pair_id=None,
+                token_pair_row_id=wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value))
+
+            validate_conversion_request_amount(amount=tx_amount,
+                                               min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
+                                               max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
+
+            token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}) \
+                                      .get(TokenEntities.TOKEN_ADDRESS.value)
+            token_symbol = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(TokenEntities.SYMBOL.value)
+
+            if policy_id is None or asset_name is None or policy_id != token_address or \
+                    asset_name != token_symbol.encode('utf-8').hex():
+                raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED)
 
         return conversion
 

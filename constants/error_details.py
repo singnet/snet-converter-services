@@ -84,6 +84,7 @@ class ErrorCode(Enum):
     INVALID_TOKEN_DATA = "E0080"
     INVALID_ADDRESS = "E0081"
     CARDANO_SERVICE_BASE_PATH_NOT_FOUND = "E0082"
+    BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA = "E0083"
 
 
 class ErrorDetails(Enum):
@@ -169,3 +170,4 @@ class ErrorDetails(Enum):
     E0080 = "Invalid token data provided"
     E0081 = "The provided address is not valid"
     E0082 = "CARDANO_SERVICE_BASE_PATH not found in environment variables"
+    E0083 = "Data from the blockchain event does not match the transaction or conversion data from the DB"
