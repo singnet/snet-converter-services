@@ -26,3 +26,15 @@ def get_all_blockchain(event, context):
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
                                                        error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def get_cardano_latest_block_no(event, context):
+    logger.info(f"Requested latest block number on Cardano")
+    response = blockchain_service.get_cardano_latest_block_no()
+    logger.info(f"Founded latest block response: {response}")
+    return generate_lambda_response(HTTPStatus.OK.value,
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value,
+                                                       data=response,
+                                                       error=make_error_format()),
+                                    cors_enabled=True)
