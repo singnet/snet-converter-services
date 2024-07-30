@@ -374,56 +374,36 @@ class ConsumerService:
             # Run checks on transaction
             if tx_amount != transaction.get(TransactionEntities.TRANSACTION_AMOUNT.value):
                 logger.info("Transaction amounts don't match")
-                raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value)
+                raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED)
 
             # Run checks on conversion
             wallet_pair = self.wallet_pair_service.get_wallet_pair_by_deposit_address(deposit_address=deposit_address)
             if wallet_pair is None:
                 logger.info("Wallet pair doesn't exist")
-                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA.value)
+                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA)
 
             if conversion.get(ConversionEntities.WALLET_PAIR_ID.value) != wallet_pair.get(WalletPairEntities.ROW_ID.value):
-                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA.value)
+                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA)
 
             if tx_amount != conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value):
                 logger.info("tx_amount doesn't match the deposit_amount")
-                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA.value)
+                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA)
 
             token_pair = self.token_service.get_token_pair_internal(
                 token_pair_id=None,
                 token_pair_row_id=wallet_pair.get(WalletPairEntities.TOKEN_PAIR_ID.value))
-
-            from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
-                .get(TokenEntities.ALLOWED_DECIMAL.value)
-            to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
-                .get(TokenEntities.ALLOWED_DECIMAL.value)
 
             validate_conversion_request_amount(amount=tx_amount,
                                                min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                                max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
 
             token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}) \
-                .get(TokenEntities.TOKEN_ADDRESS.value)
+                                      .get(TokenEntities.TOKEN_ADDRESS.value)
             token_symbol = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}).get(TokenEntities.SYMBOL.value)
 
             if policy_id is None or asset_name is None or policy_id != token_address or \
                     asset_name != token_symbol.encode('utf-8').hex():
-                raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value)
-
-            tx_amount = Decimal(tx_amount)
-            if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
-                if from_token_decimals != to_token_decimals:
-                    # Conversion fee temporary not allowed for token pairs with different decimals amount
-                    raise BadRequestException(
-                        error_code=ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value)
-                fee_amount = calculate_fee_amount(
-                    amount=tx_amount,
-                    percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
-                    .get(ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value))
-
-            if conversion.get(ConversionEntities.FEE_AMOUNT.value) != fee_amount:
-                logger.info("fee_amount doesn't match the fee_amount from existing conversion")
-                raise BadRequestException(error_code=ErrorCode.BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA.value)
+                raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED)
 
         return conversion
 
