@@ -283,14 +283,14 @@ class ConsumerService:
             CardanoEventConsumer.ASSET_NAME.value)
 
         if deposit_address is None or tx_amount is None or tx_hash is None:
-            raise InternalServerErrorException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS.value)
+            raise InternalServerErrorException(error_code=ErrorCode.MISSING_CARDANO_EVENT_FIELDS)
 
         if transaction is None:
 
             wallet_pair = self.wallet_pair_service.get_wallet_pair_by_deposit_address(deposit_address=deposit_address)
             if wallet_pair is None:
                 logger.info("Wallet pair doesn't exist")
-                raise BadRequestException(error_code=ErrorCode.WALLET_PAIR_NOT_EXISTS.value)
+                raise BadRequestException(error_code=ErrorCode.WALLET_PAIR_NOT_EXISTS)
 
             token_pair = self.token_service.get_token_pair_internal(
                 token_pair_id=None,
@@ -311,16 +311,13 @@ class ConsumerService:
 
             if policy_id is None or asset_name is None or policy_id != token_address or \
                     asset_name != token_symbol.encode('utf-8').hex():
-                raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED.value,
-                                          error_details=ErrorDetails[ErrorCode.INVALID_ASSET_TRANSFERRED.value].value)
+                raise BadRequestException(error_code=ErrorCode.INVALID_ASSET_TRANSFERRED)
 
             tx_amount = Decimal(tx_amount)
             if token_pair.get(TokenPairEntities.CONVERSION_FEE.value):
                 if from_token_decimals != to_token_decimals:
                     # Conversion fee temporary not allowed for token pairs with different decimals amount
-                    raise BadRequestException(
-                        error_code=ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value,
-                        error_details=ErrorDetails[ErrorCode.CONVERSION_FEE_NOT_ALLOWED.value].value)
+                    raise BadRequestException(error_code=ErrorCode.CONVERSION_FEE_NOT_ALLOWED)
                 fee_amount = calculate_fee_amount(
                     amount=tx_amount,
                     percentage=token_pair.get(TokenPairEntities.CONVERSION_FEE.value)
@@ -338,9 +335,7 @@ class ConsumerService:
                 if corrected_tx_amount != tx_amount:
                     logger.error(f"Received token amount {tx_amount} cannot be converted for claim because of "
                                  f"difference in tokens decimals {from_token_decimals} > {to_token_decimals}")
-                    raise BadRequestException(
-                        error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value,
-                        error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED.value].value)
+                    raise BadRequestException(error_code=ErrorCode.INVALID_CONVERSION_AMOUNT_PROVIDED)
 
             conversion = self.conversion_service.process_conversion_request(
                 wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
@@ -361,10 +356,10 @@ class ConsumerService:
                     tx_status=TransactionStatus.WAITING_FOR_CONFIRMATION.value)
             except BadRequestException as e:
                 logger.info(f"Bad Request {e}")
-                raise BadRequestException(error_code=ErrorCode.BAD_REQUEST_ON_TRANSACTION_CREATION.value)
+                raise BadRequestException(error_code=ErrorCode.BAD_REQUEST_ON_TRANSACTION_CREATION)
             except Exception as e:
                 logger.exception(f"Unexpected error occurred while creating the transaction={e} ")
-                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_TRANSACTION_CREATION.value)
+                raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_TRANSACTION_CREATION)
 
         # If the transaction was found in the DB, check it
         else:
