@@ -148,6 +148,8 @@ class CardanoService:
                 raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL)
 
             response = json.loads(response.content.decode("utf-8"))
+        except BadRequestException as bre:
+            raise bre
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano get token_liquidity={e}")
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL)
