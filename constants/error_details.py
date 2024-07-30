@@ -44,8 +44,8 @@ class ErrorCode(Enum):
     UNABLE_TO_PARSE_THE_INPUT_EVENT = "E0040"
     QUEUE_DETAILS_NOT_FOUND = "E0041"
     INVALID_TRANSACTION_OPERATION = "E0042"
-    LAMBDA_ARN_MINT_NOT_FOUND = "E0043"
-    LAMBDA_ARN_BURN_NOT_FOUND = "E0044"
+    LAMBDA_ARN_MINT_NOT_FOUND = "E0043"  # TODO currently unused, candidate for removal
+    LAMBDA_ARN_BURN_NOT_FOUND = "E0044"  # TODO currently unused, candidate for removal
     SECRET_KEY_NOT_FOUND = "E0045"
     SECRET_DETAILS_FOR_CONTRACT_NOT_AVAILABLE = "E0046"
     INVALID_SIGNATURE_TYPE_PROVIDED = "E0047"
@@ -82,7 +82,9 @@ class ErrorCode(Enum):
     NOT_LIQUID_CONTRACT = "E0078"
     INSUFFICIENT_CONTRACT_LIQUIDITY = "E0079"
     INVALID_TOKEN_DATA = "E0080"
-    BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA = "E0082"
+    INVALID_ADDRESS = "E0081"
+    CARDANO_SERVICE_BASE_PATH_NOT_FOUND = "E0082"
+    BLOCKCHAIN_EVENT_DATA_DOES_NOT_MATCH_DATABASE_DATA = "E0083"
 
 
 class ErrorDetails(Enum):
@@ -128,8 +130,8 @@ class ErrorDetails(Enum):
     E0040 = "Unable to parse the input event provided"
     E0041 = "Queue details not found"
     E0042 = "Invalid Transaction Operation provided"
-    E0043 = "Config of lambda arn for minting is empty"
-    E0044 = "Config of lambda arn for burn is empty"
+    E0043 = "Config of lambda arn for minting is empty"  # TODO currently unused, candidate for removal
+    E0044 = "Config of lambda arn for burn is empty"  # TODO currently unused, candidate for removal
     E0045 = "Secret key not found for signing"
     E0046 = "Secret details for this contract not available"
     E0047 = "Invalid signature type provided"
@@ -148,7 +150,7 @@ class ErrorDetails(Enum):
     E0060 = "Data not available in the cardano derived address response"
     E0061 = "Amount is less than expected min value "
     E0062 = "Amount is greater than expected max value"
-    E0063 = "Conversion amount must be greater tha zero"
+    E0063 = "Conversion amount must be greater than zero"
     E0064 = "Not authorized to update the cardano transaction hash"
     E0065 = "Invalid conversion amount provided"
     E0066 = "Token holder address is mismatched from blockchain and conversion request"
@@ -166,4 +168,6 @@ class ErrorDetails(Enum):
     E0078 = "Contract is not liquid"
     E0079 = "Bridge contract liquidity is insufficient! At the moment conversion unavailable. Try again later."
     E0080 = "Invalid token data provided"
-    E0082 = "Data from the blockchain_event does not match the transaction or conversion data from the DB"
+    E0081 = "The provided address is not valid"
+    E0082 = "CARDANO_SERVICE_BASE_PATH not found in environment variables"
+    E0083 = "Data from the blockchain event does not match the transaction or conversion data from the DB"

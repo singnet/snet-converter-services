@@ -71,6 +71,7 @@ class TokenPairDBModel(Base):
     from_token_id = Column("from_token_id", BIGINT, ForeignKey(TokenDBModel.row_id), nullable=False)
     to_token_id = Column("to_token_id", BIGINT, ForeignKey(TokenDBModel.row_id), nullable=False)
     conversion_fee_id = Column("conversion_fee_id", BIGINT, ForeignKey(ConversionFeeDBModel.row_id))
+    conversion_ratio = Column("conversion_ratio", DECIMAL(32, 18))
     is_enabled = Column("is_enabled", BOOLEAN, default=True)
     min_value = Column("min_value", DECIMAL(64, 0))
     max_value = Column("max_value", DECIMAL(64, 0))

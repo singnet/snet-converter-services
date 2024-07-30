@@ -935,9 +935,11 @@ functions:
   get_liquidity_data:
     handler: application/handler/conversion_handlers.get_converter_liquidity_balance
     role: ${file(./config.${self:provider.stage}.json):ROLE}
-    vpc: ${self:custom.defaultVpc}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
     layers: ${self:custom.defaultLayers}
     warmup: true
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH}
     events:
       - http:
           path: /v1/conversion/liquidity
@@ -968,3 +970,14 @@ functions:
               - statusCode: "500"
                 responseModels:
                 "application/json": "LambdaErrorMessage"
+
+  get_cardano_latest_block_no:
+    handler: application/handler/blockchain_handlers.get_cardano_latest_block_no
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/conversion/cardanolastblockno
+          method: get
+          cors: ${self:custom.defaultCors}
