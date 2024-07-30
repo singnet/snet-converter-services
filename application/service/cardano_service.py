@@ -7,7 +7,7 @@ import requests
 
 from common.logger import get_logger
 from constants.entity import CardanoAPIEntities
-from constants.error_details import ErrorCode, ErrorDetails
+from constants.error_details import ErrorCode
 from utils.exceptions import InternalServerErrorException, BadRequestException
 
 logger = get_logger(__name__)
@@ -142,14 +142,15 @@ class CardanoService:
             response = requests.get(f"{base_path}/{token_name}/liquidity")
 
             if response.status_code == HTTPStatus.NOT_FOUND.value:
-                raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT.value)
+                raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
 
             if response.status_code != HTTPStatus.OK.value:
                 raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL)
 
             response = json.loads(response.content.decode("utf-8"))
         except BadRequestException as bre:
-            raise bre
+            logger.exception("Contract is not liquid")
+            raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano get token_liquidity={e}")
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL)
