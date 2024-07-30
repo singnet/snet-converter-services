@@ -4,13 +4,15 @@ from constants.entity import ConverterBridgeEntities
 
 
 class ConverterBridge:
+
     def __init__(self, blockchain_name: str, blockchain_network_id: int, conversion_id: str, tx_amount: Decimal,
-                 tx_operation: str):
+                 tx_operation: str, conversion_side: str):
         self.blockchain_name = blockchain_name
         self.blockchain_network_id = blockchain_network_id
         self.conversion_id = conversion_id
         self.tx_amount = str(tx_amount.normalize())
         self.tx_operation = tx_operation
+        self.conversion_side = conversion_side
 
     def to_dict(self):
         return {

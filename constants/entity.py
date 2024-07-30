@@ -193,10 +193,14 @@ class CardanoEventType(Enum):
     TOKEN_RECEIVED = "TOKEN_RECEIVED"
     TOKEN_BURNT = "TOKEN_BURNT"
     TOKEN_MINTED = "TOKEN_MINTED"
+    TOKEN_TRANSFERRED = "TOKEN_TRANSFERRED"
 
 
 CardanoAllowedEventType = [CardanoEventType.TOKEN_RECEIVED.value, CardanoEventType.TOKEN_BURNT.value,
-                           CardanoEventType.TOKEN_MINTED.value]
+                           CardanoEventType.TOKEN_MINTED.value, CardanoEventType.TOKEN_TRANSFERRED.value]
+
+CardanoServicesEventTypes = [CardanoEventType.TOKEN_BURNT.value, CardanoEventType.TOKEN_MINTED.value,
+                             CardanoEventType.TOKEN_TRANSFERRED.value]
 
 
 class EthereumEventConsumerEntities(Enum):
@@ -258,6 +262,7 @@ class CardanoAPIEntities(Enum):
     FEE = "fee"
     DECIMALS_DIFFERENCE = "decimals_difference"
     CONVERSION_RATIO = "conversion_ratio"
+    BURNT_TOKEN = "burnt_token"
 
 
 class WalletPairResponseEntities(Enum):
