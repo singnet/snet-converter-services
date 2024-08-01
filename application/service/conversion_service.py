@@ -156,27 +156,8 @@ class ConversionService:
         self.conversion_repo.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                            status=status)
 
-    def check_evm_liquidity(self, token_pair_id, amount, token_pair=None) -> None:
+    def check_liquidity_balance(self, token_pair_id, claim_amount) -> None:
         try:
-            if token_pair:
-                # Update decimal places for claim amount
-                from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
-                                                .get(TokenEntities.ALLOWED_DECIMAL.value)
-                to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
-                                              .get(TokenEntities.ALLOWED_DECIMAL.value)
-                claim_amount = update_decimal_places(Decimal(amount),
-                                                     from_decimals=from_token_decimals,
-                                                     to_decimals=to_token_decimals)
-                # Recalculate claim amount by conversion ratio
-                conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
-                if conversion_ratio:
-                    claim_amount = calculate_claim_amount_by_conversion_ratio(
-                        amount=claim_amount,
-                        conversion_ratio=Decimal(conversion_ratio)
-                    )
-                # TODO[C2C]: Request Cardano liquidity from Cardano Services
-            else:
-                claim_amount = amount
             # Check amount available for claim
             liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
             if int(claim_amount) > liquidity_data["available"]:
@@ -199,8 +180,24 @@ class ConversionService:
             token_pair=token_pair,
             blockchain_conversion_type=TokenPairEntities.TO_TOKEN.value)
 
+        # Update decimal places for claim amount
+        from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+            .get(TokenEntities.ALLOWED_DECIMAL.value)
+        to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
+            .get(TokenEntities.ALLOWED_DECIMAL.value)
+        claim_amount = update_decimal_places(Decimal(amount),
+                                             from_decimals=from_token_decimals,
+                                             to_decimals=to_token_decimals)
+        # Recalculate claim amount by conversion ratio
+        conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
+        if conversion_ratio:
+            claim_amount = calculate_claim_amount_by_conversion_ratio(
+                amount=claim_amount,
+                conversion_ratio=Decimal(conversion_ratio)
+            )
+        # TODO[C2C]: Request Cardano liquidity from Cardano Services
         # Liquidity check
-        self.check_evm_liquidity(token_pair_id, amount, token_pair)
+        self.check_liquidity_balance(token_pair_id, claim_amount)
 
         if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
             logger.exception(f"Unsupported network conversion detected from_blockchain={from_blockchain}, "
@@ -588,9 +585,9 @@ class ConversionService:
         # We should return total amount of tokens because contract on the Ethereum side calculate fees by itself
         claim_amount = str(Decimal(claim_amount) + Decimal(fee_amount))
 
-        token_pair_id = (conversion.get(ConversionEntities.WALLET_PAIR_ID.value)
-                         .get(WalletPairEntities.TOKEN_PAIR_ID.value))
-        self.check_evm_liquidity(token_pair_id, claim_amount)
+        token_pair_id = conversion.get(ConversionEntities.WALLET_PAIR_ID.value) \
+                                  .get(WalletPairEntities.TOKEN_PAIR_ID.value)
+        self.check_liquidity_balance(token_pair_id, claim_amount)
 
         user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
                                         .get(WalletPairEntities.TO_ADDRESS.value)
