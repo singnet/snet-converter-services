@@ -182,9 +182,9 @@ class ConversionService:
 
         # Update decimal places for claim amount
         from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
-            .get(TokenEntities.ALLOWED_DECIMAL.value)
+                                        .get(TokenEntities.ALLOWED_DECIMAL.value)
         to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
-            .get(TokenEntities.ALLOWED_DECIMAL.value)
+                                      .get(TokenEntities.ALLOWED_DECIMAL.value)
         claim_amount = update_decimal_places(Decimal(amount),
                                              from_decimals=from_token_decimals,
                                              to_decimals=to_token_decimals)
@@ -195,7 +195,6 @@ class ConversionService:
                 amount=claim_amount,
                 conversion_ratio=Decimal(conversion_ratio)
             )
-        # TODO[C2C]: Request Cardano liquidity from Cardano Services
         # Liquidity check
         self.check_liquidity_balance(token_pair_id, claim_amount)
 
@@ -585,6 +584,7 @@ class ConversionService:
         # We should return total amount of tokens because contract on the Ethereum side calculate fees by itself
         claim_amount = str(Decimal(claim_amount) + Decimal(fee_amount))
 
+        # Recheck available liquidity for claim
         token_pair_id = conversion.get(ConversionEntities.WALLET_PAIR_ID.value) \
                                   .get(WalletPairEntities.TOKEN_PAIR_ID.value)
         self.check_liquidity_balance(token_pair_id, claim_amount)
