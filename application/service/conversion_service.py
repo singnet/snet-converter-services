@@ -156,6 +156,19 @@ class ConversionService:
         self.conversion_repo.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                            status=status)
 
+    def check_liquidity_balance(self, token_pair_id, claim_amount) -> None:
+        try:
+            # Check amount available for claim
+            liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
+            if int(claim_amount) > liquidity_data["available"]:
+                raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY)
+        except BadRequestException as e:
+            if e.error_code == ErrorCode.NOT_LIQUID_CONTRACT.value:
+                # Skipping liquidity check if contract is not liquidity contract
+                pass
+            else:
+                raise e
+
     def create_conversion_request_validation(self, token_pair_id, amount, from_address, to_address, block_number,
                                              signature, key, token_pair):
         logger.info("Validating  the conversion request")
@@ -167,34 +180,23 @@ class ConversionService:
             token_pair=token_pair,
             blockchain_conversion_type=TokenPairEntities.TO_TOKEN.value)
 
+        # Update decimal places for claim amount
+        from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                        .get(TokenEntities.ALLOWED_DECIMAL.value)
+        to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
+                                      .get(TokenEntities.ALLOWED_DECIMAL.value)
+        claim_amount = update_decimal_places(Decimal(amount),
+                                             from_decimals=from_token_decimals,
+                                             to_decimals=to_token_decimals)
+        # Recalculate claim amount by conversion ratio
+        conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
+        if conversion_ratio:
+            claim_amount = calculate_claim_amount_by_conversion_ratio(
+                amount=claim_amount,
+                conversion_ratio=Decimal(conversion_ratio)
+            )
         # Liquidity check
-        try:
-            # Update decimal places for claim amount
-            from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
-                                            .get(TokenEntities.ALLOWED_DECIMAL.value)
-            to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
-                                          .get(TokenEntities.ALLOWED_DECIMAL.value)
-            claim_amount = update_decimal_places(Decimal(amount),
-                                                 from_decimals=from_token_decimals,
-                                                 to_decimals=to_token_decimals)
-            # Recalculate claim amount by conversion ratio
-            conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
-            if conversion_ratio:
-                claim_amount = calculate_claim_amount_by_conversion_ratio(
-                    amount=claim_amount,
-                    conversion_ratio=Decimal(conversion_ratio)
-                )
-            # TODO[C2C]: Request Cardano liquidity from Cardano Services
-            # Check amount available for claim
-            liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
-            if int(claim_amount) > liquidity_data["available"]:
-                raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY)
-        except BadRequestException as e:
-            if e.error_code == ErrorCode.NOT_LIQUID_CONTRACT.value:
-                # Skipping liquidity check if contract is not liquidity contract
-                pass
-            else:
-                raise e
+        self.check_liquidity_balance(token_pair_id, claim_amount)
 
         if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
             logger.exception(f"Unsupported network conversion detected from_blockchain={from_blockchain}, "
@@ -581,6 +583,12 @@ class ConversionService:
         fee_amount = conversion.get(ConversionEntities.FEE_AMOUNT.value)
         # We should return total amount of tokens because contract on the Ethereum side calculate fees by itself
         claim_amount = str(Decimal(claim_amount) + Decimal(fee_amount))
+
+        # Recheck available liquidity for claim
+        token_pair_id = conversion.get(ConversionEntities.WALLET_PAIR_ID.value) \
+                                  .get(WalletPairEntities.TOKEN_PAIR_ID.value)
+        self.check_liquidity_balance(token_pair_id, claim_amount)
+
         user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
                                         .get(WalletPairEntities.TO_ADDRESS.value)
         contract_address = self.get_token_contract_address_for_conversion_id(
