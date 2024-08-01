@@ -51,4 +51,5 @@ class TransactionStatus(Enum):
 
 
 ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS = [TransactionOperation.TOKEN_BURNT.value,
-                                          TransactionOperation.TOKEN_MINTED.value]
+                                          TransactionOperation.TOKEN_MINTED.value,
+                                          TransactionOperation.TOKEN_TRANSFERRED.value]
