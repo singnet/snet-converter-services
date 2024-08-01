@@ -561,7 +561,7 @@ class ConsumerService:
 
             token_pair_id = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}) \
                                                       .get(WalletPairEntities.TOKEN_PAIR_ID.value)
-            token_pair = self.token_service.get_token_pair_internal(token_pair_id=token_pair_id)
+            token_pair = self.token_service.get_token_pair_internal(None, token_pair_row_id=token_pair_id)
             conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
 
             response = CardanoService.liquidity_token_transfer(conversion_id=conversion_id,
