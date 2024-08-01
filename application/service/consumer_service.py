@@ -552,7 +552,7 @@ class ConsumerService:
             burnt_token = conversion_complete_detail.get(ConversionDetailEntities.FROM_TOKEN.value, {})\
                                                     .get(TokenEntities.SYMBOL.value)
             tx_details = CardanoService.generate_transaction_detail(
-                hash=transactions[0].get(TransactionEntities.TRANSACTION_HASH.value),
+                hash=transactions[1].get(TransactionEntities.TRANSACTION_HASH.value),
                 environment=db_from_blockchain_name)
             address = conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}) \
                                                 .get(WalletPairEntities.TO_ADDRESS.value)
