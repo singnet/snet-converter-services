@@ -43,7 +43,7 @@ class CardanoService:
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND)
         try:
-            data = requests.get(f"{base_path}/cardano/liquidity/addresses")
+            data = requests.get(f"{base_path}/liquidity/addresses")
 
             if data.status_code != HTTPStatus.OK.value:
                 raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL)
