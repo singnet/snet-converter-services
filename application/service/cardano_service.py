@@ -7,9 +7,9 @@ import requests
 
 from common.logger import get_logger
 from constants.entity import CardanoAPIEntities
+from constants.entity import WalletPairResponseEntities
 from constants.error_details import ErrorCode
 from utils.exceptions import InternalServerErrorException, BadRequestException
-from application.service.wallet_pair_service import get_all_deposit_address_response
 
 logger = get_logger(__name__)
 
@@ -43,21 +43,20 @@ class CardanoService:
         if not base_path:
             raise InternalServerErrorException(error_code=ErrorCode.CARDANO_SERVICE_BASE_PATH_NOT_FOUND)
         try:
-            data = requests.get(f"{base_path}/cardano/liquidity/addresses", data=json.dumps({}),
-                                    headers={"Content-Type": "application/json"})
+            data = requests.get(f"{base_path}/cardano/liquidity/addresses")
 
             if data.status_code != HTTPStatus.OK.value:
                 raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL)
 
             prepare_response = json.loads(data.content.decode("utf-8"))
 
-            response = get_all_deposit_address_response(prepare_response.get("data").get("liquidityAddresses"))
+            response = prepare_response.get("data", []).get("liquidity_addresses")
 
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano get liquidity addresses={e}")
             raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_CARDANO_SERVICE_CALL)
         logger.info(f"Response={response}")
-        return response
+        return {WalletPairResponseEntities.ADDRESSES.value: response}
 
     @staticmethod
     def burn_token(conversion_id, address, token, tx_amount, tx_details, deposit_address_details):
