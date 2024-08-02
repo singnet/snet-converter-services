@@ -345,7 +345,8 @@ class ConversionService:
             raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
                                                error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
-        next_activity = get_next_activity_event_on_conversion(conversion_complete_detail=conversion_detail).to_dict()
+        next_activity_obj = get_next_activity_event_on_conversion(conversion_complete_detail=conversion_detail)
+        next_activity = next_activity_obj.to_dict() if next_activity_obj else None
         if next_activity is None:
             raise BadRequestException(error_code=ErrorCode.CONVERSION_ALREADY_DONE.value,
                                       error_details=ErrorDetails[ErrorCode.CONVERSION_ALREADY_DONE.value].value)

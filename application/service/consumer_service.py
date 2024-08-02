@@ -167,7 +167,8 @@ class ConsumerService:
             raise InternalServerErrorException(error_code=ErrorCode.INVALID_CONVERSION_ID.value,
                                                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
 
-        activity_event = get_next_activity_event_on_conversion(conversion_complete_detail).to_dict()
+        activity_event_obj = get_next_activity_event_on_conversion(conversion_complete_detail)
+        activity_event = activity_event_obj.to_dict() if activity_event_obj else None
 
         if activity_event:
             # Getting message pool id
@@ -448,7 +449,7 @@ class ConsumerService:
                                                error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_ID.value].value)
 
         activity_event_obj = get_next_activity_event_on_conversion(conversion_complete_detail)
-        activity_event = activity_event_obj.to_dict()
+        activity_event = activity_event_obj.to_dict() if activity_event_obj else None
 
         if payload == activity_event:
             self.process_converter_bridge_request(
