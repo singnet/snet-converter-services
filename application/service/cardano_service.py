@@ -50,7 +50,7 @@ class CardanoService:
 
             prepare_response = json.loads(data.content.decode("utf-8"))
 
-            response = prepare_response.get("data", []).get("liquidity_addresses")
+            response = prepare_response.get("data", {}).get("liquidity_addresses")
 
         except Exception as e:
             logger.exception(f"Unexpected error while calling the cardano get liquidity addresses={e}")
