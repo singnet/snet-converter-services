@@ -981,3 +981,12 @@ functions:
           path: /v1/conversion/cardanolastblockno
           method: get
           cors: ${self:custom.defaultCors}
+
+  get_all_liquidity_addresses:
+    handler: application/handler/conversion_handlers.get_converter_liquidity_addresses
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
+    layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH}
+

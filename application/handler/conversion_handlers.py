@@ -20,6 +20,7 @@ from utils.exceptions import BadRequestException, EXCEPTIONS
 from utils.exception_handler import exception_handler
 
 from application.service.conversion_service import ConversionService
+from application.service.cardano_service import CardanoService
 from config import SLACK_HOOK
 
 
@@ -223,6 +224,17 @@ def get_converter_liquidity_balance(event, context):
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY)
 
     response = conversion_service.get_liquidity_balance_data(token_pair_id)
+
+    return generate_lambda_response(HTTPStatus.OK.value,
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
+                                                       error=make_error_format()), cors_enabled=True)
+
+
+@exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)
+def get_converter_liquidity_addresses(event, context):
+    logger.debug(f"Getting the liquidity addresses :: {json.dumps(event)}")
+
+    response = CardanoService().get_liquidity_addresses()
 
     return generate_lambda_response(HTTPStatus.OK.value,
                                     make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
