@@ -586,7 +586,7 @@ class ConversionService:
         claim_amount = str(Decimal(claim_amount) + Decimal(fee_amount))
 
         # Recheck available liquidity for claim
-        logger.info("conversion::", conversion)
+        logger.info(f"{conversion_detail = }")
         token_pair_id = conversion.get(ConversionEntities.WALLET_PAIR_ID.value).get(WalletPairEntities.TOKEN_PAIR_ID.value)
         self.check_liquidity_balance(token_pair_id, claim_amount)
 
