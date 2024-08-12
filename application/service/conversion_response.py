@@ -61,6 +61,7 @@ def get_wallet_pair_response(wallet_pair):
     return {
         WalletPairEntities.FROM_ADDRESS.value: wallet_pair[WalletPairEntities.FROM_ADDRESS.value],
         WalletPairEntities.TO_ADDRESS.value: wallet_pair[WalletPairEntities.TO_ADDRESS.value],
+        WalletPairEntities.TOKEN_PAIR_ID.value: wallet_pair[WalletPairEntities.TOKEN_PAIR_ID.value],
         WalletPairEntities.DEPOSIT_ADDRESS.value: wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
     }
 
