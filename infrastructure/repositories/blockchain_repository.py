@@ -52,7 +52,7 @@ class BlockchainRepository(BaseRepository):
         ).join(
             BlockChainDBModel, TokenDBModel.blockchain_id == BlockChainDBModel.row_id
         ).filter(
-            TokenPairDBModel.row_id == token_pair_id
+            TokenPairDBModel.id == token_pair_id
         )
 
         return chain_data.one_or_none()
