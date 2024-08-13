@@ -1,4 +1,4 @@
-from constants.entity import ConversionEntities, WalletPairEntities, ConversionDetailEntities, TokenEntities, \
+from constants.entity import ConversionEntities, TokenPairEntities, WalletPairEntities, ConversionDetailEntities, TokenEntities, \
     BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities
 
 
@@ -61,8 +61,13 @@ def get_wallet_pair_response(wallet_pair):
     return {
         WalletPairEntities.FROM_ADDRESS.value: wallet_pair[WalletPairEntities.FROM_ADDRESS.value],
         WalletPairEntities.TO_ADDRESS.value: wallet_pair[WalletPairEntities.TO_ADDRESS.value],
-        WalletPairEntities.TOKEN_PAIR_ID.value: wallet_pair[WalletPairEntities.TOKEN_PAIR_ID.value],
         WalletPairEntities.DEPOSIT_ADDRESS.value: wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
+    }
+
+
+def get_token_pair_response(token_pair):
+    return {
+        TokenPairEntities.ID.value: token_pair[TokenPairEntities.ID.value],
     }
 
 
@@ -120,6 +125,8 @@ def get_conversion_detail_response(conversion_detail):
             conversion_detail[ConversionDetailEntities.FROM_TOKEN.value]),
         ConversionDetailEntities.TO_TOKEN.value: get_token_internal_response(
             conversion_detail[ConversionDetailEntities.TO_TOKEN.value]),
+        ConversionDetailEntities.TOKEN_PAIR.value: get_token_pair_response(
+            conversion_detail[ConversionDetailEntities.TOKEN_PAIR.value]),
         ConversionDetailEntities.TRANSACTIONS.value: get_transaction_internal_response(
             conversion_detail[ConversionDetailEntities.TRANSACTIONS.value])
     }

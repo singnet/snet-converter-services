@@ -81,9 +81,16 @@ class ConversionFactory:
                                           created_by=to_token.created_by, created_at=to_token.created_at,
                                           updated_at=to_token.updated_at, blockchain_detail=to_blockchain)
 
+        token_pair_obj = TokenFactory.token_pair(row_id=token_pair.row_id, id_=token_pair.id,
+                                                 min_value=token_pair.min_value, max_value=token_pair.max_value,
+                                                 created_by=token_pair.created_by, created_at=token_pair.created_at,
+                                                 updated_at=token_pair.updated_at, from_token=token_pair.from_token,
+                                                 to_token=token_pair.to_token, conversion_fee=token_pair.conversion_fee,
+                                                 conversion_ratio=token_pair.conversion_ratio)
+
         return ConversionDetail(conversion_obj=conversion_obj, wallet_pair_obj=wallet_pair_obj,
-                                from_token_obj=from_token_obj,
-                                to_token_obj=to_token_obj)
+                                from_token_obj=from_token_obj, to_token_obj=to_token_obj,
+                                token_pair_obj=token_pair_obj)
 
     @staticmethod
     def transaction_detail(transaction):
