@@ -5,7 +5,7 @@ import web3
 from eth_account.messages import defunct_hash_message, encode_defunct
 from eth_utils import ValidationError
 from web3 import Web3
-from pycardano import cip8
+from pycardano import cip8, Address
 
 from common.boto_utils import BotoUtils
 from common.logger import get_logger
@@ -41,15 +41,16 @@ def validate_cardano_conversion_signature(token_pair_id, amount, from_address, t
     logger.info("Validating Cardano signature")
 
     target_address = from_address if is_signer_as_from_address else to_address
+    target_address = Address.decode(target_address)
 
     # Decode address and message from signature
     signature_data = {"signature": signature, "key": key}
     verified_data = cip8.verify(signature_data)
     signed_message = verified_data.get('message')
-    signer_address = str(verified_data.get('signing_address'))
+    signer_address = verified_data.get('signing_address')
 
     # Check address
-    is_address_matches = (signer_address == target_address)
+    is_address_matches = (signer_address.payment_part == target_address.payment_part)
 
     # Check message
     try:
