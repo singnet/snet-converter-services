@@ -122,10 +122,11 @@ class CardanoService:
 
     @staticmethod
     def liquidity_token_transfer(conversion_id, address, token, tx_amount, tx_details, source_address,
-                                 conversion_ratio, burnt_token):
+                                 conversion_ratio, burnt_token, deposit_address_details):
         logger.info(f"Calling the liquidity token transfer service on cardano with inputs as "
                     f"conversion_id={conversion_id}, address={address}, token={token}, tx_amount={tx_amount}, "
-                    f"tx_details={tx_details}, source_address={source_address}, burnt_token={burnt_token}")
+                    f"tx_details={tx_details}, source_address={source_address}, burnt_token={burnt_token},"
+                    f"deposit_address_details={deposit_address_details}, conversion_ratio={conversion_ratio}")
 
         base_path = os.getenv("CARDANO_SERVICE_BASE_PATH", None)
         if not base_path:
@@ -139,6 +140,7 @@ class CardanoService:
                                                              conversion_ratio=conversion_ratio)
             payload[CardanoAPIEntities.SOURCE_ADDRESS.value] = source_address
             payload[CardanoAPIEntities.BURNT_TOKEN.value] = burnt_token
+            payload[CardanoAPIEntities.DEPOSIT_ADDRESS_DETAILS.value] = deposit_address_details
 
             logger.info(f"Payload for liquidity token transfer = {json.dumps(payload)}")
 
