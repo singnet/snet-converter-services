@@ -565,12 +565,16 @@ class ConsumerService:
             token_pair = self.token_service.get_token_pair_internal(None, token_pair_row_id=token_pair_id)
             conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
 
+            deposit_address_details = generate_deposit_address_details_for_cardano_operation(
+                wallet_pair=conversion_complete_detail.get(ConversionDetailEntities.WALLET_PAIR.value, {}))
+
             response = CardanoService.liquidity_token_transfer(conversion_id=conversion_id,
                                                                address=address, token=token,
                                                                tx_amount=tx_amount, tx_details=tx_details,
                                                                source_address=source_address,
                                                                conversion_ratio=conversion_ratio,
-                                                               burnt_token=burnt_token)
+                                                               burnt_token=burnt_token,
+                                                               deposit_address_details=deposit_address_details)
             data = response.get(CardanoAPIEntities.DATA.value)
             if not data:
                 raise InternalServerErrorException(error_code=ErrorCode.DATA_NOT_AVAILABLE_ON_DERIVED_ADDRESS)
