@@ -20,6 +20,9 @@
       },
       "signature": {
         "type": "string"
+      },
+      "key": {
+        "type": "string"
       }
     },
     "required": [
@@ -968,5 +971,81 @@
     "type": "object",
     "properties": {},
     "required": []
+  },
+  "GetLiquidityDataInput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "queryStringParameters": {
+        "type": "object",
+        "properties": {
+          "token_pair_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token_pair_id"
+        ]
+      }
+    },
+    "required": [
+      "queryStringParameters"
+    ]
+  },
+  "GetLiquidityDataOutput": {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "integer"
+          },
+          "liquidity": {
+            "type": "integer"
+          },
+          "locked": {
+            "type": "integer"
+          },
+          "frozen": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "available",
+          "liquidity",
+          "locked",
+          "frozen"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "null"
+          },
+          "message": {
+            "type": "null"
+          },
+          "details": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "details"
+        ]
+      }
+    },
+    "required": [
+      "status",
+      "data",
+      "error"
+    ]
   }
 }

@@ -25,6 +25,7 @@ class TransactionOperation(Enum):
     TOKEN_RECEIVED = "TOKEN_RECEIVED"
     TOKEN_BURNT = "TOKEN_BURNT"
     TOKEN_MINTED = "TOKEN_MINTED"
+    TOKEN_TRANSFERRED = "TOKEN_TRANSFERRED"
 
 
 EthereumToCardanoEvent = {"ethereum": [TransactionOperation.TOKEN_BURNT.value],
@@ -40,6 +41,9 @@ EthereumToBinanceEvent = {"ethereum": [TransactionOperation.TOKEN_BURNT.value],
 BinanceToEthereumEvent = {"binance": [TransactionOperation.TOKEN_BURNT.value],
                           "ethereum": [TransactionOperation.TOKEN_MINTED.value]}
 
+CardanoToCardanoEvent = {"cardano": [TransactionOperation.TOKEN_RECEIVED.value, TransactionOperation.TOKEN_BURNT.value],
+                         "cardano_": [TransactionOperation.TOKEN_TRANSFERRED.value]}
+
 
 class TransactionStatus(Enum):
     WAITING_FOR_CONFIRMATION = "WAITING_FOR_CONFIRMATION"
@@ -47,4 +51,5 @@ class TransactionStatus(Enum):
 
 
 ALLOWED_CONVERTER_BRIDGE_TX_OPERATIONS = [TransactionOperation.TOKEN_BURNT.value,
-                                          TransactionOperation.TOKEN_MINTED.value]
+                                          TransactionOperation.TOKEN_MINTED.value,
+                                          TransactionOperation.TOKEN_TRANSFERRED.value]

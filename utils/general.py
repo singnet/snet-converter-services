@@ -3,7 +3,7 @@ import math
 import uuid
 from datetime import datetime
 from datetime import timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
@@ -95,6 +95,19 @@ def update_decimal_places(amount: Decimal, from_decimals: int, to_decimals: int)
     return amount
 
 
+def calculate_fee_amount(amount: Decimal, percentage: str) -> Decimal:
+    percentage_decimal = Decimal(percentage) / 100
+    fee_amount = amount * percentage_decimal
+    fee_amount = fee_amount.quantize(Decimal("1."), rounding=ROUND_DOWN)
+    return fee_amount
+
+
+def calculate_claim_amount_by_conversion_ratio(amount: Decimal, conversion_ratio: Decimal):
+    claim_amount = amount * conversion_ratio
+    claim_amount = claim_amount.quantize(Decimal("1."), rounding=ROUND_DOWN)
+    return claim_amount
+
+
 def get_blockchain_from_token_pair_details(token_pair, blockchain_conversion_type):
     if blockchain_conversion_type == TokenPairEntities.FROM_TOKEN.value:
         blockchain = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}) \
@@ -135,9 +148,9 @@ def check_existing_transaction_succeed(transactions):
     is_check_existing_transaction_succeed = True
     for transaction in transactions:
         status = transaction.get(TransactionEntities.STATUS.value)
-        id = transaction.get(TransactionEntities.ID.value)
+        id_ = transaction.get(TransactionEntities.ID.value)
         if status != TransactionStatus.SUCCESS.value:
-            logger.info(f"Transaction is not success for the transaction_id={id} having a status={status}")
+            logger.info(f"Transaction is not success for the transaction_id={id_} having a status={status}")
             is_check_existing_transaction_succeed = False
             break
 

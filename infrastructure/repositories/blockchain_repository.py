@@ -1,5 +1,5 @@
 from domain.factory.blockchain_factory import BlockchainFactory
-from infrastructure.models import BlockChainDBModel
+from infrastructure.models import BlockChainDBModel, TokenDBModel, TokenPairDBModel
 from infrastructure.repositories.base_repository import BaseRepository
 from utils.database import read_from_db
 
@@ -39,3 +39,20 @@ class BlockchainRepository(BaseRepository):
                                             is_extension_available=blockchain.is_extension_available,
                                             created_by=blockchain.created_by, created_at=blockchain.created_at,
                                             updated_at=blockchain.updated_at)
+
+    @read_from_db()
+    def get_to_token_data_by_token_pair_id(self, token_pair_id):
+        chain_data = self.session.query(
+            BlockChainDBModel.name,
+            BlockChainDBModel.chain_id,
+            TokenDBModel.symbol,
+            TokenDBModel.contract_address
+        ).join(
+            TokenPairDBModel, TokenPairDBModel.to_token_id == TokenDBModel.row_id
+        ).join(
+            BlockChainDBModel, TokenDBModel.blockchain_id == BlockChainDBModel.row_id
+        ).filter(
+            TokenPairDBModel.id == token_pair_id
+        )
+
+        return chain_data.one_or_none()

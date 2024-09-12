@@ -1,8 +1,8 @@
 service: converterservices
-frameworkVersion: "2"
+frameworkVersion: "3"
 
 plugins:
-  - serverless-offline
+  # - serverless-offline
   - serverless-plugin-tracing
   - serverless-prune-plugin
   - serverless-aws-documentation
@@ -14,7 +14,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: python3.7
+  runtime: python3.8
   lambdaHashingVersion: 20201221
   memorySize: 512
   timeout: 30
@@ -48,10 +48,8 @@ custom:
     number: 5
   defaultLayers:
     - ${file(./config.${self:provider.stage}.json):MplaceCommonCode_Layer}
-    - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
-    - ${file(./config.${self:provider.stage}.json):MplacePythonWeb3AndGrpc_Layer}
     - ${file(./config.${self:provider.stage}.json):SnetContract}
-    - ${file(./config.${self:provider.stage}.json):MplacePythonBlockfrost_Layer}
+    - ${file(./config.${self:provider.stage}.json):MplaceCommonPythonLib_Layer}
   defaultVpc:
     securityGroupIds:
       - ${file(./config.${self:provider.stage}.json):SG1}
@@ -154,6 +152,11 @@ custom:
         description: "Get Conversion Status Count Output"
         contentType: "application/json"
         schema: ${file(documentation/models/conversion.json):GetConversionStatusCountOutput}
+
+      - name: "GetLiquidityDataOutput"
+        description: "Get Liquidity Data Output"
+        contentType: "application/json"
+        schema: ${file(documentation/models/conversion.json):GetLiquidityDataOutput}
 
 #      - name: "GetTransactionByConversionOutput"
 #        description: "Get Transaction By Conversion Output"
@@ -929,4 +932,61 @@ functions:
           description: 'Job for generating the conversion report'
           enabled: true
 
+  get_liquidity_data:
+    handler: application/handler/conversion_handlers.get_converter_liquidity_balance
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
+    layers: ${self:custom.defaultLayers}
+    warmup: true
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH}
+    events:
+      - http:
+          path: /v1/conversion/liquidity
+          method: get
+          cors: ${self:custom.defaultCors}
+          reqValidatorName: onlyParams
+          request:
+            parameters:
+              querystrings:
+                token_pair_id: true
+          documentation:
+            summary: "Getting liquidity information by token pair id"
+            description: "Getting liquidity information by token pair id"
+            tags:
+              - "Conversion"
+            methodResponses:
+              - statusCode: "200"
+                responseBody:
+                  description: "Get liquidity information by token pair id"
+                responseModels:
+                  "application/json": "GetLiquidityDataOutput"
+              - statusCode: "403"
+                responseModels:
+                  "application/json": "ApiErrorMessage"
+              - statusCode: "404"
+                responseModels:
+                  "application/json": "LambdaErrorMessage"
+              - statusCode: "500"
+                responseModels:
+                "application/json": "LambdaErrorMessage"
+
+  get_cardano_latest_block_no:
+    handler: application/handler/blockchain_handlers.get_cardano_latest_block_no
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpc}
+    layers: ${self:custom.defaultLayers}
+    events:
+      - http:
+          path: /v1/conversion/cardanolastblockno
+          method: get
+          cors: ${self:custom.defaultCors}
+
+  get_all_liquidity_addresses:
+    handler: application/handler/conversion_handlers.get_converter_liquidity_addresses
+    role: ${file(./config.${self:provider.stage}.json):ROLE}
+    vpc: ${self:custom.defaultVpcWithCardanoSG}
+    layers: ${self:custom.defaultLayers}
+    environment:
+      CARDANO_SERVICE_BASE_PATH: ${file(./config.${self:provider.stage}.json):CARDANO_DERIVED_ADDRESS_SERVICE_BASE_PATH}
 

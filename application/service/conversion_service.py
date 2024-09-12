@@ -1,7 +1,7 @@
 import json
 from decimal import Decimal
 
-from application.service.conversion_reponse import get_latest_user_pending_conversion_request_response, \
+from application.service.conversion_response import get_latest_user_pending_conversion_request_response, \
     create_conversion_response, create_conversion_request_response, \
     get_conversion_detail_response, get_conversion_history_response, create_conversion_transaction_response, \
     create_transaction_response, create_transaction_for_conversion_response, get_transaction_by_hash_response, \
@@ -12,7 +12,7 @@ from application.service.wallet_pair_service import WalletPairService
 from common.blockchain_util import BlockChainUtil
 from common.logger import get_logger
 from common.utils import Utils
-from config import SIGNATURE_EXPIRY_BLOCK_NUMBER, EXPIRE_CONVERSION, CONVERTER_REPORTING_SLACK_HOOK
+from config import SIGNATURE_EXPIRY_BLOCKS, EXPIRE_CONVERSION, CONVERTER_REPORTING_SLACK_HOOK
 from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity
@@ -21,7 +21,6 @@ from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities, 
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from utils.blockchain import validate_address, validate_conversion_claim_request_signature, \
-    calculate_fee_amount, \
     validate_conversion_request_amount, convert_str_to_decimal, get_next_activity_event_on_conversion, \
     check_existing_transaction_state, validate_evm_transaction_details_against_conversion, \
     validate_cardano_transaction_details_against_conversion
@@ -29,8 +28,11 @@ from utils.exceptions import BadRequestException, InternalServerErrorException
 from utils.general import get_blockchain_from_token_pair_details, get_response_from_entities, \
     is_supported_network_conversion, get_evm_network_url, get_offset, paginate_items_response_format, \
     datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report, \
-    reset_decimal_places, update_decimal_places
-from utils.signature import validate_conversion_signature, get_signature
+    reset_decimal_places, update_decimal_places, get_cardano_network_url_and_project_id, \
+    calculate_fee_amount, calculate_claim_amount_by_conversion_ratio
+from utils.signature import validate_conversion_signature, validate_cardano_conversion_signature, get_signature
+from utils.cardano_blockchain import CardanoBlockchainUtil
+from utils.blockchain import get_converter_contract_balance
 
 logger = get_logger(__name__)
 
@@ -154,11 +156,23 @@ class ConversionService:
         self.conversion_repo.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                            status=status)
 
-    @staticmethod
-    def create_conversion_request_validation(token_pair_id, amount, from_address, to_address, block_number,
-                                             signature, token_pair):
+    def check_liquidity_balance(self, token_pair_id, claim_amount) -> None:
+        try:
+            # Check amount available for claim
+            liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
+            if int(claim_amount) > liquidity_data["available"]:
+                raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY)
+        except BadRequestException as e:
+            if e.error_code == ErrorCode.NOT_LIQUID_CONTRACT.value:
+                # Skipping liquidity check if contract is not liquidity contract
+                pass
+            else:
+                raise e
+
+    def create_conversion_request_validation(self, token_pair_id, amount, from_address, to_address, block_number,
+                                             signature, key, token_pair):
         logger.info("Validating  the conversion request")
-        is_signer_as_from_address = False
+
         from_blockchain = get_blockchain_from_token_pair_details(
             token_pair=token_pair,
             blockchain_conversion_type=TokenPairEntities.FROM_TOKEN.value)
@@ -166,39 +180,78 @@ class ConversionService:
             token_pair=token_pair,
             blockchain_conversion_type=TokenPairEntities.TO_TOKEN.value)
 
+        # Update decimal places for claim amount
+        from_token_decimals = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
+                                        .get(TokenEntities.ALLOWED_DECIMAL.value)
+        to_token_decimals = token_pair.get(TokenPairEntities.TO_TOKEN.value) \
+                                      .get(TokenEntities.ALLOWED_DECIMAL.value)
+        claim_amount = update_decimal_places(Decimal(amount),
+                                             from_decimals=from_token_decimals,
+                                             to_decimals=to_token_decimals)
+        # Recalculate claim amount by conversion ratio
+        conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
+        if conversion_ratio:
+            claim_amount = calculate_claim_amount_by_conversion_ratio(
+                amount=claim_amount,
+                conversion_ratio=Decimal(conversion_ratio)
+            )
+        # Liquidity check
+        self.check_liquidity_balance(token_pair_id, claim_amount)
+
         if not is_supported_network_conversion(from_blockchain=from_blockchain, to_blockchain=to_blockchain):
             logger.exception(f"Unsupported network conversion detected from_blockchain={from_blockchain}, "
                              f"to_blockchain={to_blockchain}")
             raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
                                                error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
-        from_blockchain_name = from_blockchain.get(BlockchainEntities.NAME.value)
+        from_blockchain_name = BlockchainName(from_blockchain.get(BlockchainEntities.NAME.value).capitalize())
+        to_blockchain_name = BlockchainName(to_blockchain.get(BlockchainEntities.NAME.value).capitalize())
+        evm_blockchains = [BlockchainName.ETHEREUM, BlockchainName.BINANCE]
 
-        evm_blockchains = [BlockchainName.ETHEREUM.value.lower(), BlockchainName.BINANCE.value.lower()]
-        if from_blockchain_name.lower() in evm_blockchains:
-            is_signer_as_from_address = True
-            chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
-        else:
+        is_signer_as_from_address = True
+        signer_blockchain = from_blockchain_name
+        chain_id = from_blockchain.get(BlockchainEntities.CHAIN_ID.value)
+        if from_blockchain_name == BlockchainName.CARDANO and to_blockchain_name in evm_blockchains:
+            is_signer_as_from_address = False
+            signer_blockchain = to_blockchain_name
             chain_id = to_blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
-        network_url = get_evm_network_url(chain_id=chain_id)
-        evm_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
-        current_block_no = evm_web3_object.get_current_block_no()
-        if not block_number <= current_block_no or block_number < (current_block_no - SIGNATURE_EXPIRY_BLOCK_NUMBER):
+        if signer_blockchain in evm_blockchains:
+            network_url = get_evm_network_url(chain_id=chain_id)
+            evm_web3_object = BlockChainUtil(provider_type="HTTP_PROVIDER", provider=network_url)
+            current_block_no = evm_web3_object.get_current_block_no()
+            last_valid_block_no = current_block_no - SIGNATURE_EXPIRY_BLOCKS[signer_blockchain.name]
+            is_block_number_valid = (last_valid_block_no <= block_number <= current_block_no)
+            is_signature_valid = validate_conversion_signature(token_pair_id=token_pair_id, amount=amount,
+                                                               from_address=from_address, to_address=to_address,
+                                                               block_number=block_number, signature=signature,
+                                                               is_signer_as_from_address=is_signer_as_from_address,
+                                                               chain_id=chain_id)
+        elif signer_blockchain == BlockchainName.CARDANO:
+            url, project_id = get_cardano_network_url_and_project_id(chain_id=chain_id)
+            cardano_blockchain = CardanoBlockchainUtil(project_id=project_id, base_url=url)
+            current_block_no = cardano_blockchain.get_latest_block().height
+            last_valid_block_no = current_block_no - SIGNATURE_EXPIRY_BLOCKS[signer_blockchain.name]
+            is_block_number_valid = (last_valid_block_no <= block_number <= current_block_no)
+            is_signature_valid = validate_cardano_conversion_signature(token_pair_id, amount, from_address, to_address,
+                                                                       block_number, signature, key,
+                                                                       is_signer_as_from_address)
+        else:
+            logger.error(f"Unsupported signer blockchain provided: {signer_blockchain}")
+            raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM)
+
+        if not is_block_number_valid:
             raise BadRequestException(error_code=ErrorCode.SIGNATURE_EXPIRED.value,
                                       error_details=ErrorDetails[ErrorCode.SIGNATURE_EXPIRED.value].value)
 
-        result = validate_conversion_signature(token_pair_id=token_pair_id, amount=amount, from_address=from_address,
-                                               to_address=to_address, block_number=block_number, signature=signature,
-                                               is_signer_as_from_address=is_signer_as_from_address, chain_id=chain_id)
-        if result is False:
+        if not is_signature_valid:
             raise BadRequestException(error_code=ErrorCode.INCORRECT_SIGNATURE.value,
                                       error_details=ErrorDetails[ErrorCode.INCORRECT_SIGNATURE.value].value)
 
         validate_address(from_address=from_address, to_address=to_address, from_blockchain=from_blockchain,
                          to_blockchain=to_blockchain)
 
-    def create_conversion_request(self, token_pair_id, amount, from_address, to_address, block_number, signature):
+    def create_conversion_request(self, token_pair_id, amount, from_address, to_address, block_number, signature, key):
         logger.info(f"Creating the conversion request for token_pair_id={token_pair_id}, amount={amount}, "
                     f"from_address={from_address}, to_address={to_address}, block_number={block_number}, "
                     f"signature={signature}")
@@ -212,10 +265,10 @@ class ConversionService:
                                            min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                            max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
 
-        ConversionService.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
-                                                               from_address=from_address, to_address=to_address,
-                                                               block_number=block_number, signature=signature,
-                                                               token_pair=token_pair)
+        self.create_conversion_request_validation(token_pair_id=token_pair_id, amount=amount,
+                                                  from_address=from_address, to_address=to_address,
+                                                  block_number=block_number, signature=signature,
+                                                  key=key, token_pair=token_pair)
         wallet_pair = self.wallet_pair_service.persist_wallet_pair_details(from_address=from_address,
                                                                            to_address=to_address, amount=amount,
                                                                            signature=signature,
@@ -242,11 +295,13 @@ class ConversionService:
         from_blockchain_name = token_pair.get(TokenPairEntities.FROM_TOKEN.value) \
                                          .get(TokenEntities.BLOCKCHAIN.value) \
                                          .get(BlockchainEntities.NAME.value)
+        conversion_ratio = token_pair.get(TokenPairEntities.CONVERSION_RATIO.value)
         conversion = self.process_conversion_request(wallet_pair_id=wallet_pair.get(WalletPairEntities.ROW_ID.value),
                                                      deposit_amount=amount, fee_amount=fee_amount,
                                                      from_blockchain_name=from_blockchain_name,
                                                      from_token_decimals=from_token_decimals,
-                                                     to_token_decimals=to_token_decimals)
+                                                     to_token_decimals=to_token_decimals,
+                                                     conversion_ratio=conversion_ratio)
 
         conversion_id = conversion[ConversionEntities.ID.value]
         deposit_address = wallet_pair[WalletPairEntities.DEPOSIT_ADDRESS.value]
@@ -290,7 +345,8 @@ class ConversionService:
             raise InternalServerErrorException(error_code=ErrorCode.UNSUPPORTED_CHAIN_ID.value,
                                                error_details=ErrorDetails[ErrorCode.UNSUPPORTED_CHAIN_ID.value].value)
 
-        next_activity = get_next_activity_event_on_conversion(conversion_complete_detail=conversion_detail)
+        next_activity_obj = get_next_activity_event_on_conversion(conversion_complete_detail=conversion_detail)
+        next_activity = next_activity_obj.to_dict() if next_activity_obj else None
         if next_activity is None:
             raise BadRequestException(error_code=ErrorCode.CONVERSION_ALREADY_DONE.value,
                                       error_details=ErrorDetails[ErrorCode.CONVERSION_ALREADY_DONE.value].value)
@@ -306,10 +362,11 @@ class ConversionService:
         blockchain_name = blockchain.get(BlockchainEntities.NAME.value).lower()
         chain_id = blockchain.get(BlockchainEntities.CHAIN_ID.value)
 
-        if created_by == CreatedBy.DAPP.value and blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
-            raise BadRequestException(
-                error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
-                error_details=ErrorDetails[ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
+        # Removed to be able to create cardano transactions from DAPP
+        # if created_by == CreatedBy.DAPP.value and blockchain_name.lower() == BlockchainName.CARDANO.value.lower():
+        #     raise BadRequestException(
+        #         error_code=ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value,
+        #         error_details=ErrorDetails[ErrorCode.DAPP_AUTHORIZED_FOR_CARDANO_TX_UPDATE.value].value)
 
         check_existing_transaction_state(transactions=transactions, conversion_on=conversion_on)
 
@@ -330,7 +387,7 @@ class ConversionService:
         return next_activity
 
     def process_conversion_request(self, wallet_pair_id: str, deposit_amount: Decimal, fee_amount: Decimal,
-                                   from_blockchain_name, from_token_decimals, to_token_decimals,
+                                   from_blockchain_name, from_token_decimals, to_token_decimals, conversion_ratio,
                                    created_by: str = CreatedBy.DAPP.value):
         logger.info(f"Processing the conversion request with wallet_pair_id={wallet_pair_id}, "
                     f"deposit_amount={deposit_amount}, fee_amount={fee_amount}, "
@@ -342,8 +399,8 @@ class ConversionService:
             conversion = self.get_latest_user_pending_conversion_request(wallet_pair_id=wallet_pair_id)
 
         if conversion and (created_by == CreatedBy.DAPP.value or
-                           Decimal(float(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value))) != deposit_amount
-                           or Decimal(float(conversion.get(ConversionEntities.FEE_AMOUNT.value))) != fee_amount):
+                           Decimal(conversion.get(ConversionEntities.DEPOSIT_AMOUNT.value)) != deposit_amount
+                           or Decimal(conversion.get(ConversionEntities.FEE_AMOUNT.value)) != fee_amount):
             self.update_conversion(conversion_id=conversion[ConversionEntities.ID.value],
                                    status=ConversionStatus.EXPIRED.value)
             conversion = None
@@ -352,6 +409,11 @@ class ConversionService:
             claim_amount = update_decimal_places(deposit_amount - fee_amount,
                                                  from_decimals=from_token_decimals,
                                                  to_decimals=to_token_decimals)
+            if conversion_ratio:
+                claim_amount = calculate_claim_amount_by_conversion_ratio(
+                    amount=claim_amount,
+                    conversion_ratio=Decimal(conversion_ratio)
+                )
             conversion = self.create_conversion(wallet_pair_id=wallet_pair_id, deposit_amount=deposit_amount,
                                                 fee_amount=fee_amount, claim_amount=claim_amount,
                                                 created_by=created_by)
@@ -521,7 +583,13 @@ class ConversionService:
         claim_amount = conversion.get(ConversionEntities.CLAIM_AMOUNT.value)
         fee_amount = conversion.get(ConversionEntities.FEE_AMOUNT.value)
         # We should return total amount of tokens because contract on the Ethereum side calculate fees by itself
-        claim_amount = str(Decimal(float(claim_amount)) + Decimal(float(fee_amount)))
+        claim_amount = str(Decimal(claim_amount) + Decimal(fee_amount))
+
+        # Recheck available liquidity for claim
+        token_pair = conversion_detail.get(ConversionDetailEntities.TOKEN_PAIR.value)
+        token_pair_id = token_pair.get(TokenPairEntities.ID.value)
+        self.check_liquidity_balance(token_pair_id, claim_amount)
+
         user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
                                         .get(WalletPairEntities.TO_ADDRESS.value)
         contract_address = self.get_token_contract_address_for_conversion_id(
@@ -531,7 +599,7 @@ class ConversionService:
         # Generate claim signature
         claim_signature = get_signature(signature_type=SignatureTypeEntities.CONVERSION_IN.value,
                                         user_address=user_address, conversion_id=conversion_id,
-                                        amount=Decimal(float(claim_amount)),
+                                        amount=Decimal(claim_amount),
                                         contract_address=contract_address, chain_id=chain_id)
         # Update the signature and status
         self.update_conversion(conversion_id=conversion_id, claim_signature=claim_signature)
@@ -543,12 +611,32 @@ class ConversionService:
         logger.info(f"Getting the conversion count by status for the address={address}")
         return self.conversion_repo.get_conversion_count_by_status(address=address)
 
+    def get_liquidity_balance_data(self, token_pair_id: str):
+        logger.info(f"Retrieving liquidity balance for token_pair_id {token_pair_id}")
+
+        locked_tokens = self.conversion_repo.get_processing_claim_amount_for_token_pair(token_pair_id)
+        frozen_tokens = self.conversion_repo.get_initiated_claim_amount_for_token_pair(token_pair_id)
+
+        current_liquidity_balance = get_converter_contract_balance(token_pair_id)
+
+        if current_liquidity_balance is None:
+            raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
+
+        data = {
+            "available": current_liquidity_balance - locked_tokens - frozen_tokens,
+            "liquidity": current_liquidity_balance,
+            "locked": locked_tokens,
+            "frozen": frozen_tokens
+        }
+
+        return data
+
     def expire_conversion(self):
         current_datetime = datetime_in_utcnow()
         cardano_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("CARDANO", 0))
         ethereum_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("ETHEREUM", 0))
         binance_expire_datetime = relative_date(date_time=current_datetime, hours=EXPIRE_CONVERSION.get("BINANCE", 0))
-        print(f"Expiring the conversion of ethereum and cardano which is less than or equal to "
+        print(f"Expiring the conversion of ethereum, cardano and binance which is less than or equal to "
               f"{ethereum_expire_datetime}, {cardano_expire_datetime} or {binance_expire_datetime} respectively ")
         conversions = self.conversion_repo.get_expiring_conversion(
             ethereum_expire_datetime=ethereum_expire_datetime,
