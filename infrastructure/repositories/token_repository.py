@@ -20,7 +20,8 @@ class TokenRepository(BaseRepository):
                                         created_at=token_pair.created_at, updated_at=token_pair.updated_at,
                                         from_token=token_pair.from_token, to_token=token_pair.to_token,
                                         conversion_fee=token_pair.conversion_fee,
-                                        conversion_ratio=token_pair.conversion_ratio) for
+                                        conversion_ratio=token_pair.conversion_ratio,
+                                        is_liquid=token_pair.is_liquid) for
                 token_pair
                 in token_pairs]
 
@@ -46,4 +47,5 @@ class TokenRepository(BaseRepository):
                                        created_at=token_pair.created_at, updated_at=token_pair.updated_at,
                                        from_token=token_pair.from_token, to_token=token_pair.to_token,
                                        conversion_fee=token_pair.conversion_fee,
-                                       conversion_ratio=token_pair.conversion_ratio)
+                                       conversion_ratio=token_pair.conversion_ratio,
+                                       is_liquid=token_pair.is_liquid)
