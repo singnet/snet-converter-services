@@ -15,7 +15,7 @@ from common.utils import Utils
 from config import SIGNATURE_EXPIRY_BLOCKS, EXPIRE_CONVERSION, CONVERTER_REPORTING_SLACK_HOOK
 from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
-    TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity
+    TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity, TokenLiquidityEntities
 from constants.error_details import ErrorCode, ErrorDetails
 from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities, ConversionOn
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus
@@ -156,11 +156,12 @@ class ConversionService:
         self.conversion_repo.update_conversion_transaction(conversion_transaction_id=conversion_transaction_id,
                                                            status=status)
 
-    def check_liquidity_balance(self, token_pair_id, claim_amount) -> None:
+    def check_liquidity_balance(self, token_pair_id, claim_amount, only_liquidity=False) -> None:
         try:
+            check_field = TokenLiquidityEntities.LIQUIDITY if only_liquidity else TokenLiquidityEntities.AVAILABLE
             # Check amount available for claim
             liquidity_data = self.get_liquidity_balance_data(token_pair_id=token_pair_id)
-            if int(claim_amount) > liquidity_data["available"]:
+            if int(claim_amount) > liquidity_data[check_field.value]:
                 raise BadRequestException(error_code=ErrorCode.INSUFFICIENT_CONTRACT_LIQUIDITY)
         except BadRequestException as e:
             if e.error_code == ErrorCode.NOT_LIQUID_CONTRACT.value:
@@ -588,7 +589,7 @@ class ConversionService:
         # Recheck available liquidity for claim
         token_pair = conversion_detail.get(ConversionDetailEntities.TOKEN_PAIR.value)
         token_pair_id = token_pair.get(TokenPairEntities.ID.value)
-        self.check_liquidity_balance(token_pair_id, claim_amount)
+        self.check_liquidity_balance(token_pair_id, claim_amount, only_liquidity=True)
 
         user_address = conversion_detail.get(ConversionDetailEntities.WALLET_PAIR.value) \
                                         .get(WalletPairEntities.TO_ADDRESS.value)
@@ -627,11 +628,13 @@ class ConversionService:
         if current_liquidity_balance is None:
             raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
 
+        available_liquidity = current_liquidity_balance - locked_tokens - frozen_tokens
+
         data = {
-            "available": current_liquidity_balance - locked_tokens - frozen_tokens,
-            "liquidity": current_liquidity_balance,
-            "locked": locked_tokens,
-            "frozen": frozen_tokens
+            TokenLiquidityEntities.AVAILABLE.value: available_liquidity,
+            TokenLiquidityEntities.LIQUIDITY.value: current_liquidity_balance,
+            TokenLiquidityEntities.LOCKED.value: locked_tokens,
+            TokenLiquidityEntities.FROZEN.value: frozen_tokens
         }
 
         return data
