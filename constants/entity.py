@@ -46,6 +46,13 @@ class TokenPairEntities(Enum):
     UPDATED_AT = "updated_at"
 
 
+class TokenLiquidityEntities(Enum):
+    AVAILABLE = "available"
+    LIQUIDITY = "liquidity"
+    LOCKED = "locked"
+    FROZEN = "frozen"
+
+
 class ConversionFeeEntities(Enum):
     ID = "id"
     PERCENTAGE_FROM_SOURCE = "percentage_from_source"
