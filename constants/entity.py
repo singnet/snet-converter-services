@@ -40,6 +40,7 @@ class TokenPairEntities(Enum):
     TO_TOKEN = "to_token"
     CONVERSION_FEE = "conversion_fee"
     CONVERSION_RATIO = "conversion_ratio"
+    IS_LIQUID = "check_liquidity"
     CREATED_BY = "created_by"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"

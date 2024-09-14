@@ -614,6 +614,11 @@ class ConversionService:
     def get_liquidity_balance_data(self, token_pair_id: str):
         logger.info(f"Retrieving liquidity balance for token_pair_id {token_pair_id}")
 
+        token_pair = self.token_service.get_token_pair_internal(token_pair_id)
+
+        if not token_pair.get(TokenPairEntities.IS_LIQUID.value):
+            raise BadRequestException(error_code=ErrorCode.NOT_LIQUID_CONTRACT)
+
         locked_tokens = self.conversion_repo.get_processing_claim_amount_for_token_pair(token_pair_id)
         frozen_tokens = self.conversion_repo.get_initiated_claim_amount_for_token_pair(token_pair_id)
 

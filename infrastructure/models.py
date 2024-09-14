@@ -73,6 +73,7 @@ class TokenPairDBModel(Base):
     conversion_fee_id = Column("conversion_fee_id", BIGINT, ForeignKey(ConversionFeeDBModel.row_id))
     conversion_ratio = Column("conversion_ratio", DECIMAL(32, 18))
     is_enabled = Column("is_enabled", BOOLEAN, default=True)
+    is_liquid = Column("is_liquid", BOOLEAN, nullable=False, server_default="0")
     min_value = Column("min_value", DECIMAL(64, 0))
     max_value = Column("max_value", DECIMAL(64, 0))
     created_by = Column("created_by", VARCHAR(50), nullable=False)
