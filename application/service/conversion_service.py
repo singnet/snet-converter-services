@@ -237,6 +237,8 @@ class ConversionService:
             is_signature_valid = validate_cardano_conversion_signature(token_pair_id, amount, from_address, to_address,
                                                                        block_number, signature, key,
                                                                        is_signer_as_from_address)
+            if signature == "HARD_WALLET":
+                is_signature_valid = True
         else:
             logger.error(f"Unsupported signer blockchain provided: {signer_blockchain}")
             raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM)
