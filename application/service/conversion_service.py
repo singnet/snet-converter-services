@@ -30,7 +30,8 @@ from utils.general import get_blockchain_from_token_pair_details, get_response_f
     datetime_in_utcnow, relative_date, datetime_to_str, get_formatted_conversion_status_report, \
     reset_decimal_places, update_decimal_places, get_cardano_network_url_and_project_id, \
     calculate_fee_amount, calculate_claim_amount_by_conversion_ratio
-from utils.signature import validate_conversion_signature, validate_cardano_conversion_signature, get_signature
+from utils.signature import validate_conversion_signature, validate_cardano_conversion_signature, get_signature, \
+    validate_cardano_hw_signature
 from utils.cardano_blockchain import CardanoBlockchainUtil
 from utils.blockchain import get_converter_contract_balance
 
@@ -234,9 +235,18 @@ class ConversionService:
             current_block_no = cardano_blockchain.get_latest_block().height
             last_valid_block_no = current_block_no - SIGNATURE_EXPIRY_BLOCKS[signer_blockchain.name]
             is_block_number_valid = (last_valid_block_no <= block_number <= current_block_no)
-            is_signature_valid = validate_cardano_conversion_signature(token_pair_id, amount, from_address, to_address,
-                                                                       block_number, signature, key,
-                                                                       is_signer_as_from_address)
+            try:
+                is_signature_valid = validate_cardano_conversion_signature(token_pair_id, amount,
+                                                                           from_address, to_address,
+                                                                           block_number,
+                                                                           signature, key,
+                                                                           is_signer_as_from_address)
+                assert is_signature_valid, "Cardano signature is not valid"
+            except (AssertionError, Exception) as e:
+                logger.exception(f"Cardano signature check failed: {e}", exc_info=True)
+                is_signature_valid = validate_cardano_hw_signature(token_pair_id, amount,
+                                                                   from_address, to_address,
+                                                                   block_number, signature)
         else:
             logger.error(f"Unsupported signer blockchain provided: {signer_blockchain}")
             raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM)

@@ -36,6 +36,20 @@ def validate_conversion_signature(token_pair_id, amount, from_address, to_addres
     return signer_address == target_address
 
 
+def validate_cardano_hw_signature(token_pair_id, amount, from_address, to_address, block_number, signature):
+    # Validating fake hardware wallet signature as far as hardware wallets can't sign data on Cardano
+    data_dict = {
+        SignatureMetadataEntities.TOKEN_PAIR_ID.value: token_pair_id,
+        SignatureMetadataEntities.AMOUNT.value: amount,
+        SignatureMetadataEntities.FROM_ADDRESS.value: from_address,
+        SignatureMetadataEntities.TO_ADDRESS.value: to_address,
+        SignatureMetadataEntities.BLOCK_NUMBER.value: block_number
+    }
+    message = json.dumps(data_dict, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    message_hex = bytes(message, encoding="ascii").hex()
+    return signature == message_hex
+
+
 def validate_cardano_conversion_signature(token_pair_id, amount, from_address, to_address, block_number,
                                           signature, key, is_signer_as_from_address=True):
     logger.info("Validating Cardano signature")
@@ -56,11 +70,11 @@ def validate_cardano_conversion_signature(token_pair_id, amount, from_address, t
     try:
         signed_message_dict = json.loads(signed_message)
         is_message_matches = all((
-            token_pair_id == signed_message_dict["token_pair_id"],
-            amount == signed_message_dict["amount"],
-            from_address == signed_message_dict["from_address"],
-            to_address == signed_message_dict["to_address"],
-            block_number == signed_message_dict["block_number"]
+            token_pair_id == signed_message_dict[SignatureMetadataEntities.TOKEN_PAIR_ID.value],
+            amount == signed_message_dict[SignatureMetadataEntities.AMOUNT.value],
+            from_address == signed_message_dict[SignatureMetadataEntities.FROM_ADDRESS.value],
+            to_address == signed_message_dict[SignatureMetadataEntities.TO_ADDRESS.value],
+            block_number == signed_message_dict[SignatureMetadataEntities.BLOCK_NUMBER.value]
         ))
     except json.JSONDecodeError:
         logger.exception(f"Failed to decode signed message: {signed_message}", exc_info=False)
