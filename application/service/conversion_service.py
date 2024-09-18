@@ -234,11 +234,16 @@ class ConversionService:
             current_block_no = cardano_blockchain.get_latest_block().height
             last_valid_block_no = current_block_no - SIGNATURE_EXPIRY_BLOCKS[signer_blockchain.name]
             is_block_number_valid = (last_valid_block_no <= block_number <= current_block_no)
-            is_signature_valid = validate_cardano_conversion_signature(token_pair_id, amount, from_address, to_address,
-                                                                       block_number, signature, key,
-                                                                       is_signer_as_from_address)
             if signature == "HARD_WALLET":
                 is_signature_valid = True
+            else:
+                is_signature_valid = validate_cardano_conversion_signature(token_pair_id, amount,
+                                                                           from_address,
+                                                                           to_address,
+                                                                           block_number,
+                                                                           signature,
+                                                                           key,
+                                                                           is_signer_as_from_address)
         else:
             logger.error(f"Unsupported signer blockchain provided: {signer_blockchain}")
             raise BadRequestException(error_code=ErrorCode.UNSUPPORTED_BLOCKCHAIN_ON_SYSTEM)
