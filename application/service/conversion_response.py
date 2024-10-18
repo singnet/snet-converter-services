@@ -75,6 +75,7 @@ def get_blockchain_response(blockchain):
     return {
         BlockchainEntities.NAME.value: blockchain[BlockchainEntities.NAME.value],
         BlockchainEntities.SYMBOL.value: blockchain[BlockchainEntities.SYMBOL.value],
+        BlockchainEntities.LOGO.value: blockchain[BlockchainEntities.LOGO.value],
         BlockchainEntities.CHAIN_ID.value: blockchain[BlockchainEntities.CHAIN_ID.value]
     }
 
@@ -83,6 +84,7 @@ def get_token_response(token):
     return {
         TokenEntities.NAME.value: token[TokenEntities.NAME.value],
         TokenEntities.SYMBOL.value: token[TokenEntities.SYMBOL.value],
+        TokenEntities.LOGO.value: token[TokenEntities.LOGO.value],
         TokenEntities.ALLOWED_DECIMAL.value: token[TokenEntities.ALLOWED_DECIMAL.value],
         TokenEntities.BLOCKCHAIN.value: get_blockchain_response(token[TokenEntities.BLOCKCHAIN.value])
     }

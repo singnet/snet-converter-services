@@ -47,6 +47,12 @@ class SleepTimeEntities(Enum):
     TRANSACTION_HASH_PRESENCE = "TRANSACTION_HASH_PRESENCE"
 
 
+class ConversionHistoryOrder(Enum):
+    STATUS = "STATUS"
+    DATE = "DATE"
+    DEFAULT = STATUS
+
+
 SIGNATURE_TYPES = [SignatureTypeEntities.CONVERSION_IN.value, SignatureTypeEntities.CONVERSION_OUT.value]
 
 ENV_CONVERTER_SIGNER_PRIVATE_KEY_PATH = {
