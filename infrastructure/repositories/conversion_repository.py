@@ -3,6 +3,7 @@ from sqlalchemy.orm import joinedload, aliased
 
 from constants.general import CreatedBy, BlockchainName, ConversionOn
 from constants.status import ConversionStatus, ConversionTransactionStatus
+from constants.lambdas import PaginationDefaults
 from domain.factory.conversion_factory import ConversionFactory
 from infrastructure.models import ConversionDBModel, WalletPairDBModel, TokenPairDBModel, TokenDBModel, \
     ConversionTransactionDBModel, TransactionDBModel, BlockChainDBModel
@@ -250,58 +251,103 @@ class ConversionRepository(BaseRepository):
         return contract_address[0]
 
     @read_from_db()
-    def get_conversion_history_count(self, address):
-        count = self.session.query(func.count(ConversionDBModel.id)) \
-            .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
-            .filter(
-            or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address)) \
-            .first()
+    def get_conversion_history_count(self, address, blockchain_name, token_symbol, conversion_status):
+
+        from_token = aliased(TokenDBModel)
+        to_token = aliased(TokenDBModel)
+        from_blockchain = aliased(BlockChainDBModel)
+        to_blockchain = aliased(BlockChainDBModel)
+
+        query = self.session.query(func.count(ConversionDBModel.id)) \
+            .join(ConversionDBModel.wallet_pair) \
+            .join(WalletPairDBModel.token_pair) \
+            .join(from_token, TokenPairDBModel.from_token) \
+            .join(to_token, TokenPairDBModel.to_token) \
+            .join(from_blockchain, from_token.blockchain_detail) \
+            .join(to_blockchain, to_token.blockchain_detail)
+
+        # Filtering
+        if address:
+            query = query.filter(
+                or_(WalletPairDBModel.from_address == address,
+                    WalletPairDBModel.to_address == address)
+            )
+        if blockchain_name:
+            query = query.filter(
+                or_(from_blockchain.name == blockchain_name,
+                    to_blockchain.name == blockchain_name)
+            )
+        if token_symbol:
+            query = query.filter(
+                or_(from_token.symbol == token_symbol,
+                    to_token.symbol == token_symbol)
+            )
+        if conversion_status:
+            query = query.filter(ConversionDBModel.status == conversion_status)
+
+        count = query.first()
 
         return count[0]
 
     @read_from_db()
-    def get_conversion_history(self, address, conversion_id, offset=0, limit=15):
+    def get_conversion_history(self, address, blockchain_name, token_symbol, conversion_status,
+                               offset=0, limit=PaginationDefaults.PAGE_SIZE.value):
 
-        conversions_detail_query = self.session.query(ConversionDBModel) \
-            .join(WalletPairDBModel, WalletPairDBModel.row_id == ConversionDBModel.wallet_pair_id) \
-            .join(TokenPairDBModel, TokenPairDBModel.row_id == WalletPairDBModel.token_pair_id) \
-            .order_by(case(
+        from_token = aliased(TokenDBModel)
+        to_token = aliased(TokenDBModel)
+        from_blockchain = aliased(BlockChainDBModel)
+        to_blockchain = aliased(BlockChainDBModel)
+
+        query = self.session.query(ConversionDBModel) \
+            .join(ConversionDBModel.wallet_pair) \
+            .join(WalletPairDBModel.token_pair) \
+            .join(from_token, TokenPairDBModel.from_token) \
+            .join(to_token, TokenPairDBModel.to_token) \
+            .join(from_blockchain, from_token.blockchain_detail) \
+            .join(to_blockchain, to_token.blockchain_detail)
+
+        # Filtering
+        if address:
+            query = query.filter(
+                or_(WalletPairDBModel.from_address == address,
+                    WalletPairDBModel.to_address == address)
+            )
+        if blockchain_name:
+            query = query.filter(
+                or_(from_blockchain.name == blockchain_name,
+                    to_blockchain.name == blockchain_name)
+            )
+        if token_symbol:
+            query = query.filter(
+                or_(from_token.symbol == token_symbol,
+                    to_token.symbol == token_symbol)
+            )
+        if conversion_status:
+            query = query.filter(ConversionDBModel.status == conversion_status)
+
+        # Ordering
+        query = query.order_by(
+            case(
                 [
-                    (
-                        ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value, 1
-                    ),
-                    (
-                        ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2
-                    ),
-                    (
-                        ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3
-                    ),
-                    (
-                        ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4
-                    ),
-                    (
-                        ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5
-                    ),
-                    (
-                        ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6
-                    )
+                    (ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value, 1),
+                    (ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2),
+                    (ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3),
+                    (ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4),
+                    (ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5),
+                    (ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6)
                 ],
                 else_=7
-            ).asc(), ConversionDBModel.created_at.desc())
+            ).asc(),
+            ConversionDBModel.created_at.desc()
+        )
 
-        if address:
-            conversions_detail_query = conversions_detail_query.filter(
-                or_(WalletPairDBModel.from_address == address, WalletPairDBModel.to_address == address))
+        conversions_details = query.options(joinedload(ConversionDBModel.wallet_pair)) \
+            .options(joinedload(ConversionDBModel.wallet_pair).joinedload(WalletPairDBModel.token_pair)) \
+            .offset(offset) \
+            .limit(limit) \
+            .all()
 
-        if conversion_id:
-            conversions_detail_query = conversions_detail_query.filter(ConversionDBModel.id == conversion_id)
-
-        conversions_detail = conversions_detail_query.options(joinedload(ConversionDBModel.wallet_pair)).options(
-            joinedload(ConversionDBModel.wallet_pair).joinedload(WalletPairDBModel.token_pair)).offset(offset).limit(
-            limit).all()
-
-        return [ConversionFactory.conversion_detail(conversion=conversion_detail) for conversion_detail in
-                conversions_detail]
+        return [ConversionFactory.conversion_detail(conversion_detail) for conversion_detail in conversions_details]
 
     @read_from_db()
     def get_transactions_for_conversion_row_ids(self, conversion_row_ids):
