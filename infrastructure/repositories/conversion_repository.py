@@ -1,7 +1,7 @@
 from sqlalchemy import or_, case, func, and_
 from sqlalchemy.orm import joinedload, aliased
 
-from constants.general import CreatedBy, BlockchainName, ConversionOn
+from constants.general import CreatedBy, BlockchainName, ConversionOn, ConversionHistoryOrder
 from constants.status import ConversionStatus, ConversionTransactionStatus
 from constants.lambdas import PaginationDefaults
 from domain.factory.conversion_factory import ConversionFactory
@@ -291,6 +291,7 @@ class ConversionRepository(BaseRepository):
 
     @read_from_db()
     def get_conversion_history(self, address, blockchain_name, token_symbol, conversion_status,
+                               order=ConversionHistoryOrder.DEFAULT,
                                offset=0, limit=PaginationDefaults.PAGE_SIZE.value):
 
         from_token = aliased(TokenDBModel)
@@ -326,20 +327,23 @@ class ConversionRepository(BaseRepository):
             query = query.filter(ConversionDBModel.status == conversion_status)
 
         # Ordering
-        query = query.order_by(
-            case(
-                [
-                    (ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value, 1),
-                    (ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2),
-                    (ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3),
-                    (ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4),
-                    (ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5),
-                    (ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6)
-                ],
-                else_=7
-            ).asc(),
-            ConversionDBModel.created_at.desc()
-        )
+        if order == ConversionHistoryOrder.STATUS:
+            query = query.order_by(
+                case(
+                    [
+                        (ConversionDBModel.status == ConversionStatus.WAITING_FOR_CLAIM.value, 1),
+                        (ConversionDBModel.status == ConversionStatus.USER_INITIATED.value, 2),
+                        (ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3),
+                        (ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4),
+                        (ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5),
+                        (ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6)
+                    ],
+                    else_=7
+                ).asc(),
+                ConversionDBModel.created_at.desc()
+            )
+        elif order == ConversionHistoryOrder.DATE:
+            query = query.order_by(ConversionDBModel.created_at.desc())
 
         conversions_details = query.options(joinedload(ConversionDBModel.wallet_pair)) \
             .options(joinedload(ConversionDBModel.wallet_pair).joinedload(WalletPairDBModel.token_pair)) \

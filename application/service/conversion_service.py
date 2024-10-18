@@ -17,7 +17,7 @@ from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity, TokenLiquidityEntities
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities, ConversionOn
+from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities, ConversionOn, ConversionHistoryOrder
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus
 from constants.lambdas import PaginationDefaults
 from infrastructure.repositories.conversion_repository import ConversionRepository
@@ -443,11 +443,12 @@ class ConversionService:
                 error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_DIRECTION.value].value)
 
     def get_conversion_history(self, address, blockchain_name, token_symbol, conversion_status,
+                               order=ConversionHistoryOrder.DEFAULT,
                                page_size=PaginationDefaults.PAGE_SIZE.value,
                                page_number=PaginationDefaults.PAGE_NUMBER.value):
-        logger.info(f"Getting the conversion history for the given address={address}, blockchain={blockchain_name}, "
-                    f"token={token_symbol}, status={conversion_status}, "
-                    f"page_size={page_size}, page_number={page_number}")
+        logger.info(f"Getting the conversion history for the given address={address}, "
+                    f"blockchain={blockchain_name}, token={token_symbol}, status={conversion_status}, "
+                    f"order={order.value}, page_size={page_size}, page_number={page_number}")
         total_conversion_history = self.conversion_repo.get_conversion_history_count(
             address=address,
             blockchain_name=blockchain_name,
@@ -461,6 +462,7 @@ class ConversionService:
                                                                                  blockchain_name=blockchain_name,
                                                                                  token_symbol=token_symbol,
                                                                                  conversion_status=conversion_status,
+                                                                                 order=order,
                                                                                  offset=offset,
                                                                                  limit=page_size)
             conversion_history = get_response_from_entities(conversion_history_obj)

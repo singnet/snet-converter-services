@@ -16,6 +16,7 @@ class ApiParameters(Enum):
     TRANSACTION_HASH = "transaction_hash"
     PAGE_SIZE = "page_size"
     PAGE_NUMBER = "page_number"
+    ORDER_BY = "order_by"
     ADDRESS = "address"
     ETHEREUM_ADDRESS = "ethereum_address"
 

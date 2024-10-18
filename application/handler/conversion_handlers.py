@@ -7,7 +7,7 @@ sys.path.append('/opt')
 from web3 import Web3
 from http import HTTPStatus
 
-from constants.general import MAX_PAGE_SIZE
+from constants.general import MAX_PAGE_SIZE, ConversionHistoryOrder
 from constants.api_parameters import ApiParameters
 from constants.lambdas import HttpRequestParamType, LambdaResponseStatus, PaginationDefaults
 from constants.error_details import ErrorCode, ErrorDetails
@@ -102,6 +102,10 @@ def get_conversion_history(event, context):
     blockchain_name = query_param.get(ApiParameters.BLOCKCHAIN_NAME.value)
     token_symbol = query_param.get(ApiParameters.TOKEN_SYMBOL.value)
     conversion_status = query_param.get(ApiParameters.CONVERSION_STATUS.value)
+    try:
+        history_order = ConversionHistoryOrder(query_param.get(ApiParameters.ORDER_BY.value).upper())
+    except (AttributeError, ValueError):
+        history_order = ConversionHistoryOrder.DEFAULT
 
     if not address:
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
@@ -122,6 +126,7 @@ def get_conversion_history(event, context):
                                                          blockchain_name=blockchain_name,
                                                          token_symbol=token_symbol,
                                                          conversion_status=conversion_status,
+                                                         order=history_order,
                                                          page_size=page_size,
                                                          page_number=page_number)
 
