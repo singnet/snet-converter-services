@@ -4,7 +4,9 @@ from decimal import Decimal
 from http import HTTPStatus
 import re
 
+from web3.logs import DISCARD
 from web3.exceptions import TransactionNotFound, ABIFunctionNotFound
+
 from pycardano import Address
 from pycardano.exception import DecodingException
 
@@ -125,9 +127,9 @@ def get_evm_transaction_details(web3_object, transaction_hash):
 
 def get_event_logs(contract_instance, receipt, conversion_on):
     if conversion_on == ConversionOn.FROM.value:
-        logs = contract_instance.events.ConversionOut().processReceipt(receipt)
+        logs = contract_instance.events.ConversionOut().processReceipt(receipt, errors=DISCARD)
     else:
-        logs = contract_instance.events.ConversionIn().processReceipt(receipt)
+        logs = contract_instance.events.ConversionIn().processReceipt(receipt, errors=DISCARD)
 
     return logs
 
