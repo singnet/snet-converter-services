@@ -8,6 +8,7 @@ class ConversionStatus(Enum):
     SUCCESS = "SUCCESS"
     CLAIM_INITIATED = "CLAIM_INITIATED"
     EXPIRED = "EXPIRED"
+    CANCELED = "CANCELED"
 
 
 class ConversionTransactionStatus(Enum):
@@ -26,6 +27,7 @@ class TransactionOperation(Enum):
     TOKEN_BURNT = "TOKEN_BURNT"
     TOKEN_MINTED = "TOKEN_MINTED"
     TOKEN_TRANSFERRED = "TOKEN_TRANSFERRED"
+    TOKEN_REFUNDED = "TOKEN_REFUNDED"
 
 
 EthereumToCardanoEvent = {"ethereum": [TransactionOperation.TOKEN_BURNT.value],
