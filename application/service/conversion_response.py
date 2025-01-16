@@ -1,5 +1,6 @@
 from constants.entity import ConversionEntities, TokenPairEntities, WalletPairEntities, ConversionDetailEntities, TokenEntities, \
     BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities
+from application.service.token_reponse import get_trading_view_response
 
 
 def conversion_response(conversion):
@@ -86,7 +87,8 @@ def get_token_response(token):
         TokenEntities.SYMBOL.value: token[TokenEntities.SYMBOL.value],
         TokenEntities.LOGO.value: token[TokenEntities.LOGO.value],
         TokenEntities.ALLOWED_DECIMAL.value: token[TokenEntities.ALLOWED_DECIMAL.value],
-        TokenEntities.BLOCKCHAIN.value: get_blockchain_response(token[TokenEntities.BLOCKCHAIN.value])
+        TokenEntities.BLOCKCHAIN.value: get_blockchain_response(token[TokenEntities.BLOCKCHAIN.value]),
+        # TokenEntities.TRADING_VIEW.value: get_trading_view_response(token[TokenEntities.TRADING_VIEW.value])
     }
 
 
@@ -95,7 +97,8 @@ def get_token_internal_response(token):
         TokenEntities.ROW_ID.value: token[TokenEntities.ROW_ID.value],
         TokenEntities.NAME.value: token[TokenEntities.NAME.value],
         TokenEntities.SYMBOL.value: token[TokenEntities.SYMBOL.value],
-        TokenEntities.BLOCKCHAIN.value: get_blockchain_response(token[TokenEntities.BLOCKCHAIN.value])
+        TokenEntities.BLOCKCHAIN.value: get_blockchain_response(token[TokenEntities.BLOCKCHAIN.value]),
+        # TokenEntities.TRADING_VIEW.value: get_trading_view_response(token[TokenEntities.TRADING_VIEW.value])
     }
 
 
