@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from domain.factory.PoolFactory import PoolFactory
+from domain.factory.pool_factory import PoolFactory
 from infrastructure.models import MessageGroupPoolDBModel
 from infrastructure.repositories.base_repository import BaseRepository
 from utils.database import read_from_db, update_in_db

@@ -26,7 +26,17 @@ class TokenEntities(Enum):
     TOKEN_ADDRESS = "token_address"
     CONTRACT_ADDRESS = "contract_address"
     BLOCKCHAIN = "blockchain"
+    TRADING_VIEW = "trading_view"
     CREATED_BY = "created_by"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class TradingViewEntities(Enum):
+    ROW_ID = "row_id"
+    ID = "id"
+    SYMBOL = "symbol"
+    ALT_TEXT = "alt_text"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
 
