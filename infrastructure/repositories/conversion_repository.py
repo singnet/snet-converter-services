@@ -336,9 +336,10 @@ class ConversionRepository(BaseRepository):
                         (ConversionDBModel.status == ConversionStatus.CLAIM_INITIATED.value, 3),
                         (ConversionDBModel.status == ConversionStatus.PROCESSING.value, 4),
                         (ConversionDBModel.status == ConversionStatus.SUCCESS.value, 5),
-                        (ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6)
+                        (ConversionDBModel.status == ConversionStatus.EXPIRED.value, 6),
+                        (ConversionDBModel.status == ConversionStatus.CANCELED.value, 7)
                     ],
-                    else_=7
+                    else_=8
                 ).asc(),
                 ConversionDBModel.created_at.desc()
             )
