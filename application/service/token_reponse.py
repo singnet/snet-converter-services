@@ -13,6 +13,7 @@ def get_trading_view_response(trading_view):
 def get_token_response(token):
     return {
         TokenEntities.ID.value: token[TokenEntities.ID.value],
+        TokenEntities.NAME.value: token[TokenEntities.NAME.value],
         TokenEntities.SYMBOL.value: token[TokenEntities.SYMBOL.value],
         TokenEntities.LOGO.value: token[TokenEntities.LOGO.value],
         TokenEntities.ALLOWED_DECIMAL.value: token[TokenEntities.ALLOWED_DECIMAL.value],
