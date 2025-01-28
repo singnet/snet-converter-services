@@ -44,8 +44,8 @@ class ErrorCode(Enum):
     UNABLE_TO_PARSE_THE_INPUT_EVENT = "E0040"
     QUEUE_DETAILS_NOT_FOUND = "E0041"
     INVALID_TRANSACTION_OPERATION = "E0042"
-    LAMBDA_ARN_MINT_NOT_FOUND = "E0043"  # TODO currently unused, candidate for removal
-    LAMBDA_ARN_BURN_NOT_FOUND = "E0044"  # TODO currently unused, candidate for removal
+    INVALID_TX_ADA_AMOUNT = "E0043"
+    UNEXPECTED_ERROR_ON_ADA_AMOUNT_VALIDATION = "E0044"
     SECRET_KEY_NOT_FOUND = "E0045"
     SECRET_DETAILS_FOR_CONTRACT_NOT_AVAILABLE = "E0046"
     INVALID_SIGNATURE_TYPE_PROVIDED = "E0047"
@@ -130,8 +130,8 @@ class ErrorDetails(Enum):
     E0040 = "Unable to parse the input event provided"
     E0041 = "Queue details not found"
     E0042 = "Invalid Transaction Operation provided"
-    E0043 = "Config of lambda arn for minting is empty"  # TODO currently unused, candidate for removal
-    E0044 = "Config of lambda arn for burn is empty"  # TODO currently unused, candidate for removal
+    E0043 = "Amount of ADA in given transaction is below threshold"
+    E0044 = "Unexpected error on transaction ADA amount validation"
     E0045 = "Secret key not found for signing"
     E0046 = "Secret details for this contract not available"
     E0047 = "Invalid signature type provided"

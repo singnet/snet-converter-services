@@ -65,3 +65,6 @@ class BinanceBlockchainEntities(Enum):
 
 class CardanoBlockEntities(Enum):
     CONFIRMATIONS = "confirmations"
+
+
+DEFAULT_ADA_THRESHOLD = 0
