@@ -15,6 +15,7 @@ class ConversionTransactionStatus(Enum):
     FAILED = "FAILED"
     SUCCESS = "SUCCESS"
     PROCESSING = "PROCESSING"
+    CANCELED = "CANCELED"
 
 
 class TransactionVisibility(Enum):
