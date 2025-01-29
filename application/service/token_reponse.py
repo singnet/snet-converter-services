@@ -65,6 +65,7 @@ def get_token_pair_internal_response(token_pair):
         TokenPairEntities.FROM_TOKEN.value: get_token_response(token_pair[TokenPairEntities.FROM_TOKEN.value]),
         TokenPairEntities.TO_TOKEN.value: get_token_response(token_pair[TokenPairEntities.TO_TOKEN.value]),
         TokenPairEntities.IS_LIQUID.value: token_pair[TokenPairEntities.IS_LIQUID.value],
+        TokenPairEntities.ADA_THRESHOLD.value: token_pair[TokenPairEntities.ADA_THRESHOLD.value],
         TokenPairEntities.CONVERSION_FEE.value: get_conversion_fee_response(
             token_pair[TokenPairEntities.CONVERSION_FEE.value]),
         TokenPairEntities.UPDATED_AT.value: token_pair[TokenPairEntities.UPDATED_AT.value]

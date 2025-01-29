@@ -51,6 +51,7 @@ class TokenPairEntities(Enum):
     CONVERSION_FEE = "conversion_fee"
     CONVERSION_RATIO = "conversion_ratio"
     IS_LIQUID = "check_liquidity"
+    ADA_THRESHOLD = "ada_threshold"
     CREATED_BY = "created_by"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"

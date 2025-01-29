@@ -89,7 +89,8 @@ class ConversionFactory:
                                                  updated_at=token_pair.updated_at, from_token=token_pair.from_token,
                                                  to_token=token_pair.to_token, conversion_fee=token_pair.conversion_fee,
                                                  conversion_ratio=token_pair.conversion_ratio,
-                                                 is_liquid=token_pair.is_liquid)
+                                                 is_liquid=token_pair.is_liquid,
+                                                 ada_threshold=token_pair.ada_threshold)
 
         return ConversionDetail(conversion_obj=conversion_obj, wallet_pair_obj=wallet_pair_obj,
                                 from_token_obj=from_token_obj, to_token_obj=to_token_obj,

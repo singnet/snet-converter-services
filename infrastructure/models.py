@@ -89,6 +89,7 @@ class TokenPairDBModel(Base):
     conversion_ratio = Column("conversion_ratio", DECIMAL(32, 18))
     is_enabled = Column("is_enabled", BOOLEAN, default=True)
     is_liquid = Column("is_liquid", BOOLEAN, nullable=False, server_default="0")
+    ada_threshold = Column("ada_threshold", BIGINT, nullable=True)
     min_value = Column("min_value", DECIMAL(64, 0))
     max_value = Column("max_value", DECIMAL(64, 0))
     created_by = Column("created_by", VARCHAR(50), nullable=False)
