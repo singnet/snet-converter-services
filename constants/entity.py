@@ -67,6 +67,7 @@ class TokenLiquidityEntities(Enum):
 class ConversionFeeEntities(Enum):
     ID = "id"
     PERCENTAGE_FROM_SOURCE = "percentage_from_source"
+    TOKEN = "token"
     CREATED_BY = "created_by"
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"

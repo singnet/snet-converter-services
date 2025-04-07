@@ -1,6 +1,6 @@
 from constants.entity import ConversionEntities, TokenPairEntities, WalletPairEntities, ConversionDetailEntities, TokenEntities, \
     BlockchainEntities, TransactionEntities, TransactionConversionEntities, SignatureMetadataEntities
-from application.service.token_reponse import get_trading_view_response
+from application.service.token_response import get_trading_view_response
 
 
 def conversion_response(conversion):
