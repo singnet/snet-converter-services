@@ -1,5 +1,5 @@
 from application.service.blockchain_response import get_blockchain_for_token_response
-from application.service.conversion_fee_respose import get_conversion_fee_response
+from application.service.conversion_fee_response import get_conversion_fee_response
 from constants.entity import TokenPairEntities, TokenEntities, TradingViewEntities
 
 
