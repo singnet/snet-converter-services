@@ -8,15 +8,18 @@ def get_conversion_fee_response(conversion_fee):
 
     return {
         ConversionFeeEntities.ID.value: conversion_fee[ConversionFeeEntities.ID.value],
-        ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value: conversion_fee[
-            ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value],
-        ConversionFeeEntities.TOKEN.value: get_short_token_response(conversion_fee[
-            ConversionFeeEntities.TOKEN.value]),
+        ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value:
+            conversion_fee[ConversionFeeEntities.PERCENTAGE_FROM_SOURCE.value],
+        ConversionFeeEntities.TOKEN.value:
+            get_short_token_response(conversion_fee[ConversionFeeEntities.TOKEN.value]),
         ConversionFeeEntities.UPDATED_AT.value: conversion_fee[ConversionFeeEntities.UPDATED_AT.value]
     }
 
 
 def get_short_token_response(token):
+    if not len(token):
+        return token
+
     return {
         TokenEntities.ID.value: token[TokenEntities.ID.value],
         TokenEntities.NAME.value: token[TokenEntities.NAME.value],
