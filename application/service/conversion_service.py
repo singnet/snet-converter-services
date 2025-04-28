@@ -17,8 +17,9 @@ from constants.entity import TokenPairEntities, WalletPairEntities, \
     ConversionEntities, TokenEntities, BlockchainEntities, ConversionDetailEntities, TransactionConversionEntities, \
     TransactionEntities, ConversionFeeEntities, ConverterBridgeEntities, EventConsumerEntity, TokenLiquidityEntities
 from constants.error_details import ErrorCode, ErrorDetails
-from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities, ConversionOn
+from constants.general import BlockchainName, CreatedBy, SignatureTypeEntities, ConversionOn, ConversionHistoryOrder
 from constants.status import ConversionStatus, TransactionVisibility, TransactionStatus
+from constants.lambdas import PaginationDefaults
 from infrastructure.repositories.conversion_repository import ConversionRepository
 from utils.blockchain import validate_address, validate_conversion_claim_request_signature, \
     validate_conversion_request_amount, convert_str_to_decimal, get_next_activity_event_on_conversion, \
@@ -441,15 +442,29 @@ class ConversionService:
                 error_code=ErrorCode.INVALID_CONVERSION_DIRECTION.value,
                 error_details=ErrorDetails[ErrorCode.INVALID_CONVERSION_DIRECTION.value].value)
 
-    def get_conversion_history(self, address, page_size, page_number):
-        logger.info(f"Getting the conversion history for the given address={address}, page_size={page_size}, "
-                    f"page_number={page_number}")
-        total_conversion_history = self.conversion_repo.get_conversion_history_count(address=address)
+    def get_conversion_history(self, address, blockchain_name, token_symbol, conversion_status,
+                               order=ConversionHistoryOrder.DEFAULT,
+                               page_size=PaginationDefaults.PAGE_SIZE.value,
+                               page_number=PaginationDefaults.PAGE_NUMBER.value):
+        logger.info(f"Getting the conversion history for the given address={address}, "
+                    f"blockchain={blockchain_name}, token={token_symbol}, status={conversion_status}, "
+                    f"order={order.value}, page_size={page_size}, page_number={page_number}")
+        total_conversion_history = self.conversion_repo.get_conversion_history_count(
+            address=address,
+            blockchain_name=blockchain_name,
+            token_symbol=token_symbol,
+            conversion_status=conversion_status
+        )
         offset = get_offset(page_number=page_number, page_size=page_size)
 
         if total_conversion_history and total_conversion_history > offset:
-            conversion_history_obj = self.conversion_repo.get_conversion_history(address=address, conversion_id=None,
-                                                                                 offset=offset, limit=page_size)
+            conversion_history_obj = self.conversion_repo.get_conversion_history(address=address,
+                                                                                 blockchain_name=blockchain_name,
+                                                                                 token_symbol=token_symbol,
+                                                                                 conversion_status=conversion_status,
+                                                                                 order=order,
+                                                                                 offset=offset,
+                                                                                 limit=page_size)
             conversion_history = get_response_from_entities(conversion_history_obj)
             conversion_detail_history_response = get_conversion_history_response(conversion_history)
         else:
@@ -457,7 +472,8 @@ class ConversionService:
 
         return paginate_items_response_format(items=conversion_detail_history_response,
                                               total_records=total_conversion_history,
-                                              page_number=page_number, page_size=page_size)
+                                              page_number=page_number,
+                                              page_size=page_size)
 
     @staticmethod
     def get_conversion_row_ids(conversion_details):

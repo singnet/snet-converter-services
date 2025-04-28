@@ -4,9 +4,12 @@ from decimal import Decimal
 from http import HTTPStatus
 import re
 
+from web3.logs import DISCARD
 from web3.exceptions import TransactionNotFound, ABIFunctionNotFound
+
 from pycardano import Address
 from pycardano.exception import DecodingException
+from blockfrost.utils import ApiError as BlockfrostApiError
 
 from application.service.cardano_service import CardanoService
 from common.blockchain_util import BlockChainUtil
@@ -125,9 +128,9 @@ def get_evm_transaction_details(web3_object, transaction_hash):
 
 def get_event_logs(contract_instance, receipt, conversion_on):
     if conversion_on == ConversionOn.FROM.value:
-        logs = contract_instance.events.ConversionOut().processReceipt(receipt)
+        logs = contract_instance.events.ConversionOut().processReceipt(receipt, errors=DISCARD)
     else:
-        logs = contract_instance.events.ConversionIn().processReceipt(receipt)
+        logs = contract_instance.events.ConversionIn().processReceipt(receipt, errors=DISCARD)
 
     return logs
 
@@ -377,6 +380,36 @@ def validate_tx_hash_presence_in_blockchain(blockchain_name, tx_hash, network_id
         logger.error(f"Error occurred while checking for tx hash={tx_hash} presence in blockchain={blockchain_name}"
                      f" on the chain_id={network_id} because of {e}")
         raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_TX_HASH_PRESENCE)
+
+
+def validate_tx_token_received_ada_amount(target_amount, address, tx_hash, network_id):
+    """
+    Validates that amount of ADA received on the given address in given transaction (tx_hash) not less then
+    target_amount
+    Only for Cardano transactions, mostly for TOKEN_RECEIVED operation transactions
+    """
+    logger.info(f"Validating that amount of ADA received on the address {address} in transaction {tx_hash} not less"
+                f"then {target_amount}")
+    try:
+        url, project_id = get_cardano_network_url_and_project_id(chain_id=network_id)
+        cardano_blockchain = CardanoBlockchainUtil(project_id=project_id, base_url=url)
+        transaction_utxos = cardano_blockchain.get_transaction_utxos(tx_hash)
+        transaction_amount = 0
+        for output in transaction_utxos.outputs:
+            if output.address == address:
+                for amount in output.amount:
+                    if amount.unit == 'lovelace':
+                        transaction_amount += int(amount.quantity)
+        logger.info(f"Amount of ADA received on address {address} = {transaction_amount}")
+        if transaction_amount < target_amount:
+            raise BadRequestException(ErrorCode.INVALID_TX_ADA_AMOUNT)
+    except BlockfrostApiError:
+        raise BadRequestException(error_code=ErrorCode.TRANSACTION_HASH_NOT_FOUND)
+    except BadRequestException as e:
+        raise e
+    except Exception:
+        logger.exception(f"Unexpected error on transaction ADA amount validation", exc_info=True)
+        raise InternalServerErrorException(error_code=ErrorCode.UNEXPECTED_ERROR_ON_ADA_AMOUNT_VALIDATION)
 
 
 def validate_consumer_event_type(blockchain_name, event_type):

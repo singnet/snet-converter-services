@@ -7,7 +7,7 @@ sys.path.append('/opt')
 from web3 import Web3
 from http import HTTPStatus
 
-from constants.general import MAX_PAGE_SIZE
+from constants.general import MAX_PAGE_SIZE, ConversionHistoryOrder
 from constants.api_parameters import ApiParameters
 from constants.lambdas import HttpRequestParamType, LambdaResponseStatus, PaginationDefaults
 from constants.error_details import ErrorCode, ErrorDetails
@@ -98,7 +98,14 @@ def get_conversion_history(event, context):
                     schema_key="GetConversionHistoryInput", input_json=event)
 
     query_param = get_valid_value(event, HttpRequestParamType.REQUEST_PARAM_QUERY_STRING.value)
-    address = query_param.get(ApiParameters.ADDRESS.value, None)
+    address = query_param.get(ApiParameters.ADDRESS.value)
+    blockchain_name = query_param.get(ApiParameters.BLOCKCHAIN_NAME.value)
+    token_symbol = query_param.get(ApiParameters.TOKEN_SYMBOL.value)
+    conversion_status = query_param.get(ApiParameters.CONVERSION_STATUS.value)
+    try:
+        history_order = ConversionHistoryOrder(query_param.get(ApiParameters.ORDER_BY.value).upper())
+    except (AttributeError, ValueError):
+        history_order = ConversionHistoryOrder.DEFAULT
 
     if not address:
         raise BadRequestException(error_code=ErrorCode.PROPERTY_VALUES_EMPTY.value,
@@ -115,11 +122,19 @@ def get_conversion_history(event, context):
         raise BadRequestException(error_code=ErrorCode.PAGE_SIZE_EXCEEDS_LIMIT.value,
                                   error_details=ErrorDetails[ErrorCode.PAGE_SIZE_EXCEEDS_LIMIT.value].value)
 
-    response = conversion_service.get_conversion_history(address=address, page_size=page_size, page_number=page_number)
+    response = conversion_service.get_conversion_history(address=address,
+                                                         blockchain_name=blockchain_name,
+                                                         token_symbol=token_symbol,
+                                                         conversion_status=conversion_status,
+                                                         order=history_order,
+                                                         page_size=page_size,
+                                                         page_number=page_number)
 
     return generate_lambda_response(HTTPStatus.OK.value,
-                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value, data=response,
-                                                       error=make_error_format()), cors_enabled=True)
+                                    make_response_body(status=LambdaResponseStatus.SUCCESS.value,
+                                                       data=response,
+                                                       error=make_error_format()),
+                                    cors_enabled=True)
 
 
 @exception_handler(EXCEPTIONS=EXCEPTIONS, SLACK_HOOK=SLACK_HOOK, logger=logger)

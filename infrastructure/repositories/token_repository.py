@@ -2,7 +2,7 @@ from sqlalchemy.orm import joinedload
 
 from constants.error_details import ErrorCode, ErrorDetails
 from domain.factory.token_factory import TokenFactory
-from infrastructure.models import TokenPairDBModel
+from infrastructure.models import ConversionFeeDBModel, TokenPairDBModel
 from infrastructure.repositories.base_repository import BaseRepository
 from utils.database import read_from_db
 from utils.exceptions import TokenPairIdNotExitsException
@@ -14,14 +14,15 @@ class TokenRepository(BaseRepository):
     def get_all_token_pair(self):
         token_pairs = self.session.query(TokenPairDBModel).filter(TokenPairDBModel.is_enabled.is_(True)) \
             .options(joinedload(TokenPairDBModel.from_token)).options(joinedload(TokenPairDBModel.to_token)) \
-            .options(joinedload(TokenPairDBModel.conversion_fee)).all()
+            .options(joinedload(TokenPairDBModel.conversion_fee).joinedload(ConversionFeeDBModel.token)).all()
         return [TokenFactory.token_pair(row_id=token_pair.row_id, id_=token_pair.id, min_value=token_pair.min_value,
                                         max_value=token_pair.max_value, created_by=token_pair.created_by,
                                         created_at=token_pair.created_at, updated_at=token_pair.updated_at,
                                         from_token=token_pair.from_token, to_token=token_pair.to_token,
                                         conversion_fee=token_pair.conversion_fee,
                                         conversion_ratio=token_pair.conversion_ratio,
-                                        is_liquid=token_pair.is_liquid) for
+                                        is_liquid=token_pair.is_liquid,
+                                        ada_threshold=token_pair.ada_threshold) for
                 token_pair
                 in token_pairs]
 
@@ -48,4 +49,5 @@ class TokenRepository(BaseRepository):
                                        from_token=token_pair.from_token, to_token=token_pair.to_token,
                                        conversion_fee=token_pair.conversion_fee,
                                        conversion_ratio=token_pair.conversion_ratio,
-                                       is_liquid=token_pair.is_liquid)
+                                       is_liquid=token_pair.is_liquid,
+                                       ada_threshold=token_pair.ada_threshold)

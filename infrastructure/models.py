@@ -26,6 +26,19 @@ class BlockChainDBModel(Base):
     __table_args__ = (UniqueConstraint(name, symbol), {})
 
 
+class TradingViewDBModel(Base):
+    __tablename__ = "trading_view"
+    row_id = Column("row_id", BIGINT, primary_key=True, autoincrement=True)
+    id = Column("id", VARCHAR(50), unique=True, nullable=False)
+    symbol = Column("symbol", VARCHAR(250), nullable=True)
+    alt_text = Column("alt_text", TEXT, nullable=True)
+    created_at = Column("created_at", TIMESTAMP,
+                        server_default=func.current_timestamp(), nullable=False)
+    updated_at = Column("updated_at", TIMESTAMP,
+                        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
+                        nullable=False)
+
+
 class TokenDBModel(Base):
     __tablename__ = "token"
     row_id = Column("row_id", BIGINT, primary_key=True, autoincrement=True)
@@ -35,6 +48,7 @@ class TokenDBModel(Base):
     symbol = Column("symbol", VARCHAR(30), nullable=False)
     logo = Column("logo", VARCHAR(250))
     blockchain_id = Column("blockchain_id", BIGINT, ForeignKey(BlockChainDBModel.row_id), nullable=False)
+    trading_view_id = Column("trading_view_id", BIGINT, ForeignKey(TradingViewDBModel.row_id))
     allowed_decimal = Column("allowed_decimal", INTEGER)
     token_address = Column("token_address", VARCHAR(100), nullable=False)
     contract_address = Column("contract_address", VARCHAR(250), nullable=True)
@@ -45,6 +59,7 @@ class TokenDBModel(Base):
                         server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
                         nullable=False)
     blockchain_detail = relationship(BlockChainDBModel, uselist=False, lazy="joined")
+    trading_view = relationship(TradingViewDBModel, foreign_keys=[trading_view_id], uselist=False, lazy="joined")
     __table_args__ = (UniqueConstraint(name, symbol, blockchain_id), {})
 
 
@@ -74,6 +89,7 @@ class TokenPairDBModel(Base):
     conversion_ratio = Column("conversion_ratio", DECIMAL(32, 18))
     is_enabled = Column("is_enabled", BOOLEAN, default=True)
     is_liquid = Column("is_liquid", BOOLEAN, nullable=False, server_default="0")
+    ada_threshold = Column("ada_threshold", BIGINT, nullable=True)
     min_value = Column("min_value", DECIMAL(64, 0))
     max_value = Column("max_value", DECIMAL(64, 0))
     created_by = Column("created_by", VARCHAR(50), nullable=False)

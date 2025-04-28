@@ -68,7 +68,8 @@ class ConversionFactory:
                                             token_address=from_token.token_address,
                                             contract_address=from_token.contract_address,
                                             created_by=from_token.created_by, created_at=from_token.created_at,
-                                            updated_at=from_token.updated_at, blockchain_detail=from_blockchain)
+                                            updated_at=from_token.updated_at, blockchain_detail=from_blockchain,
+                                            trading_view=from_token.trading_view)
         to_token = token_pair.to_token
         to_blockchain = to_token.blockchain_detail
 
@@ -79,7 +80,8 @@ class ConversionFactory:
                                           token_address=from_token.token_address,
                                           contract_address=to_token.contract_address,
                                           created_by=to_token.created_by, created_at=to_token.created_at,
-                                          updated_at=to_token.updated_at, blockchain_detail=to_blockchain)
+                                          updated_at=to_token.updated_at, blockchain_detail=to_blockchain,
+                                          trading_view=to_token.trading_view)
 
         token_pair_obj = TokenFactory.token_pair(row_id=token_pair.row_id, id_=token_pair.id,
                                                  min_value=token_pair.min_value, max_value=token_pair.max_value,
@@ -87,7 +89,8 @@ class ConversionFactory:
                                                  updated_at=token_pair.updated_at, from_token=token_pair.from_token,
                                                  to_token=token_pair.to_token, conversion_fee=token_pair.conversion_fee,
                                                  conversion_ratio=token_pair.conversion_ratio,
-                                                 is_liquid=token_pair.is_liquid)
+                                                 is_liquid=token_pair.is_liquid,
+                                                 ada_threshold=token_pair.ada_threshold)
 
         return ConversionDetail(conversion_obj=conversion_obj, wallet_pair_obj=wallet_pair_obj,
                                 from_token_obj=from_token_obj, to_token_obj=to_token_obj,
@@ -113,7 +116,8 @@ class ConversionFactory:
                                        contract_address=token_db_obj.contract_address,
                                        created_by=token_db_obj.created_by, created_at=token_db_obj.created_at,
                                        updated_at=token_db_obj.updated_at,
-                                       blockchain_detail=token_db_obj.blockchain_detail)
+                                       blockchain_detail=token_db_obj.blockchain_detail,
+                                       trading_view=token_db_obj.trading_view)
 
         return ConversionFactory.transaction(row_id=transaction.row_id, id=transaction.id,
                                              conversion_transaction_id=transaction.conversion_transaction_id,

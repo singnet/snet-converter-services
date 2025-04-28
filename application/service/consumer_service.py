@@ -25,7 +25,7 @@ from utils.blockchain import get_next_activity_event_on_conversion, validate_con
     generate_deposit_address_details_for_cardano_operation, \
     validate_conversion_request_amount, validate_consumer_event_type, convert_str_to_decimal, \
     get_current_block_confirmation, wait_until_transaction_hash_exists_in_blockchain, \
-    validate_tx_hash_presence_in_blockchain
+    validate_tx_hash_presence_in_blockchain, validate_tx_token_received_ada_amount
 from utils.exception_handler import bridge_exception_handler
 from utils.exceptions import BadRequestException, InternalServerErrorException, BlockConfirmationNotEnoughException
 
@@ -134,7 +134,8 @@ class ConsumerService:
         elif db_blockchain_name == BlockchainName.CARDANO.value.lower():
             if event_type == CardanoEventType.TOKEN_RECEIVED.value:
                 conversion = self.process_cardano_token_received_event(blockchain_event=blockchain_event,
-                                                                       transaction=transaction)
+                                                                       transaction=transaction,
+                                                                       network_id=network_id)
             elif transaction and event_type in CardanoServicesEventTypes:
                 conversion = self.conversion_service.get_conversion_detail_by_tx_id(
                     tx_id=transaction.get(TransactionEntities.ID.value))
@@ -273,7 +274,7 @@ class ConsumerService:
 
         return conversion
 
-    def process_cardano_token_received_event(self, blockchain_event, transaction):
+    def process_cardano_token_received_event(self, blockchain_event, transaction, network_id):
         created_by = CreatedBy.BACKEND.value
         fee_amount = Decimal(0)
         tx_hash = blockchain_event.get(CardanoEventConsumer.TX_HASH.value)
@@ -306,6 +307,12 @@ class ConsumerService:
             validate_conversion_request_amount(amount=tx_amount,
                                                min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                                max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
+
+            target_amount = token_pair.get(TokenPairEntities.ADA_THRESHOLD.value)
+            validate_tx_token_received_ada_amount(target_amount=target_amount,
+                                                  address=deposit_address,
+                                                  tx_hash=tx_hash,
+                                                  network_id=network_id)
 
             token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}) \
                                       .get(TokenEntities.TOKEN_ADDRESS.value)
@@ -395,6 +402,12 @@ class ConsumerService:
             validate_conversion_request_amount(amount=tx_amount,
                                                min_value=token_pair.get(TokenPairEntities.MIN_VALUE.value),
                                                max_value=token_pair.get(TokenPairEntities.MAX_VALUE.value))
+
+            target_amount = token_pair.get(TokenPairEntities.ADA_THRESHOLD.value)
+            validate_tx_token_received_ada_amount(target_amount=target_amount,
+                                                  address=deposit_address,
+                                                  tx_hash=tx_hash,
+                                                  network_id=network_id)
 
             token_address = token_pair.get(TokenPairEntities.FROM_TOKEN.value, {}) \
                                       .get(TokenEntities.TOKEN_ADDRESS.value)
